@@ -69,9 +69,10 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
             optional(5, "event_value_format", Types.StringType.get()),
             optional(6, "event_key_format", Types.StringType.get()),
             optional(7, "event_sink_timestamp", Types.TimestampType.withZone()));
+    static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").build();
+    // @TODO partition by event time
+    // static final PartitionSpec TABLE_PARTITION = PartitionSpec.unpartitioned();
     // static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").day("event_sink_timestamp").build();
-    // @TODO partition by event_destination
-    static final PartitionSpec TABLE_PARTITION = PartitionSpec.unpartitioned();
     private static final Logger LOGGER = LoggerFactory.getLogger(IcebergEventsChangeConsumer.class);
     private static final String PROP_PREFIX = "debezium.sink.iceberg.";
     final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row.limit", Integer.class).orElse(500);

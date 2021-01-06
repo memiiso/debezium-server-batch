@@ -59,11 +59,10 @@ public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngi
     @ConfigProperty(name = "debezium.sink.s3.region", defaultValue = "eu-central-1")
     String region;
 
-    public String map(String destination, LocalDateTime batchTime, String recordId) {
+    public String map(String destination, LocalDateTime batchTime) {
         Objects.requireNonNull(destination, "destination Cannot be Null");
         Objects.requireNonNull(batchTime, "batchTime Cannot be Null");
-        Objects.requireNonNull(recordId, "recordId Cannot be Null");
-        String fname = batchTime.toEpochSecond(ZoneOffset.UTC) + recordId + "." + valueFormat;
+        String fname = batchTime.toEpochSecond(ZoneOffset.UTC) + UUID.randomUUID().toString() + "." + valueFormat;
         String partiton = "year=" + batchTime.getYear() + "/month=" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0') + "/day="
                 + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
         return objectKeyPrefix + destination + "/" + partiton + "/" + fname;
@@ -109,7 +108,7 @@ public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngi
         for (ChangeEvent<Object, Object> record : records) {
             PutObjectRequest putRecord = PutObjectRequest.builder()
                     .bucket(bucket)
-                    .key(this.map(record.destination(), batchTime, UUID.randomUUID().toString()))
+                    .key(this.map(record.destination(), batchTime))
                     .build();
             LOGGER.debug("Uploading s3File bucket:{} key:{} endpint:{}", putRecord.bucket(), putRecord.key(), endpointOverride);
             s3client.putObject(putRecord, RequestBody.fromBytes(getBytes(record.value())));
