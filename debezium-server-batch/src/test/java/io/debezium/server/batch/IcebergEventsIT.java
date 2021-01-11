@@ -10,6 +10,7 @@ import java.time.Duration;
 
 import javax.inject.Inject;
 
+import io.debezium.server.testutils.TestS3Minio;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
@@ -30,7 +31,7 @@ import io.quarkus.test.junit.QuarkusTest;
 @QuarkusTest
 @QuarkusTestResource(TestS3Minio.class)
 @QuarkusTestResource(TestDatabase.class)
-public class IcebergEventsIT extends SparkTestBase {
+public class IcebergEventsIT extends BaseSparkIT {
     @ConfigProperty(name = "debezium.sink.type")
     String sinkType;
     @Inject

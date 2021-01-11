@@ -12,6 +12,7 @@ import java.time.Duration;
 
 import javax.inject.Inject;
 
+import io.debezium.server.testutils.TestS3Minio;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
@@ -30,7 +31,7 @@ import io.quarkus.test.junit.QuarkusTest;
 @QuarkusTest
 @QuarkusTestResource(TestS3Minio.class)
 @QuarkusTestResource(TestDatabase.class)
-public class IcebergIT extends SparkTestBase {
+public class IcebergIT extends BaseSparkIT {
 
     @Inject
     DebeziumServer server;

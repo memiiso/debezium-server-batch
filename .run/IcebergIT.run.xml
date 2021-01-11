@@ -3,7 +3,7 @@
     <module name="debezium-server-batch" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="io.debezium.server.batch.*" />
+        <option name="PATTERN" value="io.debezium.server.testutils.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

@@ -8,6 +8,7 @@ package io.debezium.server.batch;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.debezium.server.testutils.TestS3Minio;
 import org.apache.kafka.connect.runtime.standalone.StandaloneConfig;
 
 import io.debezium.server.TestConfigSource;

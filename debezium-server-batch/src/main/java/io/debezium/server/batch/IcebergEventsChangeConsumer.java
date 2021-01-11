@@ -17,18 +17,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.iceberg.DataFile;
-import org.apache.iceberg.DataFiles;
-import org.apache.iceberg.FileFormat;
-import org.apache.iceberg.PartitionSpec;
-import org.apache.iceberg.Schema;
-import org.apache.iceberg.Table;
+import org.apache.iceberg.*;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.data.GenericRecord;
@@ -147,6 +145,22 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     // // }
     // }
 
+    public GenericRecord getIcebergRecord(String destination, ChangeEvent<Object, Object> record) {
+        Map<String, Object> var1 = Maps.newHashMapWithExpectedSize(TABLE_SCHEMA.columns().size());
+        var1.put("event_destination", destination);
+        var1.put("event_key", getString(record.key()));
+        var1.put("event_key_value", null); // @TODO extract key value!
+        var1.put("event_value", getString(record.value()));
+        var1.put("event_value_format", valueFormat);
+        var1.put("event_key_format", keyFormat);
+        var1.put("event_sink_timestamp", LocalDateTime.now().atOffset(ZoneOffset.UTC));
+        // @TODO add schema enabled flags! for key and value!
+        // @TODO add flattened flag SMT unwrap!
+        // @TODO add db name
+        // @TODO extract value from key and store it - event_key_value!
+        return GenericRecord.create(TABLE_SCHEMA).copy(var1);
+    }
+
     @Override
     public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
             throws InterruptedException {
@@ -155,41 +169,31 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
         GenericRecord icebergRecord = GenericRecord.create(TABLE_SCHEMA);
         int batchId = 0;
         int cntNumRows = 0;
-        for (ChangeEvent<Object, Object> record : records) {
-            Map<String, Object> var1 = Maps.newHashMapWithExpectedSize(TABLE_SCHEMA.columns().size());
-            var1.put("event_destination", record.destination());
-            var1.put("event_key", getString(record.key()));
-            var1.put("event_key_value", null); // @TODO extract key value!
-            var1.put("event_value", getString(record.value()));
-            var1.put("event_value_format", valueFormat);
-            var1.put("event_key_format", keyFormat);
-            var1.put("event_sink_timestamp", LocalDateTime.now().atOffset(ZoneOffset.UTC));
-            // @TODO add schema enabled flags! for key and value!
-            // @TODO add flattened flag SMT unwrap!
-            // @TODO add db name
-            // @TODO extract value from key and store it - event_key_value!
 
-            icebergRecords.add(icebergRecord.copy(var1));
+        Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
+                .collect(Collectors.groupingBy(
+                        ChangeEvent::destination,
+                        Collectors.mapping(p -> p,
+                                Collectors.toCollection(ArrayList::new))));
 
-            cntNumRows++;
-            if (cntNumRows > batchLimit) {
-                commitBatch(icebergRecords, batchTime, batchId);
-                cntNumRows = 0;
-                batchId++;
-                icebergRecords.clear();
-            }
-            // committer.markProcessed(record);
+        for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destEvents : result.entrySet()) {
+            // each destEvents is set of events for a single table
+            ArrayList<Record> destIcebergRecords = destEvents.getValue().stream()
+                    .map(e -> getIcebergRecord(destEvents.getKey(), e))
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            commitBatch(destEvents.getKey(), destIcebergRecords, batchTime, batchId);
         }
-        commitBatch(icebergRecords, batchTime, batchId);
-        icebergRecords.clear();
+        // committer.markProcessed(record);
         committer.markBatchFinished();
     }
 
-    private void commitBatch(ArrayList<Record> icebergRecords, LocalDateTime batchTime, int batchId) throws InterruptedException {
+    private void commitBatch(String destination, ArrayList<Record> icebergRecords, LocalDateTime batchTime, int batchId) throws InterruptedException {
         final String fileName = UUID.randomUUID() + "-" + batchTime.toEpochSecond(ZoneOffset.UTC) + "-" + batchId + "." + FileFormat.PARQUET.toString().toLowerCase();
-        OutputFile out = eventTable.io().newOutputFile(eventTable.locationProvider().newDataLocation(fileName));
+        // NOTE! manually setting partition directory here to destination
+        OutputFile out = eventTable.io().newOutputFile(eventTable.locationProvider().newDataLocation(destination + "/" + fileName));
 
-        FileAppender<Record> writer = null;
+        FileAppender<Record> writer;
         try {
             writer = Parquet.write(out)
                     .createWriterFunc(GenericParquetWriter::buildWriter)

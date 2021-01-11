@@ -17,7 +17,7 @@ import io.debezium.util.Testing;
  *
  * @author Ismail Simsek
  */
-public class SparkTestBase {
+public class BaseSparkIT {
     protected static final SparkConf sparkconf = new SparkConf()
             .setAppName("CDC-S3-Batch-Spark-Sink")
             .setMaster("local");
@@ -36,14 +36,14 @@ public class SparkTestBase {
 
         for (String name : ConfigProvider.getConfig().getPropertyNames()) {
             if (name.startsWith(SPARK_PROP_PREFIX)) {
-                SparkTestBase.sparkconf.set(name.substring(SPARK_PROP_PREFIX.length()), ConfigProvider.getConfig().getValue(name, String.class));
+                BaseSparkIT.sparkconf.set(name.substring(SPARK_PROP_PREFIX.length()), ConfigProvider.getConfig().getValue(name, String.class));
             }
         }
-        SparkTestBase.sparkconf.set("spark.ui.enabled", "false");
+        BaseSparkIT.sparkconf.set("spark.ui.enabled", "false");
 
-        SparkTestBase.spark = SparkSession
+        BaseSparkIT.spark = SparkSession
                 .builder()
-                .config(SparkTestBase.sparkconf)
+                .config(BaseSparkIT.sparkconf)
                 .getOrCreate();
     }
 
