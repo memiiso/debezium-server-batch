@@ -12,7 +12,8 @@ import java.util.List;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-import io.debezium.server.testutils.TestS3Minio;
+import io.debezium.server.testresource.TestDatabase;
+import io.debezium.server.testresource.TestS3Minio;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.fest.assertions.Assertions;
@@ -37,7 +38,7 @@ import io.quarkus.test.junit.QuarkusTest;
  */
 @QuarkusTest
 @QuarkusTestResource(TestS3Minio.class)
-@QuarkusTestResource(io.debezium.server.batch.TestDatabase.class)
+@QuarkusTestResource(TestDatabase.class)
 public class S3JsonBatchRecordWriterIT {
 
     private static final int MESSAGE_COUNT = 2;

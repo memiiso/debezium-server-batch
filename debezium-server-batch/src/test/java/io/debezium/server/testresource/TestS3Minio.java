@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.debezium.server.testutils;
+package io.debezium.server.testresource;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -35,8 +35,8 @@ public class TestS3Minio implements QuarkusTestResourceLifecycleManager {
     static final String DEFAULT_IMAGE = "minio/minio:latest";
     static final String DEFAULT_STORAGE_DIRECTORY = "/data";
     static final String HEALTH_ENDPOINT = "/minio/health/ready";
-    static final String MINIO_ACCESS_KEY;
-    static final String MINIO_SECRET_KEY;
+    public static final String MINIO_ACCESS_KEY;
+    public static final String MINIO_SECRET_KEY;
 
     static {
         DefaultCredentialsProvider pcred = DefaultCredentialsProvider.create();

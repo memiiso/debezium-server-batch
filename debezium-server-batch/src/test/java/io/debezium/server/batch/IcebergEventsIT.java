@@ -10,7 +10,8 @@ import java.time.Duration;
 
 import javax.inject.Inject;
 
-import io.debezium.server.testutils.TestS3Minio;
+import io.debezium.server.testresource.TestDatabase;
+import io.debezium.server.testresource.TestS3Minio;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
@@ -44,6 +45,7 @@ public class IcebergEventsIT extends BaseSparkIT {
 
         Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
             try {
+                TestS3Minio.listFiles();
                 Dataset<Row> ds = spark.read().format("iceberg")
                         .load("s3a://test-bucket/iceberg_warehouse/debezium_events");
                 ds.show();

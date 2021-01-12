@@ -6,27 +6,18 @@
 
 package io.debezium.server.batch;
 
-import static org.apache.iceberg.types.Types.NestedField.optional;
-import static org.apache.iceberg.types.Types.NestedField.required;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.Dependent;
-import javax.inject.Named;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import io.debezium.engine.ChangeEvent;
+import io.debezium.engine.DebeziumEngine;
+import io.debezium.engine.format.Json;
+import io.debezium.server.BaseChangeConsumer;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.iceberg.*;
+import org.apache.iceberg.DataFile;
+import org.apache.iceberg.DataFiles;
+import org.apache.iceberg.FileFormat;
+import org.apache.iceberg.PartitionKey;
+import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.Table;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.data.GenericRecord;
@@ -44,10 +35,21 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.debezium.engine.ChangeEvent;
-import io.debezium.engine.DebeziumEngine;
-import io.debezium.engine.format.Json;
-import io.debezium.server.BaseChangeConsumer;
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.Dependent;
+import javax.inject.Named;
+import java.io.Closeable;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.apache.iceberg.types.Types.NestedField.optional;
+import static org.apache.iceberg.types.Types.NestedField.required;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -161,6 +163,10 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
         return GenericRecord.create(TABLE_SCHEMA).copy(var1);
     }
 
+    public String map(String destination) {
+        return destination.replace(".", "-");
+    }
+
     @Override
     public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
             throws InterruptedException {
@@ -172,7 +178,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
 
         Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
                 .collect(Collectors.groupingBy(
-                        ChangeEvent::destination,
+                        objectObjectChangeEvent -> map(objectObjectChangeEvent.destination()),
                         Collectors.mapping(p -> p,
                                 Collectors.toCollection(ArrayList::new))));
 
@@ -191,7 +197,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     private void commitBatch(String destination, ArrayList<Record> icebergRecords, LocalDateTime batchTime, int batchId) throws InterruptedException {
         final String fileName = UUID.randomUUID() + "-" + batchTime.toEpochSecond(ZoneOffset.UTC) + "-" + batchId + "." + FileFormat.PARQUET.toString().toLowerCase();
         // NOTE! manually setting partition directory here to destination
-        OutputFile out = eventTable.io().newOutputFile(eventTable.locationProvider().newDataLocation(destination + "/" + fileName));
+        OutputFile out = eventTable.io().newOutputFile(eventTable.locationProvider().newDataLocation("event_destination=" + destination + "/" + fileName));
 
         FileAppender<Record> writer;
         try {
@@ -205,11 +211,15 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
                 writer.addAll(icebergRecords);
             }
 
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             LOGGER.error("Failed committing events to iceberg table!", e);
             throw new InterruptedException(e.getMessage());
         }
+
+
+        PartitionKey pk = new PartitionKey(TABLE_PARTITION, TABLE_SCHEMA);
+        Record pr = GenericRecord.create(TABLE_SCHEMA).copy("event_destination", destination);
+        pk.partition(pr);
 
         DataFile dataFile = DataFiles.builder(eventTable.spec())
                 .withFormat(FileFormat.PARQUET)
@@ -217,6 +227,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
                 .withFileSizeInBytes(writer.length())
                 .withSplitOffsets(writer.splitOffsets())
                 .withMetrics(writer.metrics())
+                .withPartition(pk)
                 .build();
 
         LOGGER.debug("Appending new file '{}' !", dataFile.path());

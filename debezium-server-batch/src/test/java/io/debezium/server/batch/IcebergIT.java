@@ -12,7 +12,8 @@ import java.time.Duration;
 
 import javax.inject.Inject;
 
-import io.debezium.server.testutils.TestS3Minio;
+import io.debezium.server.testresource.TestDatabase;
+import io.debezium.server.testresource.TestS3Minio;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
