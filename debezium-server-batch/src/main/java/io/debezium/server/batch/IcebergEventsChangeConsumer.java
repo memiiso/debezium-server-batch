@@ -71,11 +71,10 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
             optional(7, "event_sink_timestamp", Types.TimestampType.withZone()));
     static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").build();
     // @TODO partition by event time
-    // static final PartitionSpec TABLE_PARTITION = PartitionSpec.unpartitioned();
     // static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").day("event_sink_timestamp").build();
     private static final Logger LOGGER = LoggerFactory.getLogger(IcebergEventsChangeConsumer.class);
     private static final String PROP_PREFIX = "debezium.sink.iceberg.";
-    final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row.limit", Integer.class).orElse(500);
+    // final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row.limit", Integer.class).orElse(500);
     @ConfigProperty(name = "debezium.format.value", defaultValue = "json")
     String valueFormat;
     @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
@@ -87,17 +86,6 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     String warehouseLocation;
     @ConfigProperty(name = PROP_PREFIX + "fs.defaultFS")
     String defaultFs;
-//     @ConfigProperty(name = "debezium.transforms")
-//     String transforms;
-//    @ConfigProperty(name = "value.converter.schemas.enable", defaultValue = "false")
-//    Boolean formatValueSchemasEnable;
-//    @ConfigProperty(name = "key.converter.schemas.enable", defaultValue = "true")
-//    Boolean formatKeySchemasEnable;
-//    @ConfigProperty(name = "debezium.format.schemas.enable")
-//    // @ConfigProperty(name = "converter.schemas.enable")
-//    Boolean formatSchemasEnable;
-//    @ConfigProperty(name = "debezium.source.database.dbname")
-//    String databaseName;
 
     Catalog icebergCatalog;
     Table eventTable;
@@ -171,10 +159,6 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
             throws InterruptedException {
         LocalDateTime batchTime = LocalDateTime.now();
-        ArrayList<Record> icebergRecords = Lists.newArrayList();
-        GenericRecord icebergRecord = GenericRecord.create(TABLE_SCHEMA);
-        int batchId = 0;
-        int cntNumRows = 0;
 
         Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
                 .collect(Collectors.groupingBy(
@@ -188,14 +172,14 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
                     .map(e -> getIcebergRecord(destEvents.getKey(), e))
                     .collect(Collectors.toCollection(ArrayList::new));
 
-            commitBatch(destEvents.getKey(), destIcebergRecords, batchTime, batchId);
+            commitBatch(destEvents.getKey(), destIcebergRecords, batchTime);
         }
         // committer.markProcessed(record);
         committer.markBatchFinished();
     }
 
-    private void commitBatch(String destination, ArrayList<Record> icebergRecords, LocalDateTime batchTime, int batchId) throws InterruptedException {
-        final String fileName = UUID.randomUUID() + "-" + batchTime.toEpochSecond(ZoneOffset.UTC) + "-" + batchId + "." + FileFormat.PARQUET.toString().toLowerCase();
+    private void commitBatch(String destination, ArrayList<Record> icebergRecords, LocalDateTime batchTime) throws InterruptedException {
+        final String fileName = UUID.randomUUID() + "-" + batchTime.toEpochSecond(ZoneOffset.UTC) + "." + FileFormat.PARQUET.toString().toLowerCase();
         // NOTE! manually setting partition directory here to destination
         OutputFile out = eventTable.io().newOutputFile(eventTable.locationProvider().newDataLocation("event_destination=" + destination + "/" + fileName));
 
