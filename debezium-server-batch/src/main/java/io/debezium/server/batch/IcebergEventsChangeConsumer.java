@@ -1,5 +1,5 @@
 /*
- * Copyright Debezium Authors.
+ * Copyright memiiso Authors.
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
@@ -11,13 +11,7 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.server.BaseChangeConsumer;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.iceberg.DataFile;
-import org.apache.iceberg.DataFiles;
-import org.apache.iceberg.FileFormat;
-import org.apache.iceberg.PartitionKey;
-import org.apache.iceberg.PartitionSpec;
-import org.apache.iceberg.Schema;
-import org.apache.iceberg.Table;
+import org.apache.iceberg.*;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.data.GenericRecord;
@@ -27,7 +21,6 @@ import org.apache.iceberg.hadoop.HadoopCatalog;
 import org.apache.iceberg.io.FileAppender;
 import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.parquet.Parquet;
-import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.types.Types;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -69,12 +62,12 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
             optional(5, "event_value_format", Types.StringType.get()),
             optional(6, "event_key_format", Types.StringType.get()),
             optional(7, "event_sink_timestamp", Types.TimestampType.withZone()));
-    static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").build();
-    // @TODO partition by event time
-    // static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").day("event_sink_timestamp").build();
+    static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA)
+            .identity("event_destination")
+            .hour("event_sink_timestamp")
+            .build();
     private static final Logger LOGGER = LoggerFactory.getLogger(IcebergEventsChangeConsumer.class);
     private static final String PROP_PREFIX = "debezium.sink.iceberg.";
-    // final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row.limit", Integer.class).orElse(500);
     @ConfigProperty(name = "debezium.format.value", defaultValue = "json")
     String valueFormat;
     @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
@@ -200,9 +193,8 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
             throw new InterruptedException(e.getMessage());
         }
 
-
         PartitionKey pk = new PartitionKey(TABLE_PARTITION, TABLE_SCHEMA);
-        Record pr = GenericRecord.create(TABLE_SCHEMA).copy("event_destination", destination);
+        Record pr = GenericRecord.create(TABLE_SCHEMA).copy("event_destination", destination, "event_sink_timestamp", batchTime.atOffset(ZoneOffset.UTC));
         pk.partition(pr);
 
         DataFile dataFile = DataFiles.builder(eventTable.spec())
