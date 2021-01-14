@@ -3,6 +3,7 @@
  *
  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
  */
+
 package io.debezium.server.batch.keymapper;
 
 import java.time.LocalDateTime;
@@ -15,9 +16,9 @@ import java.time.LocalDateTime;
 
 public interface ObjectKeyMapper {
 
-    String map(String destination, LocalDateTime batchTime, Integer batchId);
+  String map(String destination, LocalDateTime batchTime, Integer batchId);
 
-    String map(String destination, LocalDateTime batchTime, Integer batchId, String fileExtension);
+  String map(String destination, LocalDateTime batchTime, Integer batchId, String fileExtension);
 
-    String map(String destination, LocalDateTime batchTime, String recordId);
+  String map(String destination, LocalDateTime batchTime, String recordId);
 }

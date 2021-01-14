@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>io.debezium</groupId>
         <artifactId>debezium-server-memiiso</artifactId>
@@ -105,7 +106,8 @@
                                     <appendAssemblyId>false</appendAssemblyId>
                                     <attach>true</attach>  <!-- we want attach & deploy these to Maven -->
                                     <descriptors>
-                                        <descriptor>src/main/resources/assemblies/${assembly.descriptor}.xml</descriptor>
+                                        <descriptor>src/main/resources/assemblies/${assembly.descriptor}.xml
+                                        </descriptor>
                                     </descriptors>
                                     <tarLongFileMode>posix</tarLongFileMode>
                                 </configuration>

@@ -6,12 +6,12 @@
 
 package io.debezium.server.batch.batchwriter;
 
+import io.debezium.server.batch.keymapper.ObjectKeyMapper;
+
 import java.net.URISyntaxException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.debezium.server.batch.keymapper.ObjectKeyMapper;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -20,11 +20,11 @@ import io.debezium.server.batch.keymapper.ObjectKeyMapper;
  */
 public class SparkBatchRecordWriter extends AbstractSparkBatchRecordWriter {
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(SparkBatchRecordWriter.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(SparkBatchRecordWriter.class);
 
-    public SparkBatchRecordWriter(ObjectKeyMapper mapper) throws URISyntaxException {
-        super(mapper);
-        LOGGER.info("Starting S3 Spark Consumer({})", this.getClass().getName());
-        LOGGER.info("Spark save format is '{}'", saveFormat);
-    }
+  public SparkBatchRecordWriter(ObjectKeyMapper mapper) throws URISyntaxException {
+    super(mapper);
+    LOGGER.info("Starting S3 Spark Consumer({})", this.getClass().getName());
+    LOGGER.info("Spark save format is '{}'", saveFormat);
+  }
 }

@@ -25,8 +25,7 @@ than the maximum batch size specified by the max.batch.size property.
 
 object names are mapped like
 
-`objectkey.prefix + event.destination + "/" + daily partition of batch time + "/" + random UUID + "." +
-debezium.format.value{json,avro...};`
+`objectkey.prefix + event.destination + "/" + daily partition of batch time + "/" + random UUID + "." + debezium.format.value{json,avro...};`
 
 ```
 debezium.sink.type=s3

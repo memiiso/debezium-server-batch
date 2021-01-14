@@ -12,9 +12,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public interface BatchRecordWriter {
 
-    void append(String destination, JsonNode valueJson) throws IOException;
+  void append(String destination, JsonNode valueJson) throws IOException;
 
-    void uploadBatch() throws IOException;
+  void uploadBatch() throws IOException;
 
-    void close() throws IOException;
+  void close() throws IOException;
 }
