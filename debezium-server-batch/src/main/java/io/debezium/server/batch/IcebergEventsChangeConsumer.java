@@ -62,10 +62,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
       optional(5, "event_value_format", Types.StringType.get()),
       optional(6, "event_key_format", Types.StringType.get()),
       optional(7, "event_sink_timestamp", Types.TimestampType.withZone()));
-  static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA)
-      .identity("event_destination")
-      .hour("event_sink_timestamp")
-      .build();
+  static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").build();
   private static final Logger LOGGER = LoggerFactory.getLogger(IcebergEventsChangeConsumer.class);
   private static final String PROP_PREFIX = "debezium.sink.iceberg.";
   @ConfigProperty(name = "debezium.format.value", defaultValue = "json")
@@ -128,7 +125,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
   // // }
   // }
 
-  public GenericRecord getIcebergRecord(String destination, ChangeEvent<Object, Object> record) {
+  public GenericRecord getIcebergRecord(String destination, ChangeEvent<Object, Object> record, LocalDateTime batchTime) {
     Map<String, Object> var1 = Maps.newHashMapWithExpectedSize(TABLE_SCHEMA.columns().size());
     var1.put("event_destination", destination);
     var1.put("event_key", getString(record.key()));
@@ -136,7 +133,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     var1.put("event_value", getString(record.value()));
     var1.put("event_value_format", valueFormat);
     var1.put("event_key_format", keyFormat);
-    var1.put("event_sink_timestamp", LocalDateTime.now().atOffset(ZoneOffset.UTC));
+    var1.put("event_sink_timestamp", batchTime.atOffset(ZoneOffset.UTC));
     // @TODO add schema enabled flags! for key and value!
     // @TODO add flattened flag SMT unwrap!
     // @TODO add db name
@@ -151,7 +148,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
-    LocalDateTime batchTime = LocalDateTime.now();
+    LocalDateTime batchTime = LocalDateTime.now(ZoneOffset.UTC);
 
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
         .collect(Collectors.groupingBy(
@@ -162,7 +159,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destEvents : result.entrySet()) {
       // each destEvents is set of events for a single table
       ArrayList<Record> destIcebergRecords = destEvents.getValue().stream()
-          .map(e -> getIcebergRecord(destEvents.getKey(), e))
+          .map(e -> getIcebergRecord(destEvents.getKey(), e, batchTime))
           .collect(Collectors.toCollection(ArrayList::new));
 
       commitBatch(destEvents.getKey(), destIcebergRecords, batchTime);
@@ -172,7 +169,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
   }
 
   private void commitBatch(String destination, ArrayList<Record> icebergRecords, LocalDateTime batchTime) throws InterruptedException {
-    final String fileName = UUID.randomUUID() + "-" + batchTime.toEpochSecond(ZoneOffset.UTC) + "." + FileFormat.PARQUET.toString().toLowerCase();
+    final String fileName = UUID.randomUUID() + "-" + batchTime + "." + FileFormat.PARQUET.toString().toLowerCase();
     // NOTE! manually setting partition directory here to destination
     OutputFile out = eventTable.io().newOutputFile(eventTable.locationProvider().newDataLocation("event_destination=" + destination + "/" + fileName));
 
@@ -194,7 +191,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     }
 
     PartitionKey pk = new PartitionKey(TABLE_PARTITION, TABLE_SCHEMA);
-    Record pr = GenericRecord.create(TABLE_SCHEMA).copy("event_destination", destination, "event_sink_timestamp", batchTime.atOffset(ZoneOffset.UTC));
+    Record pr = GenericRecord.create(TABLE_SCHEMA).copy("event_destination", destination, "event_sink_timestamp", batchTime);
     pk.partition(pr);
 
     DataFile dataFile = DataFiles.builder(eventTable.spec())
