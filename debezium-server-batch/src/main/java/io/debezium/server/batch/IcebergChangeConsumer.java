@@ -13,6 +13,7 @@ import io.debezium.server.BaseChangeConsumer;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -132,36 +133,33 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
       Table icebergTable;
       final Schema tableSchema;
       try {
+        // load iceberg table
         icebergTable = icebergCatalog.loadTable(TableIdentifier.of(event.getKey()));
       } catch (org.apache.iceberg.exceptions.NoSuchTableException e) {
+        // Table is not exists lets try to create it using the schema of an debezium event
         JsonNode sampleEvent = jsonDeserializer.deserialize(event.getValue().get(0).destination(), getBytes(event.getValue().get(0).value()));
         if (SchemaUtil.hasSchema(sampleEvent) && sampleEvent.has("schema")) {
           Schema schema = SchemaUtil.getIcebergSchema(sampleEvent.get("schema"));
           LOGGER.warn("Table '{}' not found creating it!\nSchema:\n{}", TableIdentifier.of(event.getKey()), schema.toString());
           icebergTable = icebergCatalog.createTable(TableIdentifier.of(event.getKey()), schema);
         } else {
+          // iceberg table and schema is not exists in the event data! FAIL!
           e.printStackTrace();
           throw new InterruptedException("Iceberg table not found!" + e.getMessage());
         }
       }
-      // GenericRecord genericRecord = GenericRecord.create(icebergTable.schema());
-      // JsonNode valueJson = jsonDeserializer.deserialize(event.destination(), getBytes(event.value()));
       tableSchema = icebergTable.schema();
       ArrayList<Record> icebergRecords = event.getValue().stream()
           .map(e -> getIcebergRecord(tableSchema, jsonDeserializer.deserialize(e.destination(), getBytes(e.value()))))
           .collect(Collectors.toCollection(ArrayList::new));
 
-      commitTable(icebergTable, icebergRecords);
-      // @TODO is order important for committing single record!!?
-      for (ChangeEvent<Object, Object> record : event.getValue()) {
-        committer.markProcessed(record);
-      }
+      appendTable(icebergTable, icebergRecords);
     }
     committer.markBatchFinished();
   }
 
-  private void commitTable(Table icebergTable, ArrayList<Record> icebergRecords) throws InterruptedException {
-    final String fileName = UUID.randomUUID() + "-" + LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) + "-" + 0 + "." + FileFormat.PARQUET.toString().toLowerCase();
+  private void appendTable(Table icebergTable, ArrayList<Record> icebergRecords) throws InterruptedException {
+    final String fileName = UUID.randomUUID() + "-" + Instant.now().toEpochMilli() + "." + FileFormat.PARQUET.toString().toLowerCase();
     OutputFile out = icebergTable.io().newOutputFile(icebergTable.locationProvider().newDataLocation(fileName));
 
     FileAppender<Record> writer;
