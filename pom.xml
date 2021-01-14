@@ -19,13 +19,13 @@
         <release>8</release>
 
         <version.s3>2.15.45</version.s3>
-        <version.debezium>1.4.0.CR1</version.debezium>
+        <version.debezium>1.4.0.Final</version.debezium>
         <version.assembly.plugin>3.1.1</version.assembly.plugin>
         <version.jackson>2.11.2</version.jackson>
         <skipITs>true</skipITs>
 
         <!-- Quarkus -->
-        <quarkus.version>1.7.1.Final</quarkus.version>
+        <quarkus.version>1.11.0.Beta2</quarkus.version>
     </properties>
 
     <dependencyManagement>
