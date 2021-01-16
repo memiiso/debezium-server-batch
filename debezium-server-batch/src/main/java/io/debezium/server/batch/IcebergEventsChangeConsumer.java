@@ -1,7 +1,9 @@
 /*
- * Copyright memiiso Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright memiiso Authors.
+ *  *
+ *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 
 package io.debezium.server.batch;
@@ -54,14 +56,17 @@ import static org.apache.iceberg.types.Types.NestedField.required;
 public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
   static final String TABLE_NAME = "debezium_events";
+
+  // @TODO add schema enabled flags! for key and value!
+  // @TODO add flattened flag SMT unwrap! as bolean?
+  // @TODO extract value from key and store only value -> event_key_value!
+  // @TODO add event_sink_timestamp to partition
   static final Schema TABLE_SCHEMA = new Schema(
       required(1, "event_destination", Types.StringType.get(), "event destination"),
       optional(2, "event_key", Types.StringType.get()),
       optional(3, "event_key_value", Types.StringType.get()),
       optional(4, "event_value", Types.StringType.get()),
-      optional(5, "event_value_format", Types.StringType.get()),
-      optional(6, "event_key_format", Types.StringType.get()),
-      optional(7, "event_sink_timestamp", Types.TimestampType.withZone()));
+      optional(5, "event_sink_timestamp", Types.TimestampType.withZone()));
   static final PartitionSpec TABLE_PARTITION = PartitionSpec.builderFor(TABLE_SCHEMA).identity("event_destination").build();
   private static final Logger LOGGER = LoggerFactory.getLogger(IcebergEventsChangeConsumer.class);
   private static final String PROP_PREFIX = "debezium.sink.iceberg.";
@@ -131,13 +136,7 @@ public class IcebergEventsChangeConsumer extends BaseChangeConsumer implements D
     var1.put("event_key", getString(record.key()));
     var1.put("event_key_value", null); // @TODO extract key value!
     var1.put("event_value", getString(record.value()));
-    var1.put("event_value_format", valueFormat);
-    var1.put("event_key_format", keyFormat);
     var1.put("event_sink_timestamp", batchTime.atOffset(ZoneOffset.UTC));
-    // @TODO add schema enabled flags! for key and value!
-    // @TODO add flattened flag SMT unwrap!
-    // @TODO add db name
-    // @TODO extract value from key and store it - event_key_value!
     return GenericRecord.create(TABLE_SCHEMA).copy(var1);
   }
 
