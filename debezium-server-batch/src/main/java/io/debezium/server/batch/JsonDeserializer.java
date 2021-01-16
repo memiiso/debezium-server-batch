@@ -8,7 +8,6 @@
 
 package io.debezium.server.batch;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -23,7 +22,7 @@ public class JsonDeserializer implements Deserializer<JsonNode> {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   JsonDeserializer() {
-    objectMapper.enable(DeserializationFeature.USE_LONG_FOR_INTS);
+    // objectMapper.enable(DeserializationFeature.USE_LONG_FOR_INTS);
     objectMapper.setNodeFactory(JsonNodeFactory.withExactBigDecimals(true));
   }
 

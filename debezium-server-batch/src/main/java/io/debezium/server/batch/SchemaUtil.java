@@ -1,7 +1,9 @@
 /*
- * Copyright memiiso Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright memiiso Authors.
+ *  *
+ *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 
 package io.debezium.server.batch;
@@ -106,7 +108,7 @@ public class SchemaUtil {
         case "int8":
         case "int16":
         case "int32": // int 4 bytes
-          schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.LongType.get()));
+          schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.IntegerType.get()));
           break;
         case "int64": // long 8 bytes
           schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.LongType.get()));
