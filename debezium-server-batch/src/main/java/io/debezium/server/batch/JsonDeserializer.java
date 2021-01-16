@@ -1,13 +1,12 @@
 /*
- * Copyright memiiso Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright memiiso Authors.
+ *  *
+ *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 
 package io.debezium.server.batch;
-
-import java.util.Collections;
-import java.util.Set;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -23,25 +22,9 @@ import org.apache.kafka.common.serialization.Deserializer;
 public class JsonDeserializer implements Deserializer<JsonNode> {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  /**
-   * Default constructor needed by Kafka
-   */
-  public JsonDeserializer() {
-    this(Collections.emptySet(), JsonNodeFactory.withExactBigDecimals(true));
-  }
-
-  /**
-   * A constructor that additionally specifies some {@link DeserializationFeature}
-   * for the deserializer
-   *
-   * @param deserializationFeatures the specified deserialization features
-   * @param jsonNodeFactory         the json node factory to use.
-   */
-  public JsonDeserializer(
-      final Set<DeserializationFeature> deserializationFeatures,
-      final JsonNodeFactory jsonNodeFactory) {
-    deserializationFeatures.forEach(objectMapper::enable);
-    objectMapper.setNodeFactory(jsonNodeFactory);
+  JsonDeserializer() {
+    objectMapper.enable(DeserializationFeature.USE_LONG_FOR_INTS);
+    objectMapper.setNodeFactory(JsonNodeFactory.withExactBigDecimals(true));
   }
 
   @Override

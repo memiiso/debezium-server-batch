@@ -16,17 +16,18 @@ import io.debezium.server.BaseChangeConsumer;
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.*;
 import org.apache.iceberg.catalog.Catalog;
@@ -104,9 +105,7 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
     }
 
     icebergCatalog = new HadoopCatalog("iceberg", hadoopConf, warehouseLocation);
-    HashSet<DeserializationFeature> f = new HashSet<>();
-    f.add(DeserializationFeature.USE_LONG_FOR_INTS);
-    jsonDeserializer = new JsonDeserializer(f, JsonNodeFactory.withExactBigDecimals(true));
+    jsonDeserializer = new JsonDeserializer();
     // @TODO iceberg 11 . make catalog dynamic using catalogImpl parametter!
     // if (catalogImpl != null) {
     // icebergCatalog = CatalogUtil.loadCatalog(catalogImpl, name, options, hadoopConf);
@@ -187,7 +186,7 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
         .withMetrics(writer.metrics())
         .build();
 
-    // @TODO commit all files/TABLES at once! waiting in iceberg feature. its in discussion!
+    // @TODO commit all files/TABLES at once! waiting for iceberg feature. its in discussion!
     LOGGER.debug("Committing new file as newAppend '{}' !", dataFile.path());
     icebergTable.newAppend()
         .appendFile(dataFile)
