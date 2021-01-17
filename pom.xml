@@ -1,5 +1,13 @@
 <?xml version="1.0"?>
 
+<!--
+  ~ /*
+  ~  * Copyright memiiso Authors.
+  ~  *
+  ~  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+  ~  */
+  -->
+
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -42,6 +50,11 @@
                 <artifactId>debezium-server-batch</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
+                <artifactId>debezium-server-iceberg</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- Upgrade jackson version for spark -->
             <!-- Major dependencies -->
@@ -78,6 +91,7 @@
 
     <modules>
         <module>debezium-server-batch</module>
+        <module>debezium-server-iceberg</module>
         <module>debezium-server-dist</module>
     </modules>
 
