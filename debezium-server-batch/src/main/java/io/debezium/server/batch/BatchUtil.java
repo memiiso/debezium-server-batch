@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
-public class SchemaUtil {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(SchemaUtil.class);
+public class BatchUtil {
+  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchUtil.class);
   protected static final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   public static StructType getSparkDfSchema(JsonNode eventSchema) {
@@ -79,7 +79,7 @@ public class SchemaUtil {
           break;
         case "struct":
           // recursive call
-          StructType subSchema = SchemaUtil.getSparkDfSchema(jsonSchemaFieldNode);
+          StructType subSchema = BatchUtil.getSparkDfSchema(jsonSchemaFieldNode);
           sparkSchema = sparkSchema.add(new StructField(fieldName, subSchema, true, Metadata.empty()));
           break;
         default:
@@ -162,10 +162,10 @@ public class SchemaUtil {
   public static StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
 
-    if (!SchemaUtil.hasSchema(jsonNode)) {
+    if (!BatchUtil.hasSchema(jsonNode)) {
       return null;
     }
-    return SchemaUtil.getSparkDfSchema(jsonNode.get("schema"));
+    return BatchUtil.getSparkDfSchema(jsonNode.get("schema"));
   }
 
   public static boolean hasSchema(JsonNode jsonNode) {
@@ -176,7 +176,7 @@ public class SchemaUtil {
   }
 
   public static GenericRecord getIcebergRecord(Schema schema, JsonNode data) throws InterruptedException {
-    return SchemaUtil.getIcebergRecord(schema.asStruct(), data);
+    return BatchUtil.getIcebergRecord(schema.asStruct(), data);
   }
 
   public static GenericRecord getIcebergRecord(Types.StructType nestedField, JsonNode data) throws InterruptedException {

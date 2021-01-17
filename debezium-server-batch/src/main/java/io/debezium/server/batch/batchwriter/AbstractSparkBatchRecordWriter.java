@@ -1,12 +1,14 @@
 /*
- * Copyright memiiso Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright memiiso Authors.
+ *  *
+ *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 
 package io.debezium.server.batch.batchwriter;
 
-import io.debezium.server.batch.SchemaUtil;
+import io.debezium.server.batch.BatchUtil;
 import io.debezium.server.batch.keymapper.ObjectKeyMapper;
 
 import java.net.URISyntaxException;
@@ -73,7 +75,7 @@ abstract class AbstractSparkBatchRecordWriter extends AbstractBatchRecordWriter 
 
   void setReaderSchema(DataFrameReader dfReader, String event) {
     try {
-      StructType schema = SchemaUtil.getEventSparkDfSchema(event);
+      StructType schema = BatchUtil.getEventSparkDfSchema(event);
       if (schema == null || schema.isEmpty()) {
         return;
       }

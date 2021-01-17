@@ -129,8 +129,8 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
         } catch (IOException ioException) {
           // pass
         }
-        if (SchemaUtil.hasSchema(jsonSchema)) {
-          Schema schema = SchemaUtil.getIcebergSchema(jsonSchema.get("schema"));
+        if (BatchUtil.hasSchema(jsonSchema)) {
+          Schema schema = BatchUtil.getIcebergSchema(jsonSchema.get("schema"));
           LOGGER.warn("Table '{}' not found creating it!\nSchema:\n{}", TableIdentifier.of(event.getKey()), schema.toString());
           icebergTable = icebergCatalog.createTable(TableIdentifier.of(event.getKey()), schema);
         } else {
@@ -142,7 +142,7 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
       tableSchema = icebergTable.schema();
       ArrayList<Record> icebergRecords = new ArrayList<>();
       for (ChangeEvent<Object, Object> e : event.getValue()) {
-        GenericRecord icebergRecord = SchemaUtil.getIcebergRecord(tableSchema, valDeserializer.deserialize(e.destination(),
+        GenericRecord icebergRecord = BatchUtil.getIcebergRecord(tableSchema, valDeserializer.deserialize(e.destination(),
             getBytes(e.value())));
         icebergRecords.add(icebergRecord);
       }

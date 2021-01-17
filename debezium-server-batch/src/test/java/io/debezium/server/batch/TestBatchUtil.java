@@ -27,9 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.*;
 
-class TestSchemaUtil {
+class TestBatchUtil {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(TestSchemaUtil.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(TestBatchUtil.class);
   final String serdeUpdate = Testing.Files.readResourceAsString("json/serde-update.json");
   final String serdeWithSchema = Testing.Files.readResourceAsString("json/serde-with-schema.json");
   final String serdeWithSchema2 = Testing.Files.readResourceAsString("json/serde-with-schema2.json");
@@ -38,10 +38,10 @@ class TestSchemaUtil {
   public StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
 
-    if (!SchemaUtil.hasSchema(jsonNode)) {
+    if (!BatchUtil.hasSchema(jsonNode)) {
       return null;
     }
-    return SchemaUtil.getSparkDfSchema(jsonNode.get("schema"));
+    return BatchUtil.getSparkDfSchema(jsonNode.get("schema"));
   }
 
   @Test
@@ -61,7 +61,7 @@ class TestSchemaUtil {
 
   @Test
   public void testNestedIcebergSchema() throws JsonProcessingException {
-    Schema s = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema).get("schema"));
+    Schema s = BatchUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema).get("schema"));
     // StructType ss = ConsumerUtil.getEventSparkDfSchema(serdeWithSchema);
     assertNotNull(s);
     assertEquals(s.findField("ts_ms").fieldId(), 29);
@@ -72,7 +72,7 @@ class TestSchemaUtil {
 
   @Test
   public void testNestedIcebergSchema2() throws JsonProcessingException {
-    Schema s = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema2));
+    Schema s = BatchUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema2));
     // assertEquals(s.asStruct().toString(), "xx");
     assertTrue(s.asStruct().toString().contains("source: optional struct<"));
     assertTrue(s.asStruct().toString().contains("after: optional struct<"));
@@ -81,8 +81,8 @@ class TestSchemaUtil {
   @Test
   public void testUnwrapJsonRecord() throws IOException, InterruptedException {
     JsonNode event = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
-    Schema schema = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(unwrapWithSchema).get("schema"));
-    GenericRecord record = SchemaUtil.getIcebergRecord(schema.asStruct(), event);
+    Schema schema = BatchUtil.getIcebergSchema(new ObjectMapper().readTree(unwrapWithSchema).get("schema"));
+    GenericRecord record = BatchUtil.getIcebergRecord(schema.asStruct(), event);
     assertEquals("orders", record.getField("__table").toString());
     assertEquals(16850, record.getField("order_date"));
   }
@@ -90,7 +90,7 @@ class TestSchemaUtil {
   @Test
   public void testNestedJsonRecord() throws IOException, InterruptedException {
     JsonNode event = new ObjectMapper().readTree(serdeWithSchema).get("payload");
-    Schema schema = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema).get("schema"));
+    Schema schema = BatchUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema).get("schema"));
 
     System.out.println(schema.asStruct().field("before"));
     System.out.println(schema.asStruct().fields());
@@ -101,7 +101,7 @@ class TestSchemaUtil {
     fail();
 
     assert schema != null;
-    GenericRecord record = SchemaUtil.getIcebergRecord(schema.asStruct(), event);
+    GenericRecord record = BatchUtil.getIcebergRecord(schema.asStruct(), event);
     System.out.println(record);
     System.out.println(record.getField("after").toString());
     System.out.println(record.getField("after").getClass().getSimpleName());
@@ -109,9 +109,9 @@ class TestSchemaUtil {
 
     // unwrapped
     JsonNode eventUw = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
-    Schema schemaUw = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(unwrapWithSchema).get("schema"));
+    Schema schemaUw = BatchUtil.getIcebergSchema(new ObjectMapper().readTree(unwrapWithSchema).get("schema"));
 
-    GenericRecord recordUw = SchemaUtil.getIcebergRecord(schemaUw.asStruct(), eventUw);
+    GenericRecord recordUw = BatchUtil.getIcebergRecord(schemaUw.asStruct(), eventUw);
 
     fail();
   }
