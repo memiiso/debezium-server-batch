@@ -12,11 +12,11 @@ import io.debezium.server.batch.batchwriter.AbstractBatchRecordWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.iceberg.Schema;
@@ -186,71 +186,67 @@ public class SchemaUtil {
   }
 
   public static GenericRecord getIcebergRecord(Schema schema, JsonNode data) {
-    Map<String, Object> mappedResult = jsonObjectMapper.convertValue(data.get("payload"), new TypeReference<Map<String, Object>>() {
-    });
-    // @TODO recoursive call util and convert type!
-    // FIX type of "__lsn"
-//    for (Map.Entry<String, Object> entry : mappedResult.entrySet()) {
-//      if (!entry.getValue().getClass().getSimpleName().equals(schema.findField(entry.getKey()).type().toString())) {
-//        Types.NestedField field = schema.findField((String) entry.getKey());
-//        //LOGGER.error("FILED={}",field.type().asPrimitiveType().toString());
-//        LOGGER.error("FILED={}", field.type().toString());
-//        LOGGER.error("VALUE={}", entry.getValue().getClass().getSimpleName());
-//        entry.setValue(schema.findField(entry.getKey()));
-//      }
-//    }
-    LOGGER.error(GenericRecord.create(schema).toString());
-    //LOGGER.error(GenericRecord.create(schema).getField("after").toString());
+    // JsonToGenericRecord(Collections.emptyMap(), schema.asStruct().,data);
+    Map<String, Object> mappedResult = Collections.emptyMap();
+    GenericRecord record = GenericRecord.create(schema);
+
+    schema.
+    for (StructType coll : record.struct()) {
+      try {
+        mappedResult = JsonToGenericRecord(mappedResult, record.struct(), data))
+      } catch (IOException e) {
+        // @TODO add to signature
+      }
+    }
     return GenericRecord.create(schema).copy(mappedResult);
   }
 
-  public Map<String, Object> JsonToGenericRecord(Schema schema, JsonNode node) throws IOException {
-    String fieldType = schema.toString();
+  public static Map<String, Object> JsonToGenericRecord(Map<String, Object> mappedResult, Types.NestedField field,
+                                                        JsonNode node) throws IOException {
+    LOGGER.debug("Converting Field:" + field.name() + " Type:" + field.type());
+    System.out.println("Converting Field:" + field.name() + " Type:" + field.type());
 
-    switch (fieldType) {
-      case "int8":
-      case "int16":
-      case "int32": // int 4 bytes
-        node.asInt();
+    switch (field.type().typeId()) {
+      case INTEGER: // int 4 bytes
+        mappedResult.put(field.name(), node.asInt());
         break;
-      case "int64": // long 8 bytes
-        node.asLong();
+      case LONG: // long 8 bytes
+        mappedResult.put(field.name(), node.asLong());
         break;
-      case "float8":
-      case "float16":
-      case "float32": // float is represented in 32 bits,
-        node.floatValue();
+      case FLOAT: // float is represented in 32 bits,
+        mappedResult.put(field.name(), node.floatValue());
         break;
-      case "float64": // double is represented in 64 bits
-        node.asDouble();
+      case DOUBLE: // double is represented in 64 bits
+        mappedResult.put(field.name(), node.asDouble());
         break;
-      case "boolean":
-        node.asBoolean();
+      case BOOLEAN:
+        mappedResult.put(field.name(), node.asBoolean());
         break;
-      case "string":
-        node.asText();
+      case STRING:
+        mappedResult.put(field.name(), node.asText());
         break;
-      case "bytes":
-        node.binaryValue();
+      case BINARY: // ??? "byte"???
+        mappedResult.put(field.name(), node.binaryValue());
         break;
-      case "array":
-        new ObjectMapper().convertValue(node, ArrayList.class);
+      case LIST:// "array" ???
+        // @TODO FIX
+        mappedResult.put(field.name(), node.asText());
         break;
-      case "map":
-        // @TODO
-        new ObjectMapper().convertValue(node, Map.class);
+      case MAP:
+        // @TODO FIX
+        mappedResult.put(field.name(), node.asText());
         break;
-      case "struct":
+      case STRUCT:
         // recursive call
-        // @TODO
-        node.asText();
+        Types.NestedField nField = field;
+        mappedResult.put(field.name(), JsonToGenericRecord(Collections.emptyMap(), nField., node.get(field.name())));
         break;
       default:
         // default to String type
-        node.asText();
+        mappedResult.put(field.name(), node.asText());
         break;
     }
 
-    return null;
+    return mappedResult;
   }
 }

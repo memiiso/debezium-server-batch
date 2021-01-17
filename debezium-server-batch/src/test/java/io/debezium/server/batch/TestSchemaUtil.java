@@ -79,15 +79,20 @@ class TestSchemaUtil {
 
   @Test
   public void testNestedJsonRecord() throws JsonProcessingException {
-    JsonNode event = new ObjectMapper().readTree(serdeWithSchema);
+    JsonNode event = new ObjectMapper().readTree(serdeWithSchema).get("payload");
     Schema schema = SchemaUtil.getEventIcebergSchema(serdeWithSchema);
 
+    assert schema != null;
     GenericRecord record = SchemaUtil.getIcebergRecord(schema, event);
-    LOGGER.error(record.getField("after").toString());
     System.out.println(record.getField("after").toString());
     System.out.println(record.getField("after").getClass().getSimpleName());
     System.out.println(record.getClass().getSimpleName());
-    // recoursive setup classes should be record!
+
+    // unwrapped
+    JsonNode eventUw = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
+    Schema schemaUw = SchemaUtil.getEventIcebergSchema(unwrapWithSchema);
+    GenericRecord recordUw = SchemaUtil.getIcebergRecord(schemaUw, eventUw);
+
     fail();
   }
 
@@ -104,6 +109,12 @@ class TestSchemaUtil {
     assertTrue(deserializedData.has("after"));
     assertTrue(deserializedData.has("op"));
     assertTrue(deserializedData.has("before"));
+    assertFalse(deserializedData.has("schema"));
+
+    valueSerde.configure(Collections.singletonMap("from.field", "schema"), false);
+    JsonNode deserializedSchema = valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
+    System.out.println(deserializedSchema);
+    assertFalse(deserializedSchema.has("schema"));
   }
 
 }
