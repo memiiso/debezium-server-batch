@@ -61,14 +61,13 @@ class TestSchemaUtil {
 
   @Test
   public void testNestedIcebergSchema() throws JsonProcessingException {
-    Schema s = SchemaUtil.getEventIcebergSchema(serdeWithSchema);
+    Schema s = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema).get("schema"));
     // StructType ss = ConsumerUtil.getEventSparkDfSchema(serdeWithSchema);
     assertNotNull(s);
     assertEquals(s.findField("ts_ms").fieldId(), 29);
     assertEquals(s.findField(7).name(), "after");
     assertTrue(s.asStruct().toString().contains("source: optional struct<"));
     assertTrue(s.asStruct().toString().contains("after: optional struct<"));
-    s = SchemaUtil.getEventIcebergSchema(unwrapWithSchema);
   }
 
   @Test
@@ -82,7 +81,7 @@ class TestSchemaUtil {
   @Test
   public void testUnwrapJsonRecord() throws IOException, InterruptedException {
     JsonNode event = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
-    Schema schema = SchemaUtil.getEventIcebergSchema(unwrapWithSchema);
+    Schema schema = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(unwrapWithSchema).get("schema"));
     GenericRecord record = SchemaUtil.getIcebergRecord(schema.asStruct(), event);
     assertEquals("orders", record.getField("__table").toString());
     assertEquals(16850, record.getField("order_date"));
@@ -91,7 +90,7 @@ class TestSchemaUtil {
   @Test
   public void testNestedJsonRecord() throws IOException, InterruptedException {
     JsonNode event = new ObjectMapper().readTree(serdeWithSchema).get("payload");
-    Schema schema = SchemaUtil.getEventIcebergSchema(serdeWithSchema);
+    Schema schema = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(serdeWithSchema).get("schema"));
 
     System.out.println(schema.asStruct().field("before"));
     System.out.println(schema.asStruct().fields());
@@ -110,7 +109,8 @@ class TestSchemaUtil {
 
     // unwrapped
     JsonNode eventUw = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
-    Schema schemaUw = SchemaUtil.getEventIcebergSchema(unwrapWithSchema);
+    Schema schemaUw = SchemaUtil.getIcebergSchema(new ObjectMapper().readTree(unwrapWithSchema).get("schema"));
+
     GenericRecord recordUw = SchemaUtil.getIcebergRecord(schemaUw.asStruct(), eventUw);
 
     fail();

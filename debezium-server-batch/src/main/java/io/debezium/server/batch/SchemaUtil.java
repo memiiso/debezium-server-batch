@@ -161,17 +161,7 @@ public class SchemaUtil {
     return new Schema(schemaColumns);
   }
 
-  // @TODO remove!
-  public static Schema getEventIcebergSchema(String event) throws JsonProcessingException {
-    JsonNode jsonNode = new ObjectMapper().readTree(event);
-
-    if (!SchemaUtil.hasSchema(jsonNode)) {
-      return null;
-    }
-    return SchemaUtil.getIcebergSchema(jsonNode.get("schema"));
-  }
-
-  // @TODO remove!
+  // @TODO replace!
   public static StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
 
