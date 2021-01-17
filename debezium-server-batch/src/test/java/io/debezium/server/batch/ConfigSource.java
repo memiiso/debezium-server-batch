@@ -1,7 +1,9 @@
 /*
- * Copyright memiiso Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright memiiso Authors.
+ *  *
+ *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 
 package io.debezium.server.batch;
@@ -87,11 +89,11 @@ public class ConfigSource extends TestConfigSource {
     // s3Test.put("value.converter.data.serializer.type", "json");
 
     // debezium unwrap message
-    s3Test.put("debezium.transforms", "unwrap");
-    s3Test.put("debezium.transforms.unwrap.type", "io.debezium.transforms.ExtractNewRecordState");
-    s3Test.put("debezium.transforms.unwrap.add.fields", "op,table,lsn,source.ts_ms");
-    s3Test.put("debezium.transforms.unwrap.add.headers", "db");
-    s3Test.put("debezium.transforms.unwrap.delete.handling.mode", "rewrite");
+//    s3Test.put("debezium.transforms", "unwrap");
+//    s3Test.put("debezium.transforms.unwrap.type", "io.debezium.transforms.ExtractNewRecordState");
+//    s3Test.put("debezium.transforms.unwrap.add.fields", "op,table,lsn,source.ts_ms");
+//    s3Test.put("debezium.transforms.unwrap.add.headers", "db");
+//    s3Test.put("debezium.transforms.unwrap.delete.handling.mode", "rewrite");
 
     // DEBEZIUM SOURCE conf
     s3Test.put("debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector");

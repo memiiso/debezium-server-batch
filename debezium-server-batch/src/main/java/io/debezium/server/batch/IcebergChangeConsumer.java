@@ -11,15 +11,13 @@ package io.debezium.server.batch;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
+import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.BaseChangeConsumer;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
@@ -39,6 +37,8 @@ import org.apache.iceberg.hadoop.HadoopCatalog;
 import org.apache.iceberg.io.FileAppender;
 import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.parquet.Parquet;
+import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.Serde;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -67,20 +67,11 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
   String warehouseLocation;
   @ConfigProperty(name = PROP_PREFIX + "fs.defaultFS")
   String defaultFs;
-//    @ConfigProperty(name = "debezium.transforms")
-//    String transforms;
-//    @ConfigProperty(name = "value.converter.schemas.enable", defaultValue = "false")
-//    Boolean formatValueSchemasEnable;
-//    @ConfigProperty(name = "key.converter.schemas.enable", defaultValue = "true")
-//    Boolean formatKeySchemasEnable;
-//    @ConfigProperty(name = "debezium.format.schemas.enable")
-//    // @ConfigProperty(name = "converter.schemas.enable")
-//    Boolean formatSchemasEnable;
-//    @ConfigProperty(name = "debezium.source.database.dbname")
-//    String databaseName;
 
   Catalog icebergCatalog;
-  JsonDeserializer jsonDeserializer;
+  Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
+  Deserializer<JsonNode> valDeserializer;
+  Deserializer<JsonNode> keyDeserializer;
   ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   @PostConstruct
@@ -105,20 +96,24 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
     }
 
     icebergCatalog = new HadoopCatalog("iceberg", hadoopConf, warehouseLocation);
-    jsonDeserializer = new JsonDeserializer();
     // @TODO iceberg 11 . make catalog dynamic using catalogImpl parametter!
     // if (catalogImpl != null) {
     // icebergCatalog = CatalogUtil.loadCatalog(catalogImpl, name, options, hadoopConf);
     // }
+    valSerde.configure(Collections.emptyMap(), false);
+    valDeserializer = valSerde.deserializer();
+    valSerde.configure(Collections.emptyMap(), true);
+    keyDeserializer = valSerde.deserializer();
+  }
+
+  public String map(String destination) {
+    return destination.replace(".", "-");
   }
 
   public GenericRecord getIcebergRecord(Schema schema, JsonNode data) {
     Map<String, Object> mappedResult = jsonObjectMapper.convertValue(data.get("payload"), new TypeReference<Map<String, Object>>() {
     });
-    // FIX type of "__lsn"
-    if (mappedResult.containsKey("__lsn")) {
-      mappedResult.put("__lsn", (long) (int) mappedResult.get("__lsn"));
-    }
+    // @TODO recursive call util and convert type! FIX type mismatch
     return GenericRecord.create(schema).copy(mappedResult);
   }
 
@@ -128,7 +123,7 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
 
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
         .collect(Collectors.groupingBy(
-            ChangeEvent::destination,
+            objectObjectChangeEvent -> map(objectObjectChangeEvent.destination()),
             Collectors.mapping(p -> p,
                 Collectors.toCollection(ArrayList::new))));
 
@@ -140,20 +135,20 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
         icebergTable = icebergCatalog.loadTable(TableIdentifier.of(event.getKey()));
       } catch (org.apache.iceberg.exceptions.NoSuchTableException e) {
         // Table is not exists lets try to create it using the schema of an debezium event
-        JsonNode sampleEvent = jsonDeserializer.deserialize(event.getValue().get(0).destination(), getBytes(event.getValue().get(0).value()));
-        if (SchemaUtil.hasSchema(sampleEvent) && sampleEvent.has("schema")) {
+        JsonNode sampleEvent = valDeserializer.deserialize(event.getValue().get(0).destination(), getBytes(event.getValue().get(0).value()));
+        if (SchemaUtil.hasSchema(sampleEvent)) {
           Schema schema = SchemaUtil.getIcebergSchema(sampleEvent.get("schema"));
           LOGGER.warn("Table '{}' not found creating it!\nSchema:\n{}", TableIdentifier.of(event.getKey()), schema.toString());
           icebergTable = icebergCatalog.createTable(TableIdentifier.of(event.getKey()), schema);
         } else {
-          // iceberg table and schema is not exists in the event data! FAIL!
+          // iceberg table not exists and schema is not enabled to create table with! FAIL!
           e.printStackTrace();
-          throw new InterruptedException("Iceberg table not found!" + e.getMessage());
+          throw new InterruptedException("Iceberg table not found!\n" + e.getMessage());
         }
       }
       tableSchema = icebergTable.schema();
       ArrayList<Record> icebergRecords = event.getValue().stream()
-          .map(e -> getIcebergRecord(tableSchema, jsonDeserializer.deserialize(e.destination(), getBytes(e.value()))))
+          .map(e -> getIcebergRecord(tableSchema, valDeserializer.deserialize(e.destination(), getBytes(e.value()))))
           .collect(Collectors.toCollection(ArrayList::new));
 
       appendTable(icebergTable, icebergRecords);
