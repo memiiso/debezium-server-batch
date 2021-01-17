@@ -12,7 +12,7 @@ import io.debezium.server.batch.batchwriter.AbstractBatchRecordWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -144,11 +144,14 @@ public class SchemaUtil {
           schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StringType.get()));
           break;
         case "struct":
+          throw new RuntimeException("Event schema containing nested data '" + fieldName + "' cannot process nested" +
+              " data!");
+          // Disabled by purpose
           // recursive call
-          Schema subSchema = SchemaUtil.getIcebergSchema(jsonSchemaFieldNode, fieldName, ++columnId);
-          schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StructType.of(subSchema.columns())));
-          columnId += subSchema.columns().size();
-          break;
+//          Schema subSchema = SchemaUtil.getIcebergSchema(jsonSchemaFieldNode, fieldName, ++columnId);
+//          schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StructType.of(subSchema.columns())));
+//          columnId += subSchema.columns().size();
+//          break;
         default:
           // default to String type
           schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StringType.get()));
@@ -185,26 +188,28 @@ public class SchemaUtil {
         && jsonNode.get("schema").get("fields").isArray();
   }
 
-  public static GenericRecord getIcebergRecord(Schema schema, JsonNode data) {
-    // JsonToGenericRecord(Collections.emptyMap(), schema.asStruct().,data);
-    Map<String, Object> mappedResult = Collections.emptyMap();
-    GenericRecord record = GenericRecord.create(schema);
+  public static GenericRecord getIcebergRecord(Types.StructType nestedField, JsonNode data) {
+    Map<String, Object> mappedResult = new HashMap<>();
+    LOGGER.debug("Processing nested field : " + nestedField);
 
-    schema.
-    for (StructType coll : record.struct()) {
-      try {
-        mappedResult = JsonToGenericRecord(mappedResult, record.struct(), data))
-      } catch (IOException e) {
-        // @TODO add to signature
+    for (Types.NestedField field : nestedField.fields()) {
+      if (data == null || !data.has(field.name())) {
+        mappedResult.put(field.name(), null);
+        continue;
       }
+      JsonToGenericRecord(mappedResult, field, data.get(field.name()));
     }
-    return GenericRecord.create(schema).copy(mappedResult);
+    return GenericRecord.create(nestedField).copy(mappedResult);
   }
 
-  public static Map<String, Object> JsonToGenericRecord(Map<String, Object> mappedResult, Types.NestedField field,
-                                                        JsonNode node) throws IOException {
-    LOGGER.debug("Converting Field:" + field.name() + " Type:" + field.type());
-    System.out.println("Converting Field:" + field.name() + " Type:" + field.type());
+  public static void JsonToGenericRecord(Map<String, Object> mappedResult, Types.NestedField field,
+                                         JsonNode node) {
+    LOGGER.debug("Processing Field:" + field.name() + " Type:" + field.type());
+
+    if (node == null) {
+      mappedResult.put(field.name(), null);
+      return;
+    }
 
     switch (field.type().typeId()) {
       case INTEGER: // int 4 bytes
@@ -226,7 +231,12 @@ public class SchemaUtil {
         mappedResult.put(field.name(), node.asText());
         break;
       case BINARY: // ??? "byte"???
-        mappedResult.put(field.name(), node.binaryValue());
+        try {
+          mappedResult.put(field.name(), node.binaryValue());
+        } catch (IOException e) {
+          e.printStackTrace();
+          // @TODO fix
+        }
         break;
       case LIST:// "array" ???
         // @TODO FIX
@@ -237,16 +247,19 @@ public class SchemaUtil {
         mappedResult.put(field.name(), node.asText());
         break;
       case STRUCT:
-        // recursive call
-        Types.NestedField nField = field;
-        mappedResult.put(field.name(), JsonToGenericRecord(Collections.emptyMap(), nField., node.get(field.name())));
-        break;
+        throw new RuntimeException("Cannot process recursive records!");
+        // Disabled because cannot recursively process StructType/NestedField
+//        // recursive call to get nested data/record
+//        Types.StructType nestedField = Types.StructType.of(field);
+//        GenericRecord r = getIcebergRecord(schema, nestedField, node.get(field.name()));
+//        mappedResult.put(field.name(), r);
+//        // throw new RuntimeException("Cannot process recursive record!");
+//        break;
       default:
         // default to String type
         mappedResult.put(field.name(), node.asText());
         break;
     }
 
-    return mappedResult;
   }
 }

@@ -110,7 +110,7 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
     // @TODO remove!
     // Map<String, Object> payload = jsonObjectMapper.convertValue(data.get("payload"), new TypeReference<Map<String,Object>>() {});
     // @TODO recursive call util and convert type! FIX type mismatch
-    return SchemaUtil.getIcebergRecord(schema, data);
+    return SchemaUtil.getIcebergRecord(schema.asStruct(), data);
     //Map<String, Object> payload = SchemaUtil.getIcebergRecord();
     //return GenericRecord.create(schema).copy(payload);
   }

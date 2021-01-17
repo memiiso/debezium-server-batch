@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.data.GenericRecord;
+import org.apache.iceberg.types.Types;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
@@ -78,12 +79,30 @@ class TestSchemaUtil {
   }
 
   @Test
+  public void testUnwrapJsonRecord() throws JsonProcessingException {
+    JsonNode event = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
+    Schema schema = SchemaUtil.getEventIcebergSchema(unwrapWithSchema);
+    GenericRecord record = SchemaUtil.getIcebergRecord(schema.asStruct(), event);
+    assertEquals("orders", record.getField("__table").toString());
+    assertEquals(16850, record.getField("order_date"));
+  }
+
+  @Test
   public void testNestedJsonRecord() throws JsonProcessingException {
     JsonNode event = new ObjectMapper().readTree(serdeWithSchema).get("payload");
     Schema schema = SchemaUtil.getEventIcebergSchema(serdeWithSchema);
 
+    System.out.println(schema.asStruct().field("before"));
+    System.out.println(schema.asStruct().fields());
+    System.out.println(schema.asStruct().field("id"));
+    System.out.println(
+        Types.StructType.of(schema.findField("before")).field("before")
+    );
+    fail();
+
     assert schema != null;
-    GenericRecord record = SchemaUtil.getIcebergRecord(schema, event);
+    GenericRecord record = SchemaUtil.getIcebergRecord(schema.asStruct(), event);
+    System.out.println(record);
     System.out.println(record.getField("after").toString());
     System.out.println(record.getField("after").getClass().getSimpleName());
     System.out.println(record.getClass().getSimpleName());
@@ -91,7 +110,7 @@ class TestSchemaUtil {
     // unwrapped
     JsonNode eventUw = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
     Schema schemaUw = SchemaUtil.getEventIcebergSchema(unwrapWithSchema);
-    GenericRecord recordUw = SchemaUtil.getIcebergRecord(schemaUw, eventUw);
+    GenericRecord recordUw = SchemaUtil.getIcebergRecord(schemaUw.asStruct(), eventUw);
 
     fail();
   }

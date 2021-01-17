@@ -85,11 +85,11 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.format.value.schemas.enable", "true");
 
     // debezium unwrap message
-//    s3Test.put("debezium.transforms", "unwrap");
-//    s3Test.put("debezium.transforms.unwrap.type", "io.debezium.transforms.ExtractNewRecordState");
-//    s3Test.put("debezium.transforms.unwrap.add.fields", "op,table,lsn,source.ts_ms");
-//    s3Test.put("debezium.transforms.unwrap.add.headers", "db");
-//    s3Test.put("debezium.transforms.unwrap.delete.handling.mode", "rewrite");
+    s3Test.put("debezium.transforms", "unwrap");
+    s3Test.put("debezium.transforms.unwrap.type", "io.debezium.transforms.ExtractNewRecordState");
+    s3Test.put("debezium.transforms.unwrap.add.fields", "op,table,lsn,source.ts_ms");
+    s3Test.put("debezium.transforms.unwrap.add.headers", "db");
+    s3Test.put("debezium.transforms.unwrap.delete.handling.mode", "rewrite");
 
     // DEBEZIUM SOURCE conf
     s3Test.put("debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector");
