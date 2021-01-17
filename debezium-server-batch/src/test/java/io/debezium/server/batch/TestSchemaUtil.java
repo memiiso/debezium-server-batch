@@ -11,6 +11,7 @@ package io.debezium.server.batch;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.util.Testing;
 
+import java.io.IOException;
 import java.util.Collections;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -79,7 +80,7 @@ class TestSchemaUtil {
   }
 
   @Test
-  public void testUnwrapJsonRecord() throws JsonProcessingException {
+  public void testUnwrapJsonRecord() throws IOException, InterruptedException {
     JsonNode event = new ObjectMapper().readTree(unwrapWithSchema).get("payload");
     Schema schema = SchemaUtil.getEventIcebergSchema(unwrapWithSchema);
     GenericRecord record = SchemaUtil.getIcebergRecord(schema.asStruct(), event);
@@ -88,7 +89,7 @@ class TestSchemaUtil {
   }
 
   @Test
-  public void testNestedJsonRecord() throws JsonProcessingException {
+  public void testNestedJsonRecord() throws IOException, InterruptedException {
     JsonNode event = new ObjectMapper().readTree(serdeWithSchema).get("payload");
     Schema schema = SchemaUtil.getEventIcebergSchema(serdeWithSchema);
 

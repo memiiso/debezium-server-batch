@@ -188,7 +188,11 @@ public class SchemaUtil {
         && jsonNode.get("schema").get("fields").isArray();
   }
 
-  public static GenericRecord getIcebergRecord(Types.StructType nestedField, JsonNode data) {
+  public static GenericRecord getIcebergRecord(Schema schema, JsonNode data) throws InterruptedException {
+    return SchemaUtil.getIcebergRecord(schema.asStruct(), data);
+  }
+
+  public static GenericRecord getIcebergRecord(Types.StructType nestedField, JsonNode data) throws InterruptedException {
     Map<String, Object> mappedResult = new HashMap<>();
     LOGGER.debug("Processing nested field : " + nestedField);
 
@@ -203,7 +207,7 @@ public class SchemaUtil {
   }
 
   public static void JsonToGenericRecord(Map<String, Object> mappedResult, Types.NestedField field,
-                                         JsonNode node) {
+                                         JsonNode node) throws InterruptedException {
     LOGGER.debug("Processing Field:" + field.name() + " Type:" + field.type());
 
     if (node == null) {
@@ -234,8 +238,8 @@ public class SchemaUtil {
         try {
           mappedResult.put(field.name(), node.binaryValue());
         } catch (IOException e) {
-          e.printStackTrace();
-          // @TODO fix
+          LOGGER.error("Failed converting event to iceberg record", e);
+          throw new InterruptedException("Failed Processing Event!" + e.getMessage());
         }
         break;
       case LIST:// "array" ???

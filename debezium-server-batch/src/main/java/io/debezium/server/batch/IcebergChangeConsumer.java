@@ -70,7 +70,6 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
   Catalog icebergCatalog;
   Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   Deserializer<JsonNode> valDeserializer;
-  ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   @PostConstruct
   void connect() throws InterruptedException {
@@ -104,15 +103,6 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
 
   public String map(String destination) {
     return destination.replace(".", "-");
-  }
-
-  public GenericRecord getIcebergRecord(Schema schema, JsonNode data) {
-    // @TODO remove!
-    // Map<String, Object> payload = jsonObjectMapper.convertValue(data.get("payload"), new TypeReference<Map<String,Object>>() {});
-    // @TODO recursive call util and convert type! FIX type mismatch
-    return SchemaUtil.getIcebergRecord(schema.asStruct(), data);
-    //Map<String, Object> payload = SchemaUtil.getIcebergRecord();
-    //return GenericRecord.create(schema).copy(payload);
   }
 
   @Override
@@ -150,9 +140,12 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
         }
       }
       tableSchema = icebergTable.schema();
-      ArrayList<Record> icebergRecords = event.getValue().stream()
-          .map(e -> getIcebergRecord(tableSchema, valDeserializer.deserialize(e.destination(), getBytes(e.value()))))
-          .collect(Collectors.toCollection(ArrayList::new));
+      ArrayList<Record> icebergRecords = new ArrayList<>();
+      for (ChangeEvent<Object, Object> e : event.getValue()) {
+        GenericRecord icebergRecord = SchemaUtil.getIcebergRecord(tableSchema, valDeserializer.deserialize(e.destination(),
+            getBytes(e.value())));
+        icebergRecords.add(icebergRecord);
+      }
 
       appendTable(icebergTable, icebergRecords);
     }
@@ -172,6 +165,7 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
           .overwrite()
           .build();
 
+      LOGGER.error("XX=>{}", icebergRecords);
       try (Closeable toClose = writer) {
         writer.addAll(icebergRecords);
       }
