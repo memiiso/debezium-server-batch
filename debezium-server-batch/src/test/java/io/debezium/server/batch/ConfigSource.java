@@ -25,7 +25,7 @@ public class ConfigSource extends TestConfigSource {
   final Map<String, String> s3Test = new HashMap<>();
 
   public ConfigSource() {
-    // common conf
+    // common sink conf
     s3Test.put("debezium.sink.type", "batch");
     s3Test.put("debezium.sink.batch.objectkey.prefix", "debezium-cdc-");
     // s3Test.put("debezium.sink.batch.objectkey.mapper", "dailypartitioned");
@@ -83,10 +83,6 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.sink.sparkbatch.spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore");
     // enable disable schema
     s3Test.put("debezium.format.value.schemas.enable", "true");
-    // s3Test.put("debezium.format.value.converter", "io.debezium.converters.CloudEventsConverter");
-    // s3Test.put("value.converter", "io.debezium.converters.CloudEventsConverter");
-    // s3Test.put("debezium.format.value.converter.data.serializer.type" , "json");
-    // s3Test.put("value.converter.data.serializer.type", "json");
 
     // debezium unwrap message
 //    s3Test.put("debezium.transforms", "unwrap");

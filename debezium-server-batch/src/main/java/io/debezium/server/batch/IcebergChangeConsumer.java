@@ -71,7 +71,6 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
   Catalog icebergCatalog;
   Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   Deserializer<JsonNode> valDeserializer;
-  Deserializer<JsonNode> keyDeserializer;
   ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   @PostConstruct
@@ -102,8 +101,6 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
     // }
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();
-    valSerde.configure(Collections.emptyMap(), true);
-    keyDeserializer = valSerde.deserializer();
   }
 
   public String map(String destination) {
@@ -111,6 +108,7 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
   }
 
   public GenericRecord getIcebergRecord(Schema schema, JsonNode data) {
+    // @TODO remove!
     Map<String, Object> mappedResult = jsonObjectMapper.convertValue(data.get("payload"), new TypeReference<Map<String, Object>>() {
     });
     // @TODO recursive call util and convert type! FIX type mismatch
@@ -135,9 +133,14 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
         icebergTable = icebergCatalog.loadTable(TableIdentifier.of(event.getKey()));
       } catch (org.apache.iceberg.exceptions.NoSuchTableException e) {
         // Table is not exists lets try to create it using the schema of an debezium event
-        JsonNode sampleEvent = valDeserializer.deserialize(event.getValue().get(0).destination(), getBytes(event.getValue().get(0).value()));
-        if (SchemaUtil.hasSchema(sampleEvent)) {
-          Schema schema = SchemaUtil.getIcebergSchema(sampleEvent.get("schema"));
+        JsonNode jsonSchema = null;
+        try {
+          jsonSchema = new ObjectMapper().readTree(getBytes(event.getValue().get(0).value()));
+        } catch (IOException ioException) {
+          // pass
+        }
+        if (SchemaUtil.hasSchema(jsonSchema)) {
+          Schema schema = SchemaUtil.getIcebergSchema(jsonSchema.get("schema"));
           LOGGER.warn("Table '{}' not found creating it!\nSchema:\n{}", TableIdentifier.of(event.getKey()), schema.toString());
           icebergTable = icebergCatalog.createTable(TableIdentifier.of(event.getKey()), schema);
         } else {
