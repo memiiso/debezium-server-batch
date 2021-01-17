@@ -1,4 +1,12 @@
 <?xml version="1.0"?>
+<!--
+  ~ /*
+  ~  * Copyright memiiso Authors.
+  ~  *
+  ~  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+  ~  */
+  -->
+
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
@@ -105,18 +113,6 @@
             <artifactId>spark-sql_2.12</artifactId>
             <version>3.0.1</version>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>hadoop-cloud_2.12</artifactId>
-            <version>3.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-core</artifactId>
-            <version>0.10.0</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>org.apache.iceberg</groupId>
             <artifactId>iceberg-spark3-runtime</artifactId>
