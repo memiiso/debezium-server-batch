@@ -1,7 +1,9 @@
 /*
- * Copyright memiiso Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright memiiso Authors.
+ *  *
+ *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 
 package io.debezium.server.batch;
@@ -47,7 +49,7 @@ public class IcebergIT extends BaseSparkIT {
       try {
 
         Dataset<Row> ds = spark.read().format("iceberg")
-            .load("s3a://test-bucket/iceberg_warehouse/testc.inventory.customers");
+            .load("s3a://test-bucket/iceberg_warehouse/testc.inventory.customers".replace(".", "-"));
         ds.show();
         return ds.count() >= 4;
       } catch (Exception e) {

@@ -165,7 +165,6 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
           .overwrite()
           .build();
 
-      LOGGER.error("XX=>{}", icebergRecords);
       try (Closeable toClose = writer) {
         writer.addAll(icebergRecords);
       }
