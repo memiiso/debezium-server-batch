@@ -8,8 +8,6 @@
 
 package io.debezium.server.test;
 
-import io.debezium.server.batch.JsonDeserializer;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -32,8 +30,7 @@ public class testJackson {
     System.out.println("-------------");
     TypeReference ref = new TypeReference<Map<String, Object>>() {
     };
-    JsonDeserializer ds = new JsonDeserializer();
-    JsonNode jdondata = ds.deserialize("", data.getBytes());
+    JsonNode jdondata = new ObjectMapper().readTree(data);
     com.fasterxml.jackson.databind.ObjectMapper jsonObjectMapper = new ObjectMapper();
     Map<String, Object> mappedResult = jsonObjectMapper.convertValue(jdondata, new TypeReference<Map<String, Object>>() {
     });

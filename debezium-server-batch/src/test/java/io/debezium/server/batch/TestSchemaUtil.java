@@ -1,16 +1,24 @@
 /*
- * Copyright memiiso Authors.
  *
- * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *  * Copyright memiiso Authors.
+ *  *
+ *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 
 package io.debezium.server.batch;
 
+import io.debezium.serde.DebeziumSerdes;
 import io.debezium.util.Testing;
 
+import java.util.Collections;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.iceberg.Schema;
+import org.apache.iceberg.data.GenericRecord;
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -25,16 +33,25 @@ class TestSchemaUtil {
   final String serdeWithSchema2 = Testing.Files.readResourceAsString("json/serde-with-schema2.json");
   final String unwrapWithSchema = Testing.Files.readResourceAsString("json/unwrap-with-schema.json");
 
+  public StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
+    JsonNode jsonNode = new ObjectMapper().readTree(event);
+
+    if (!SchemaUtil.hasSchema(jsonNode)) {
+      return null;
+    }
+    return SchemaUtil.getSparkDfSchema(jsonNode.get("schema"));
+  }
+
   @Test
   public void testSimpleSchema() throws JsonProcessingException {
-    StructType s = SchemaUtil.getEventSparkDfSchema(unwrapWithSchema);
+    StructType s = getEventSparkDfSchema(unwrapWithSchema);
     assertNotNull(s);
     assertTrue(s.catalogString().contains("id:int,order_date:int,purchaser:int,quantity:int,product_id:int,__op:string"));
   }
 
   @Test
   public void testNestedSparkSchema() throws JsonProcessingException {
-    StructType s = SchemaUtil.getEventSparkDfSchema(serdeWithSchema);
+    StructType s = getEventSparkDfSchema(serdeWithSchema);
     assertNotNull(s);
     assertTrue(s.catalogString().contains("before:struct<id"));
     assertTrue(s.catalogString().contains("after:struct<id"));
@@ -58,6 +75,35 @@ class TestSchemaUtil {
     // assertEquals(s.asStruct().toString(), "xx");
     assertTrue(s.asStruct().toString().contains("source: optional struct<"));
     assertTrue(s.asStruct().toString().contains("after: optional struct<"));
-    LOGGER.error("{}", s);
   }
+
+  @Test
+  public void testNestedJsonRecord() throws JsonProcessingException {
+    JsonNode event = new ObjectMapper().readTree(serdeWithSchema);
+    Schema schema = SchemaUtil.getEventIcebergSchema(serdeWithSchema);
+
+    GenericRecord record = SchemaUtil.getIcebergRecord(schema, event);
+    LOGGER.error(record.getField("after").toString());
+    System.out.println(record.getField("after").toString());
+    System.out.println(record.getField("after").getClass().getSimpleName());
+    System.out.println(record.getClass().getSimpleName());
+    // recoursive setup classes should be record!
+    fail();
+  }
+
+  @Test
+  public void valuePayloadWithSchemaAsJsonNode() {
+    // testing Debezium deserializer
+    final Serde<JsonNode> valueSerde = DebeziumSerdes.payloadJson(JsonNode.class);
+    valueSerde.configure(Collections.emptyMap(), false);
+    JsonNode deserializedData = valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
+    System.out.println(deserializedData.getClass().getSimpleName());
+    System.out.println(deserializedData.has("payload"));
+    assertEquals(deserializedData.getClass().getSimpleName(), "ObjectNode");
+    System.out.println(deserializedData);
+    assertTrue(deserializedData.has("after"));
+    assertTrue(deserializedData.has("op"));
+    assertTrue(deserializedData.has("before"));
+  }
+
 }

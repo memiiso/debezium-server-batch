@@ -10,13 +10,17 @@ package io.debezium.server.batch;
 
 import io.debezium.server.batch.batchwriter.AbstractBatchRecordWriter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.iceberg.Schema;
+import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.types.Types;
 import org.apache.spark.sql.types.*;
 import org.slf4j.Logger;
@@ -29,6 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SchemaUtil {
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchRecordWriter.class);
+  protected static final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   public static StructType getSparkDfSchema(JsonNode eventSchema) {
 
@@ -98,7 +103,7 @@ public class SchemaUtil {
   public static Schema getIcebergSchema(JsonNode eventSchema, String schemaName, int columnId) {
     List<Types.NestedField> schemaColumns = new ArrayList<>();
     String schemaType = eventSchema.get("type").textValue();
-    // LOGGER.debug("Converting Schema of: {}::{}", schemaName, schemaType);
+    LOGGER.debug("Converting Schema of: {}::{}", schemaName, schemaType);
     for (JsonNode jsonSchemaFieldNode : eventSchema.get("fields")) {
       columnId++;
       String fieldName = jsonSchemaFieldNode.get("field").textValue();
@@ -153,6 +158,7 @@ public class SchemaUtil {
     return new Schema(schemaColumns);
   }
 
+  // @TODO remove!
   public static Schema getEventIcebergSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
 
@@ -162,17 +168,7 @@ public class SchemaUtil {
     return SchemaUtil.getIcebergSchema(jsonNode.get("schema"));
   }
 
-  // public static StructType getSparkDfSchema(String event) throws JsonProcessingException {
-  // JsonNode jsonNode = new ObjectMapper().readTree(event);
-  //
-  // if (jsonNode == null
-  // || !jsonNode.has("fields")
-  // || !jsonNode.get("fields").isArray()) {
-  // return null;
-  // }
-  // return ConsumerUtil.getSparkDfSchema(jsonNode.get("schema"));
-  // }
-
+  // @TODO remove!
   public static StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
 
@@ -182,11 +178,6 @@ public class SchemaUtil {
     return SchemaUtil.getSparkDfSchema(jsonNode.get("schema"));
   }
 
-  // public static boolean hasSchema(String event) throws JsonProcessingException {
-  // JsonNode jsonNode = new ObjectMapper().readTree(event);
-  // return ConsumerUtil.hasSchema(jsonNode);
-  // }
-
   public static boolean hasSchema(JsonNode jsonNode) {
     return jsonNode != null
         && jsonNode.has("schema")
@@ -194,4 +185,72 @@ public class SchemaUtil {
         && jsonNode.get("schema").get("fields").isArray();
   }
 
+  public static GenericRecord getIcebergRecord(Schema schema, JsonNode data) {
+    Map<String, Object> mappedResult = jsonObjectMapper.convertValue(data.get("payload"), new TypeReference<Map<String, Object>>() {
+    });
+    // @TODO recoursive call util and convert type!
+    // FIX type of "__lsn"
+//    for (Map.Entry<String, Object> entry : mappedResult.entrySet()) {
+//      if (!entry.getValue().getClass().getSimpleName().equals(schema.findField(entry.getKey()).type().toString())) {
+//        Types.NestedField field = schema.findField((String) entry.getKey());
+//        //LOGGER.error("FILED={}",field.type().asPrimitiveType().toString());
+//        LOGGER.error("FILED={}", field.type().toString());
+//        LOGGER.error("VALUE={}", entry.getValue().getClass().getSimpleName());
+//        entry.setValue(schema.findField(entry.getKey()));
+//      }
+//    }
+    LOGGER.error(GenericRecord.create(schema).toString());
+    //LOGGER.error(GenericRecord.create(schema).getField("after").toString());
+    return GenericRecord.create(schema).copy(mappedResult);
+  }
+
+  public Map<String, Object> JsonToGenericRecord(Schema schema, JsonNode node) throws IOException {
+    String fieldType = schema.toString();
+
+    switch (fieldType) {
+      case "int8":
+      case "int16":
+      case "int32": // int 4 bytes
+        node.asInt();
+        break;
+      case "int64": // long 8 bytes
+        node.asLong();
+        break;
+      case "float8":
+      case "float16":
+      case "float32": // float is represented in 32 bits,
+        node.floatValue();
+        break;
+      case "float64": // double is represented in 64 bits
+        node.asDouble();
+        break;
+      case "boolean":
+        node.asBoolean();
+        break;
+      case "string":
+        node.asText();
+        break;
+      case "bytes":
+        node.binaryValue();
+        break;
+      case "array":
+        new ObjectMapper().convertValue(node, ArrayList.class);
+        break;
+      case "map":
+        // @TODO
+        new ObjectMapper().convertValue(node, Map.class);
+        break;
+      case "struct":
+        // recursive call
+        // @TODO
+        node.asText();
+        break;
+      default:
+        // default to String type
+        node.asText();
+        break;
+    }
+
+    return null;
+  }
 }
