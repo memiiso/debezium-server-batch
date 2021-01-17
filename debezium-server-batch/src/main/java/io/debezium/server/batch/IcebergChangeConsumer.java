@@ -181,7 +181,6 @@ public class IcebergChangeConsumer extends BaseChangeConsumer implements Debeziu
         .withMetrics(writer.metrics())
         .build();
 
-    // @TODO commit all files/TABLES at once! waiting for iceberg feature. its in discussion!
     LOGGER.debug("Committing new file as newAppend '{}' !", dataFile.path());
     icebergTable.newAppend()
         .appendFile(dataFile)
