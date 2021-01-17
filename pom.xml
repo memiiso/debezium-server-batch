@@ -12,7 +12,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.debezium</groupId>
-    <artifactId>debezium-server-memiiso</artifactId>
+    <artifactId>debezium-server-batch</artifactId>
     <name>Debezium Server Parent</name>
     <version>${revision}</version>
     <packaging>pom</packaging>
@@ -91,7 +91,6 @@
 
     <modules>
         <module>debezium-server-batch</module>
-        <module>debezium-server-iceberg</module>
         <module>debezium-server-dist</module>
     </modules>
 

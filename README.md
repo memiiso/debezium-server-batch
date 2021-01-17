@@ -1,4 +1,4 @@
-![Java CI with Maven](https://github.com/memiiso/debezium-server-memiiso/workflows/Java%20CI%20with%20Maven/badge.svg?branch=master)
+![Java CI with Maven](https://github.com/memiiso/debezium-server-batch/workflows/Java%20CI%20with%20Maven/badge.svg?branch=master)
 
 @TODO make sure mapdb creates different files each time! random!
 
