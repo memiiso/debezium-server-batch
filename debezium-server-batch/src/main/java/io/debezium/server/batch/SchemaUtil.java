@@ -8,8 +8,6 @@
 
 package io.debezium.server.batch;
 
-import io.debezium.server.batch.batchwriter.AbstractBatchRecordWriter;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * @author Ismail Simsek
  */
 public class SchemaUtil {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchRecordWriter.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(SchemaUtil.class);
   protected static final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   public static StructType getSparkDfSchema(JsonNode eventSchema) {
@@ -136,18 +134,17 @@ public class SchemaUtil {
           schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.BinaryType.get()));
           break;
         case "array":
-          // @TODO
-          schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StringType.get()));
-          break;
+          throw new RuntimeException("'" + fieldName + "' has Array type, Array type not supported!");
+          //schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.ListType.ofOptional()));
+          //break;
         case "map":
-          // @TODO
-          schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StringType.get()));
-          break;
+          throw new RuntimeException("'" + fieldName + "' has Map type, Map type not supported!");
+          //schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StringType.get()));
+          //break;
         case "struct":
           throw new RuntimeException("Event schema containing nested data '" + fieldName + "' cannot process nested" +
               " data!");
-          // Disabled by purpose
-          // recursive call
+//          //recursive call
 //          Schema subSchema = SchemaUtil.getIcebergSchema(jsonSchemaFieldNode, fieldName, ++columnId);
 //          schemaColumns.add(Types.NestedField.optional(columnId, fieldName, Types.StructType.of(subSchema.columns())));
 //          columnId += subSchema.columns().size();
@@ -187,23 +184,18 @@ public class SchemaUtil {
     LOGGER.debug("Processing nested field : " + nestedField);
 
     for (Types.NestedField field : nestedField.fields()) {
-      if (data == null || !data.has(field.name())) {
+      if (data == null || !data.has(field.name()) || data.get(field.name()) == null) {
         mappedResult.put(field.name(), null);
         continue;
       }
-      JsonToGenericRecord(mappedResult, field, data.get(field.name()));
+      jsonToGenericRecord(mappedResult, field, data.get(field.name()));
     }
     return GenericRecord.create(nestedField).copy(mappedResult);
   }
 
-  public static void JsonToGenericRecord(Map<String, Object> mappedResult, Types.NestedField field,
-                                         JsonNode node) throws InterruptedException {
+  private static void jsonToGenericRecord(Map<String, Object> mappedResult, Types.NestedField field,
+                                          JsonNode node) throws InterruptedException {
     LOGGER.debug("Processing Field:" + field.name() + " Type:" + field.type());
-
-    if (node == null) {
-      mappedResult.put(field.name(), null);
-      return;
-    }
 
     switch (field.type().typeId()) {
       case INTEGER: // int 4 bytes
@@ -224,21 +216,19 @@ public class SchemaUtil {
       case STRING:
         mappedResult.put(field.name(), node.asText());
         break;
-      case BINARY: // ??? "byte"???
+      case BINARY:
         try {
           mappedResult.put(field.name(), node.binaryValue());
         } catch (IOException e) {
-          LOGGER.error("Failed converting event to iceberg record", e);
+          LOGGER.error("Failed converting '" + field.name() + "' binary value to iceberg record", e);
           throw new InterruptedException("Failed Processing Event!" + e.getMessage());
         }
         break;
-      case LIST:// "array" ???
-        // @TODO FIX
-        mappedResult.put(field.name(), node.asText());
+      case LIST:
+        mappedResult.put(field.name(), jsonObjectMapper.convertValue(node, List.class));
         break;
       case MAP:
-        // @TODO FIX
-        mappedResult.put(field.name(), node.asText());
+        mappedResult.put(field.name(), jsonObjectMapper.convertValue(node, Map.class));
         break;
       case STRUCT:
         throw new RuntimeException("Cannot process recursive records!");
