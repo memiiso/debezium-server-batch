@@ -9,7 +9,7 @@
 package io.debezium.server.batch;
 
 import io.debezium.server.TestConfigSource;
-import io.debezium.server.TestDatabase;
+import io.debezium.server.testresource.TestDatabase;
 import io.debezium.server.testresource.TestS3Minio;
 
 import java.util.HashMap;
@@ -31,7 +31,7 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.sink.batch.objectkey-prefix", "debezium-cdc-");
     s3Test.put("debezium.sink.batch.objectkey-partition", "true");
     s3Test.put("debezium.sink.batch.row.limit", "2");
-    s3Test.put("debezium.sink.batch.time.limit", "3600");
+    s3Test.put("debezium.sink.batch.time.limit", "5"); // second
 
     // s3batch sink
     s3Test.put("debezium.sink.batch.s3.region", S3_REGION);
@@ -63,6 +63,20 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.type", "hadoop");
     s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.warehouse", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
 
+    // iceberg @TODO WIP
+    s3Test.put("debezium.sink.iceberg.table-prefix", "debezium-cdc-");
+    s3Test.put("debezium.sink.iceberg.fs.defaultFS", "s3a://" + S3_BUCKET);
+    s3Test.put("debezium.sink.iceberg.warehouse", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
+    s3Test.put("debezium.sink.iceberg.user.timezone", "UTC");
+    s3Test.put("debezium.sink.iceberg.com.amazonaws.services.s3.enableV4", "true");
+    s3Test.put("debezium.sink.iceberg.com.amazonaws.services.s3a.enableV4", "true");
+    s3Test.put("debezium.sink.iceberg.fs.s3a.aws.credentials.provider", "com.amazonaws.auth.DefaultAWSCredentialsProviderChain");
+    s3Test.put("debezium.sink.iceberg.fs.s3a.access.key", TestS3Minio.MINIO_ACCESS_KEY);
+    s3Test.put("debezium.sink.iceberg.fs.s3a.secret.key", TestS3Minio.MINIO_SECRET_KEY);
+    s3Test.put("debezium.sink.iceberg.fs.s3a.path.style.access", "true");
+    s3Test.put("debezium.sink.iceberg.fs.s3a.endpoint", "http://localhost:9000"); // minio specific setting
+    s3Test.put("debezium.sink.iceberg.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
+
     // DEBEZIUM PROP
     s3Test.put("debezium.sink.sparkbatch.spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore");
     // enable disable schema
@@ -87,7 +101,12 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.database.dbname", TestDatabase.POSTGRES_DBNAME);
     s3Test.put("debezium.source.database.server.name", "testc");
     s3Test.put("debezium.source.schema.whitelist", "inventory");
-    s3Test.put("debezium.source.table.whitelist", "inventory.customers,inventory.orders");
+    s3Test.put("debezium.source.table.whitelist", "inventory.customers,inventory.orders,inventory.products," +
+        "inventory.geom,inventory.table_datatypes");
+
+//    However, when decimal.handling.mode configuration property is set to double, then the connector will represent
+//    all DECIMAL and NUMERIC values as Java double values and encodes them as follows:
+    s3Test.put("debezium.source.decimal.handling.mode", "double");
 
     config = s3Test;
   }

@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.test;
+package io.debezium.server.batch.manualtests;
 
 import java.util.Arrays;
 import java.util.List;

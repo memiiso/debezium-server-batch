@@ -96,7 +96,7 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
         batchWriter.append(record);
         // committer.markProcessed(record);
       }
-      batchWriter.uploadAll();
+      // batchWriter.uploadAll();
       committer.markBatchFinished();
     } catch (Exception e) {
       StringWriter sw = new StringWriter();

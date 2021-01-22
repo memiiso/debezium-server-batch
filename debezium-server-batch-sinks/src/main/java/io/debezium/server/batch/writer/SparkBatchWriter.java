@@ -76,12 +76,12 @@ public class SparkBatchWriter extends AbstractBatchWriter {
     }
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(tempFile.getAbsolutePath());
-    LOGGER.debug("Saving data to destination:'{}'", s3File);
     df.write()
         .mode(SaveMode.Append)
         .format(saveFormat)
         .save(bucket + "/" + s3File);
-    LOGGER.debug("Saving Succeeded! destination:'{}'", s3File);
+    LOGGER.debug("Saved data to:'{}' rows:{}", s3File, df.count());
+    cacheRowCounter.put(destination, 0);
   }
 
   @Override

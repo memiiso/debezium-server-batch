@@ -42,7 +42,6 @@ public class S3JsonWriter extends AbstractBatchWriter {
   public S3JsonWriter()
       throws URISyntaxException {
     super();
-    // @TODO enforce format to be json
 
     final AwsCredentialsProvider credProvider;
     if (useInstanceProfile) {
@@ -80,6 +79,7 @@ public class S3JsonWriter extends AbstractBatchWriter {
     s3Client.putObject(putRecord, RequestBody.fromFile(tempFile.toPath()));
     tempFile.delete();
     LOGGER.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
+    cacheRowCounter.put(destination, 0);
   }
 
 }

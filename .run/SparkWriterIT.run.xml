@@ -11,7 +11,7 @@
         <module name="debezium-server-batch-sinks"/>
         <extension name="coverage">
             <pattern>
-                <option name="PATTERN" value="io.debezium.server.batch.*"/>
+                <option name="PATTERN" value="io.debezium.server.batch.manualtests.*"/>
                 <option name="ENABLED" value="true"/>
             </pattern>
         </extension>

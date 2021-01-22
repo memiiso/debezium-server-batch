@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -52,39 +53,23 @@ public abstract class AbstractBatchWriter implements BatchWriter, AutoCloseable 
   final String cacheDir = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache-dir",
       String.class).orElse("./cache");
   final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row.limit", Integer.class).orElse(500);
-  final Integer timerBatchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.time.limit", Integer.class).orElse(3600);
+  final Integer batchInterval = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.time.limit", Integer.class).orElse(600);
   final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
   protected LocalDateTime batchTime = LocalDateTime.now();
   protected Boolean partitionData =
       ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.objectkey-partition", Boolean.class).orElse(false);
   protected Boolean schemaEnabled =
       ConfigProvider.getConfig().getOptionalValue("debezium.format.value.schemas.enable", Boolean.class).orElse(false);
+  ConcurrentHashMap<String, Integer> cacheRowCounter = new ConcurrentHashMap<>();
   DefaultCacheManager cm = new DefaultCacheManager();
-  ConfigurationBuilder builder = new ConfigurationBuilder();
+  ConfigurationBuilder builder = new ConfigurationBuilder().simpleCache(true);
   // deserializer
   Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   Deserializer<JsonNode> valDeserializer;
   ObjectMapper mapper = new ObjectMapper();
 
   public AbstractBatchWriter() {
-    builder.persistence()
-        .passivation(false)
-        .addSingleFileStore()
-        //preload : If true, when the cache starts, data stored in the cache store will be pre-loaded into memory
-        //Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is
-        // affected by this process.
-        .preload(false)
-        .shared(false)// not shared (local only)
-        .fetchPersistentState(true)
-        // ignoreModifications: If true, any operation that modifies the cache (put, remove, clear, store...etc)
-        // won't be applied to the cache store.
-        // This means that the cache store could become out of sync with the cache.
-        .ignoreModifications(false)
-        .purgeOnStartup(true) // If true, purges this cache store when it starts up.
-        .location(cacheDir)
-        .async()
-        .enabled(true);
-
+    cm.start();
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();
     LOGGER.info("Batch row limit set to {}", batchLimit);
@@ -92,20 +77,19 @@ public abstract class AbstractBatchWriter implements BatchWriter, AutoCloseable 
     // DISABLED! this can be achieved using poll.interval.ms and max.batch.size
 // poll.interval.ms = Positive integer value that specifies the number of milliseconds the connector should wait during each iteration for new change events to appear. Defaults to 1000 milliseconds,
 // or 1 second.
-    // setupTimer();
+    setupTimer();
   }
 
   protected void setupTimer() {
-    LOGGER.info("Set Batch Time limit to {} Second", timerBatchLimit);
+    LOGGER.info("Batch time limit set to {} second", batchInterval);
     Runnable timerTask = () -> {
-      LOGGER.debug("Timer is up uploading batch data!");
       try {
         this.uploadAll();
       } catch (Exception e) {
-        LOGGER.error("Timer based batch upload failed data will be uploaded with next batch!");
+        LOGGER.error("Timer based batch upload failed!");
       }
     };
-    timerExecutor.scheduleWithFixedDelay(timerTask, timerBatchLimit, timerBatchLimit, TimeUnit.SECONDS);
+    timerExecutor.scheduleWithFixedDelay(timerTask, batchInterval, batchInterval, TimeUnit.SECONDS);
   }
 
   protected void stopTimer() {
@@ -151,15 +135,17 @@ public abstract class AbstractBatchWriter implements BatchWriter, AutoCloseable 
 
     // create cache for the table if not exists
     if (!cm.cacheExists(destination)) {
-      cm.defineConfiguration(destination, builder.build()); // what is this one doing ?
-      // cm.createCache(destination,builder.build());// what is this on edoing
+      cm.defineConfiguration(destination, builder.build());
+      cacheRowCounter.put(destination, 0);
     }
     // append event/record to it
-    cm.getCache(destination).put(record.key(), record.value());
+    cm.getCache(destination).put(UUID.randomUUID().toString(), record.value());
+    cacheRowCounter.put(destination, cacheRowCounter.getOrDefault(destination, 0) + 1);
 
-    if (cm.getCache(destination).size() >= batchLimit) {
+    if (cacheRowCounter.getOrDefault(destination, 0) >= batchLimit) {
       LOGGER.debug("Batch Row Limit reached Uploading Data, destination:{}", destination);
       this.uploadOne(destination);
+      cacheRowCounter.put(destination, 0);
     }
   }
 
@@ -177,7 +163,7 @@ public abstract class AbstractBatchWriter implements BatchWriter, AutoCloseable 
       uploadOne(k);
       numBatchFiles++;
     }
-    LOGGER.info("Uploaded '{}' batch files.", numBatchFiles);
+    LOGGER.info("Uploaded '{}' files.", numBatchFiles);
   }
 
   @Override

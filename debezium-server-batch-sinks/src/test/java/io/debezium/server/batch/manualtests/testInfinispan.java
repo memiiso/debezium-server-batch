@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.test;
+package io.debezium.server.batch.manualtests;
 
 import java.util.UUID;
 
@@ -25,21 +25,25 @@ public class testInfinispan {
     DefaultCacheManager cm = new DefaultCacheManager();
     //ConfigurationBuilder builder = new ConfigurationBuilder().simpleCache(true);
     ConfigurationBuilder builder = new ConfigurationBuilder();
-    builder.persistence()
-        .passivation(false)
-        .addSingleFileStore()
-        //preload : If true, when the cache starts, data stored in the cache store will be pre-loaded into memory
-        //Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is
-        // affected by this process.
-        .preload(false)
-        .shared(false)
-        .fetchPersistentState(true)
-        .ignoreModifications(false)
-        .purgeOnStartup(true) // If true, purges this cache store when it starts up.
-        .location("./cache")
-        .async()
-        .enabled(true);
+    builder.simpleCache()
+    //.persistence()
+    //.passivation(false)
+    //.addSingleFileStore()
+    //preload : If true, when the cache starts, data stored in the cache store will be pre-loaded into memory
+    //Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is
+    // affected by this process.
+    //.preload(false)
+    //.shared(false)
+    //.fetchPersistentState(true)
+    //.ignoreModifications(false)
+    //.purgeOnStartup(true) // If true, purges this cache store when it starts up.
+    //.location("./cache")
+    //.async()
+    //.enabled(true);
+//      builder.simpleCache(true)
+    ;
 
+    cm.start();
     cm.defineConfiguration("mySimpleCache", builder.build());
     cm.defineConfiguration("mySimpleCache2", builder.build());
     cm.defineConfiguration("mySimpleCache3", builder.build());

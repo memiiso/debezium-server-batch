@@ -18,13 +18,19 @@ import io.quarkus.test.junit.QuarkusTest;
 import java.time.Duration;
 import javax.inject.Inject;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.iceberg.Table;
+import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.hadoop.HadoopCatalog;
+import org.apache.iceberg.types.Types;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.awaitility.Awaitility;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fest.assertions.Assertions;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Integration test that verifies basic reading from PostgreSQL database and writing to s3 destination.
@@ -34,45 +40,53 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(TestS3Minio.class)
 @QuarkusTestResource(TestDatabase.class)
-public class SparkWriterIT extends BaseSparkIT {
+public class IcebergIT extends BaseSparkIT {
 
   @Inject
   DebeziumServer server;
   @ConfigProperty(name = "debezium.sink.type")
   String sinkType;
+  @ConfigProperty(name = "debezium.sink.iceberg.table-prefix", defaultValue = "")
+  String tablePrefix;
+  @ConfigProperty(name = "debezium.sink.iceberg.warehouse")
+  String warehouseLocation;
 
-  @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
-  String objectKeyPrefix;
-  @ConfigProperty(name = "debezium.sink.batch.s3.bucket-name", defaultValue = "")
-  String bucket;
+  {
+    // Testing.Debug.enable();
+    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
+    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
+  }
 
   private Dataset<Row> getTableData(String table) {
-
-    return spark.read().option("mergeSchema", "true")
-        .parquet(bucket + "/" + objectKeyPrefix + table + "/*")
+    Dataset<Row> ds = spark.read().format("iceberg")
+        .load(warehouseLocation + "/" + tablePrefix + table.replace(".", "-"))
         .withColumn("input_file", functions.input_file_name());
+    return ds;
   }
 
-
-  @Test
-  public void testS3Batch() {
-    Testing.Print.enable();
-    Assertions.assertThat(sinkType.equals("batch"));
-
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
-      try {
-        Dataset<Row> df = getTableData("testc.inventory.customers");
-        df.show(false);
-        return df.filter("id is not null").count() >= 4;
-      } catch (Exception e) {
-        return false;
+  private HadoopCatalog getIcebergCatalog() {
+    // loop and set hadoopConf
+    Configuration hadoopConf = new Configuration();
+    for (String name : ConfigProvider.getConfig().getPropertyNames()) {
+      if (name.startsWith("debezium.sink.iceberg.")) {
+        hadoopConf.set(name.substring("debezium.sink.iceberg.".length()),
+            ConfigProvider.getConfig().getValue(name, String.class));
       }
-    });
-    TestS3Minio.listFiles();
+    }
+    HadoopCatalog icebergCatalog = new HadoopCatalog("iceberg", hadoopConf, warehouseLocation);
+    return icebergCatalog;
   }
+
+  private Table getTable(String table) {
+    HadoopCatalog catalog = getIcebergCatalog();
+    return catalog.loadTable(TableIdentifier.of(tablePrefix + table.replace(".", "-")));
+  }
+
+  // @TODO WIP
 
   @Test
   public void testDatatypes() throws Exception {
+    assertEquals(sinkType, "iceberg");
     String sql = "\n" +
         "        DROP TABLE IF EXISTS inventory.table_datatypes;\n" +
         "        CREATE TABLE IF NOT EXISTS inventory.table_datatypes (\n" +
@@ -101,38 +115,12 @@ public class SparkWriterIT extends BaseSparkIT {
         "null,null,null,null,null,null,null" +
         ")," +
         "(2, 'val_text', 'A', 123, current_date , current_timestamp, current_timestamp," +
-        "'1.23'::float,'1234566.34456'::decimal,'345.452'::numeric(18,4), interval '1 day',false," +
+        "'1.23'::float,'1234566.34456'::decimal,'345672123.452'::numeric, interval '1 day',false," +
         "'3f207ac6-5dba-11eb-ae93-0242ac130002'::UUID, 'aBC'::bytea" +
         ")";
     TestDatabase.runSQL(sql);
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
-      try {
-        Dataset<Row> df = getTableData("testc.inventory.table_datatypes").filter("c_id == 2");
-        df = df.withColumn("c_bytea", df.col("c_bytea").cast("string"));
-        df = df.withColumn("c_numeric", df.col("c_numeric").cast("float"));
-        df = df.withColumn("c_float", df.col("c_float").cast("float"));
-        df = df.withColumn("c_decimal", df.col("c_decimal").cast("float"));
-        df.show(false);
-        df.printSchema();
-        return df.where("c_bytea == 'aBC' " +
-            "AND c_float == '1.23'" +
-            "AND c_decimal == '1234566.3446'" +
-            "AND c_numeric == '345.452'" +
-            // interval as milisecond
-            "AND c_interval == '86400000000'" +
-            "").
-            count() == 1;
-      } catch (Exception e) {
-        if (e.getMessage().contains("cast")) {
-          System.out.println(e.getMessage());
-        }
-        return false;
-      }
-    });
-
-    // check null values
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.table_datatypes");
         df.show();
@@ -148,11 +136,10 @@ public class SparkWriterIT extends BaseSparkIT {
 
   @Test
   public void testIcebergConsumer() throws Exception {
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
       try {
         Dataset<Row> ds = getTableData("testc.inventory.customers");
-        ds.show();
-        return ds.count() >= 2;
+        return ds.count() >= 4;
       } catch (Exception e) {
         return false;
       }
@@ -171,26 +158,35 @@ public class SparkWriterIT extends BaseSparkIT {
     TestDatabase.runSQL("UPDATE inventory.customers SET last_name = NULL  WHERE id = 1002 ;");
     TestDatabase.runSQL("DELETE FROM inventory.customers WHERE id = 1004 ;");
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
       try {
         Dataset<Row> ds = getTableData("testc.inventory.customers");
-        ds.show(false);
         return ds.where("first_name == 'George__UPDATE1'").count() == 3
             && ds.where("first_name == 'SallyUSer2'").count() == 1
             && ds.where("last_name is null").count() == 1
-            && ds.where("id == '1004'").where("__op == 'd'").count() == 1
-            ;
+            && ds.where("id == '1004'").where("__op == 'd'").count() == 1;
       } catch (Exception e) {
         return false;
       }
     });
 
     getTableData("testc.inventory.customers").show();
+    // add new columns to iceberg table!  and check if new column values are populated!
+    Table table = getTable("testc.inventory.customers");
+
+    // !!!!! IMPORTANT !!! column list here is in reverse order!! for testing purpose!
+    table.updateSchema()
+        // test_date_column is Long type because debezium serializes date type as number
+        .addColumn("test_date_column", Types.LongType.get())
+        .addColumn("test_boolean_column", Types.BooleanType.get())
+        .addColumn("test_varchar_column", Types.StringType.get())
+        .commit();
+
     TestDatabase.runSQL("ALTER TABLE inventory.customers DROP COLUMN email;");
     TestDatabase.runSQL("INSERT INTO inventory.customers VALUES " +
         "(default,'User3','lastname_value3','test_varchar_value3',true, '2020-01-01'::DATE);");
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
       try {
         Dataset<Row> ds = getTableData("testc.inventory.customers");
         return ds.where("first_name == 'User3'").count() == 1
@@ -202,4 +198,24 @@ public class SparkWriterIT extends BaseSparkIT {
 
   }
 
+  @Test
+  public void testBatchSize() throws Exception {
+    // test that max batch size is respected! `debezium.source.max.batch.size`
+    Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
+      try {
+        Dataset<Row> ds = getTableData("testc.inventory.customers");
+        return ds.groupBy("input_file").count().filter("count > 2").count() == 0
+            && ds.groupBy("input_file").count().filter("count <=2 ").count() > 1; // 4 and more rows
+      } catch (Exception e) {
+        return false;
+      }
+    });
+
+    getTableData("testc.inventory.customers").show();
+    getTableData("testc.inventory.customers").groupBy("input_file").count().show();
+    getTableData("testc.inventory.products").show();
+    getTableData("testc.inventory.orders").show();
+    // ignored table because of nested data
+    // getTableData("testc.inventory.geom").show();
+  }
 }

@@ -29,12 +29,6 @@
         <dependency>
             <groupId>io.debezium</groupId>
             <artifactId>debezium-embedded</artifactId>
-            <!--            <exclusions>-->
-            <!--                <exclusion>-->
-            <!--                    <groupId>org.slf4j</groupId>-->
-            <!--                    <artifactId>slf4j-log4j12</artifactId>-->
-            <!--                </exclusion>-->
-            <!--            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>io.debezium</groupId>
@@ -57,11 +51,6 @@
 
         <!-- Target systems -->
         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>5.7.0</version>
-        </dependency>
-        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>sdk-core</artifactId>
             <version>${version.s3}</version>
@@ -75,11 +64,6 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
             <version>${version.s3}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mapdb</groupId>
-            <artifactId>mapdb</artifactId>
-            <version>3.0.8</version>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
@@ -100,12 +84,16 @@
                     <groupId>log4j</groupId>
                     <artifactId>log4j</artifactId>
                 </exclusion>
-                <!-- include jul-to-slf4j-stub instead Below -->
-                <!--                <exclusion>-->
-                <!--                    <groupId>org.slf4j</groupId>-->
-                <!--                    <artifactId>jul-to-slf4j</artifactId>-->
-                <!--                </exclusion>-->
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jul-to-slf4j</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jul-to-slf4j-stub</artifactId>
+            <version>1.0.1.Final</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -116,11 +104,6 @@
             <groupId>org.apache.iceberg</groupId>
             <artifactId>iceberg-spark3-runtime</artifactId>
             <version>0.10.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.delta</groupId>
-            <artifactId>delta-core_2.12</artifactId>
-            <version>0.7.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -148,13 +131,6 @@
             <version>3.3.0</version>
         </dependency>
         <!-- END using spark sink -->
-
-        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>29.0-jre</version>
-        </dependency>
 
         <!-- Testing -->
         <dependency>
