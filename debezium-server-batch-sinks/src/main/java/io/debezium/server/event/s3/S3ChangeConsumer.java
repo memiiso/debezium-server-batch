@@ -49,13 +49,15 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(S3ChangeConsumer.class);
-  final String credentialsProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.credentials.profile", String.class).orElse("default");
-  final String endpointOverride = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.endpointoverride", String.class).orElse("false");
-  final Boolean useInstanceProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.credentials.useinstancecred", Boolean.class).orElse(false);
-  final String objectKeyPrefix = ConfigProvider.getConfig().getValue("debezium.sink.s3.objectkey.prefix", String.class);
+  final String credentialsProfile = ConfigProvider.getConfig()
+      .getOptionalValue("debezium.sink.s3.credentials.profile", String.class).orElse("default");
+  final String endpointOverride = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.endpoint-override",
+      String.class).orElse("false");
+  final Boolean useInstanceProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.credentials.use-instance-cred", Boolean.class).orElse(false);
+  final String objectKeyPrefix = ConfigProvider.getConfig().getValue("debezium.sink.s3.objectkey-prefix", String.class);
   final String valueFormat = ConfigProvider.getConfig().getOptionalValue("debezium.format.value", String.class).orElse(Json.class.getSimpleName().toLowerCase());
   S3Client s3client;
-  @ConfigProperty(name = "debezium.sink.s3.bucket.name", defaultValue = "My-S3-Bucket")
+  @ConfigProperty(name = "debezium.sink.s3.bucket-name", defaultValue = "My-S3-Bucket")
   String bucket;
   @ConfigProperty(name = "debezium.sink.s3.region", defaultValue = "eu-central-1")
   String region;
@@ -86,6 +88,7 @@ public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngi
     // used for testing, using minio
     if (!endpointOverride.trim().equalsIgnoreCase("false")) {
       clientBuilder.endpointOverride(new URI(endpointOverride));
+      LOGGER.info("Overriding S3 Endpoint with:{}", endpointOverride);
     }
     s3client = clientBuilder.build();
     LOGGER.info("Using default S3Client '{}'", s3client);

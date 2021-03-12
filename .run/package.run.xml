@@ -23,6 +23,7 @@
               <option value="install"/>
               <option value="package"/>
               <option value="-Passembly"/>
+              <option value="-Dquarkus.version=1.11.3.Final"/>
             </list>
           </option>
           <option name="pomFileName"/>

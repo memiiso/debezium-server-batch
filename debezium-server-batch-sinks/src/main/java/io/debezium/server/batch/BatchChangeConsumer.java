@@ -12,14 +12,15 @@ import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.writer.AbstractBatchWriter;
-import io.debezium.server.batch.writer.S3JsonWriter;
-import io.debezium.server.batch.writer.SparkBatchWriter;
+import io.debezium.server.batch.consumer.S3JsonConsumer;
+import io.debezium.server.batch.consumer.SparkConsumer;
+import io.debezium.server.batch.consumer.SparkIcebergConsumer;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -44,19 +45,22 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   String valueFormat;
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
-  AbstractBatchWriter batchWriter;
+  BatchWriter batchWriter;
   @Inject
   @ConfigProperty(name = "debezium.sink.batch.writer")
   String customBatchWriter;
+  @Inject
+  @ConfigProperty(name = "debezium.sink.batch.cache.use-batch-append", defaultValue = "true")
+  Boolean useBatchAppend;
 
   @PreDestroy
   void close() {
     try {
-      LOGGER.warn("Close called, uploading all cache data and closing batch writer!");
-      batchWriter.uploadAll();
+      LOGGER.warn("Closing batch writer!");
       batchWriter.close();
     } catch (Exception e) {
       LOGGER.warn("Exception while closing writer:{} ", e.getMessage());
+      e.printStackTrace();
     }
   }
 
@@ -65,14 +69,13 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
 
     switch (customBatchWriter) {
       case "spark":
-        batchWriter = new SparkBatchWriter();
+        batchWriter = new SparkConsumer();
         break;
       case "sparkiceberg":
-        // @TODO
-        batchWriter = new SparkBatchWriter();
+        batchWriter = new SparkIcebergConsumer();
         break;
       case "s3json":
-        batchWriter = new S3JsonWriter();
+        batchWriter = new S3JsonConsumer();
         break;
       default:
         throw new InterruptedException("Message here!");
@@ -91,19 +94,31 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
-    try {
-      for (ChangeEvent<Object, Object> record : records) {
-        batchWriter.append(record);
-        // committer.markProcessed(record);
+
+    if (useBatchAppend) {
+
+
+      Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
+          .collect(Collectors.groupingBy(
+              ChangeEvent::destination,
+              Collectors.mapping(p -> p,
+                  Collectors.toCollection(ArrayList::new))));
+
+      for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destinationEvents : result.entrySet()) {
+        batchWriter.appendAll(destinationEvents.getKey(), destinationEvents.getValue());
       }
-      // batchWriter.uploadAll();
-      committer.markBatchFinished();
-    } catch (Exception e) {
-      StringWriter sw = new StringWriter();
-      e.printStackTrace(new PrintWriter(sw));
-      LOGGER.error(sw.toString());
-      throw new InterruptedException(e.getMessage());
+      // workaround! somehow offset is not saved to file unless we call committer.markProcessed
+      // even its should be saved to file periodically
+      if (!records.isEmpty()) {
+        committer.markProcessed(records.get(0));
+      }
+    } else {
+      for (ChangeEvent<Object, Object> record : records) {
+        batchWriter.append(record.destination(), record);
+        committer.markProcessed(record);
+      }
     }
+    committer.markBatchFinished();
   }
 
 }

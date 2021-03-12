@@ -7,19 +7,18 @@
   -->
 
 <component name="ProjectRunConfigurationManager">
-    <configuration default="false" name="S3JsonWriterIT" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+    <configuration default="false" name="TestS3JsonConsumer" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
         <module name="debezium-server-batch-sinks"/>
         <extension name="coverage">
             <pattern>
-                <option name="PATTERN" value="io.debezium.server.batch.manualtests.*"/>
+                <option name="PATTERN" value="io.debezium.server.batch.common.*"/>
                 <option name="ENABLED" value="true"/>
             </pattern>
         </extension>
         <option name="PACKAGE_NAME" value="io.debezium.server.batch"/>
-        <option name="MAIN_CLASS_NAME" value="io.debezium.server.batch.S3JsonWriterIT"/>
+        <option name="MAIN_CLASS_NAME" value="io.debezium.server.batch.TestS3JsonConsumer"/>
         <option name="METHOD_NAME" value=""/>
         <option name="TEST_OBJECT" value="class"/>
-        <option name="VM_PARAMETERS" value="-ea -Ddebezium.sink.type=batch"/>
         <option name="WORKING_DIRECTORY" value="$MODULE_DIR$"/>
         <method v="2">
             <option name="Make" enabled="true"/>

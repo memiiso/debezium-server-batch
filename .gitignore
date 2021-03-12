@@ -1,6 +1,9 @@
 # Debezium gitignore
 
-cache
+/cache/**
+/debezium-server-batch-sinks/cache/
+/rocksdb/**
+deploy.sh
 
 activemq-data/
 .idea/

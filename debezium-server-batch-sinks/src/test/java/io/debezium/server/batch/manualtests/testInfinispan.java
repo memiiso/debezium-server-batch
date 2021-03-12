@@ -8,62 +8,44 @@
 
 package io.debezium.server.batch.manualtests;
 
-import java.util.UUID;
+import io.debezium.server.batch.common.TestUtil;
+
+import java.time.Duration;
+import java.time.Instant;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class testInfinispan {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(testInfinispan.class);
+public class testInfinispan extends TestUtil {
+
 
   public static void main(String[] args) {
-    Logger LOGGER = LoggerFactory.getLogger(testInfinispan.class);
-
-    DefaultCacheManager cm = new DefaultCacheManager();
-    //ConfigurationBuilder builder = new ConfigurationBuilder().simpleCache(true);
-    ConfigurationBuilder builder = new ConfigurationBuilder();
-    builder.simpleCache()
-    //.persistence()
-    //.passivation(false)
-    //.addSingleFileStore()
-    //preload : If true, when the cache starts, data stored in the cache store will be pre-loaded into memory
-    //Can be used to provide a 'warm-cache' on startup, however there is a performance penalty as startup time is
-    // affected by this process.
-    //.preload(false)
-    //.shared(false)
-    //.fetchPersistentState(true)
-    //.ignoreModifications(false)
-    //.purgeOnStartup(true) // If true, purges this cache store when it starts up.
-    //.location("./cache")
-    //.async()
-    //.enabled(true);
-//      builder.simpleCache(true)
-    ;
-
-    cm.start();
-    cm.defineConfiguration("mySimpleCache", builder.build());
-    cm.defineConfiguration("mySimpleCache2", builder.build());
-    cm.defineConfiguration("mySimpleCache3", builder.build());
-
-    Cache cache = cm.getCache("mySimpleCache");
-    Cache cache2 = cm.getCache("mySimpleCache2");
-    Cache cache3 = cm.getCache("mySimpleCache3");
-
-    cache.put(UUID.randomUUID().toString(), UUID.randomUUID().toString());
-    cache2.put("key2", "val2");
-    System.out.println(cm.getCacheConfigurationNames());
-    cache.values().stream().forEach(System.out::println);
-    System.out.println("----------------------");
-    cache.put(UUID.randomUUID().toString(), UUID.randomUUID().toString());
-    cache.put("mykey", "val1");
-    cache.put("mykey", "val2");
-    cache.values().stream().forEach(System.out::println);
-    System.out.println("----------------------");
-    cache.remove("mykey");
-    cache.values().stream().forEach(System.out::println);
-    System.out.println("----------------------");
+    testInfinispan mytest = new testInfinispan();
+    mytest.run();
   }
+
+  public void run() {
+    ConfigurationBuilder builder = new ConfigurationBuilder();
+    DefaultCacheManager cm = new DefaultCacheManager();
+    System.out.println("Using simpleCache");
+    builder.simpleCache(true);
+
+    Instant start = Instant.now();
+    for (int i = 0; i < 100013; i++) {
+      cm.getCache("test").put(randomString(randomInt(31, 32)), randomString(randomInt(5300, 14300)));
+    }
+
+    System.out.println("Cache Size - test: " + cm.getCache("test").size());
+    Cache<Object, Object> cache = cm.getCache("test");
+    for (Object k : cache.keySet()) {
+      cache.remove(k);
+    }
+    Instant end = Instant.now();
+    Duration interval = Duration.between(start, end);
+    System.out.println("Cache Size - test: " + cm.getCache("test").size());
+    System.out.println("Execution time in seconds: " + interval.getSeconds());
+  }
+
+
 }

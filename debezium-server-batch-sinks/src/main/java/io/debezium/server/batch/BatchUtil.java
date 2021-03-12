@@ -9,7 +9,6 @@
 package io.debezium.server.batch;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.spark.sql.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +20,6 @@ import org.slf4j.LoggerFactory;
  */
 public class BatchUtil {
   protected static final Logger LOGGER = LoggerFactory.getLogger(BatchUtil.class);
-  protected static final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   public static StructType getSparkDfSchema(JsonNode eventSchema) {
 

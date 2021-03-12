@@ -10,8 +10,6 @@ package io.debezium.server.batch;
 
 public interface BatchWriter extends BatchCache {
 
-  void uploadAll();
-
-  void uploadOne(String destination);
+  void uploadDestination(String destination, String uploadTrigger);
 
 }

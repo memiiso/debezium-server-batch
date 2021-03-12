@@ -19,16 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TestBatchUtil {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(TestBatchUtil.class);
-  final String serdeUpdate = Testing.Files.readResourceAsString("json/serde-update.json");
   final String serdeWithSchema = Testing.Files.readResourceAsString("json/serde-with-schema.json");
-  final String serdeWithSchema2 = Testing.Files.readResourceAsString("json/serde-with-schema2.json");
   final String unwrapWithSchema = Testing.Files.readResourceAsString("json/unwrap-with-schema.json");
 
   public StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
