@@ -33,7 +33,6 @@ public class TestCacheLocalThreadingProfile implements QuarkusTestProfile {
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
     config.put("debezium.sink.batch.cache.invocation-batching", "true");
     config.put("debezium.sink.batch.cache.max-batch-size", "1254");
-    config.put("quarkus.log.level", "ERROR");
 
     return config;
   }

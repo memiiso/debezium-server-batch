@@ -15,6 +15,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.time.Duration;
 import java.time.Instant;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -26,6 +28,9 @@ import org.apache.spark.sql.types.StructType;
  *
  * @author Ismail Simsek
  */
+
+@Dependent
+@Default
 public class SparkConsumer extends AbstractSparkConsumer {
 
   public SparkConsumer() {
@@ -53,7 +58,7 @@ public class SparkConsumer extends AbstractSparkConsumer {
         Thread.currentThread().setName("spark-" + uploadTrigger + "-upload-" + Thread.currentThread().getId());
         Instant start = Instant.now();
         // upload different destinations parallel but same destination serial
-        BatchJsonlinesFile tempFile = this.getJsonLines(destination);
+        BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
         if (tempFile == null) {
           LOGGER.info("No data to upload for destination: {}", destination);
           return;
@@ -94,7 +99,7 @@ public class SparkConsumer extends AbstractSparkConsumer {
               uploadTrigger,
               tempFile.getFile().length(),
               Duration.between(start, Instant.now()),
-              this.getEstimatedCacheSize(destination),
+              this.cache.getEstimatedCacheSize(destination),
               s3File);
         }
 

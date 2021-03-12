@@ -17,6 +17,8 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Alternative;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -35,6 +37,9 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
  *
  * @author Ismail Simsek
  */
+
+@Dependent
+@Alternative
 public class S3JsonConsumer extends AbstractConsumer {
   protected static final Logger LOGGER = LoggerFactory.getLogger(S3JsonConsumer.class);
   protected static final String bucket = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3" +
@@ -97,7 +102,7 @@ public class S3JsonConsumer extends AbstractConsumer {
       Thread.currentThread().setName("s3json-" + uploadTrigger + "-upload-" + Thread.currentThread().getId());
 
       String s3File = map(destination) + "/" + UUID.randomUUID() + ".json";
-      BatchJsonlinesFile tempFile = this.getJsonLines(destination);
+      BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
       if (tempFile == null) {
         return;
       }

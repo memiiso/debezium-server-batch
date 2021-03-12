@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Alternative;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
@@ -31,6 +33,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
+
+@Dependent
+@Alternative
 public class MemoryCache extends AbstractCache {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(MemoryCache.class);
@@ -38,6 +43,7 @@ public class MemoryCache extends AbstractCache {
 
   public MemoryCache() {
     super();
+    LOGGER.info("Using MemoryCache (ConcurrentHashMap) as in memory cache");
   }
 
   private ConcurrentHashMap<String, Object> getDestinationCache(String destination) {

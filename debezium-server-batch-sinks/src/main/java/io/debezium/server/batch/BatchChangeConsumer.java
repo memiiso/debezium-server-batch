@@ -45,6 +45,7 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   String valueFormat;
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
+  @Inject
   BatchWriter batchWriter;
   @Inject
   @ConfigProperty(name = "debezium.sink.batch.writer")
@@ -66,20 +67,6 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
 
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {
-
-    switch (customBatchWriter) {
-      case "spark":
-        batchWriter = new SparkConsumer();
-        break;
-      case "sparkiceberg":
-        batchWriter = new SparkIcebergConsumer();
-        break;
-      case "s3json":
-        batchWriter = new S3JsonConsumer();
-        break;
-      default:
-        throw new InterruptedException("Message here!");
-    }
 
     LOGGER.info("Using '{}' batch writer", batchWriter.getClass().getName());
 

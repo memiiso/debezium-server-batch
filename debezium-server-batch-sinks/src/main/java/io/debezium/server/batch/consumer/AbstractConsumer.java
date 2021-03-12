@@ -11,19 +11,16 @@ package io.debezium.server.batch.consumer;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.BatchCache;
 import io.debezium.server.batch.BatchWriter;
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
-import io.debezium.server.batch.cache.InfinispanCache;
-import io.debezium.server.batch.cache.MemoryCache;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -40,7 +37,8 @@ public abstract class AbstractConsumer implements BatchWriter {
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractConsumer.class);
   protected static final Boolean partitionData =
       ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.objectkey-partition", Boolean.class).orElse(false);
-  protected final BatchCache cache;
+  @Inject
+  protected BatchCache cache;
   final String objectKeyPrefix = ConfigProvider.getConfig().getValue("debezium.sink.batch.objectkey-prefix", String.class);
   final Integer batchInterval = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.time-limit", Integer.class).orElse(600);
   final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
@@ -49,13 +47,6 @@ public abstract class AbstractConsumer implements BatchWriter {
   protected ThreadPoolExecutor threadPool;
 
   public AbstractConsumer() {
-    if (cacheStore.equals("memory")) {
-      this.cache = new MemoryCache();
-      LOGGER.info("Using ConcurrentHashMap as cache store");
-    } else {
-      this.cache = new InfinispanCache();
-      LOGGER.info("Using Infinispan as cache store");
-    }
     setupTimerUpload();
     LOGGER.info("Batch row limit set to {}", batchLimit);
   }
@@ -87,12 +78,6 @@ public abstract class AbstractConsumer implements BatchWriter {
     cache.appendAll(destination, records);
     this.startUploadIfRowLimitReached(destination);
   }
-
-  @Override
-  public BatchJsonlinesFile getJsonLines(String destination) {
-    return cache.getJsonLines(destination);
-  }
-
 
   private void startUploadIfRowLimitReached(String destination) {
     this.startUpload(destination, true);
@@ -157,13 +142,4 @@ public abstract class AbstractConsumer implements BatchWriter {
     }
   }
 
-  @Override
-  public Integer getEstimatedCacheSize(String destination) {
-    return cache.getEstimatedCacheSize(destination);
-  }
-
-  @Override
-  public Set<String> getCaches() {
-    return cache.getCaches();
-  }
 }

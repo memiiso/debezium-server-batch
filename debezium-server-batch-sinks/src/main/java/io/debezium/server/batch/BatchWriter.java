@@ -8,8 +8,19 @@
 
 package io.debezium.server.batch;
 
-public interface BatchWriter extends BatchCache {
+import io.debezium.engine.ChangeEvent;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+public interface BatchWriter {
 
   void uploadDestination(String destination, String uploadTrigger);
+
+  void close() throws IOException;
+
+  void append(String destination, ChangeEvent<Object, Object> record) throws InterruptedException;
+
+  void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) throws InterruptedException;
 
 }

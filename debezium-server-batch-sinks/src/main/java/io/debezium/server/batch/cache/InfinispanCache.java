@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -39,6 +41,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
+@Dependent
+@Default
 public class InfinispanCache extends AbstractCache {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(InfinispanCache.class);

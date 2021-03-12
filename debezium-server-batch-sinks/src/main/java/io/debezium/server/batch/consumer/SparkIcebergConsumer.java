@@ -11,6 +11,9 @@ package io.debezium.server.batch.consumer;
 import io.debezium.server.batch.BatchUtil;
 import io.debezium.server.batch.cache.BatchJsonlinesFile;
 
+import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Alternative;
+
 import org.apache.iceberg.spark.SparkSessionCatalog;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -23,6 +26,8 @@ import org.apache.spark.sql.types.StructType;
  *
  * @author Ismail Simsek
  */
+@Dependent
+@Alternative
 public class SparkIcebergConsumer extends AbstractSparkConsumer {
 
   final String saveFormat = "iceberg";
@@ -42,7 +47,7 @@ public class SparkIcebergConsumer extends AbstractSparkConsumer {
 
     // Read DF with Schema if schema enabled and exists in the event message
 
-    BatchJsonlinesFile tempFile = this.getJsonLines(destination);
+    BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
     if (tempFile == null) {
       LOGGER.info("No data received to upload for destination: {}", destination);
       return;
