@@ -54,7 +54,7 @@ public abstract class AbstractSparkConsumer extends AbstractConsumer {
       if (!spark.sparkContext().isStopped()) {
         spark.close();
       }
-      LOGGER.info("Closed Spark");
+      LOGGER.debug("Closed Spark");
     } catch (Exception e) {
       LOGGER.warn("Exception during Spark shutdown ", e);
     }

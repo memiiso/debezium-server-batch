@@ -209,7 +209,7 @@ public class InfinispanCache extends AbstractCache {
     } catch (Exception e) {
       LOGGER.warn("Exception during cache shutdown ", e);
     }
-    LOGGER.info("Closed cache");
+    LOGGER.debug("Closed cache");
   }
 
   public BatchJsonlinesFile getJsonLines(String destination) {

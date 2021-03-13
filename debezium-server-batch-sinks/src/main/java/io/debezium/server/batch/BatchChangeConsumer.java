@@ -12,9 +12,6 @@ import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.consumer.S3JsonConsumer;
-import io.debezium.server.batch.consumer.SparkConsumer;
-import io.debezium.server.batch.consumer.SparkIcebergConsumer;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -57,7 +54,7 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   @PreDestroy
   void close() {
     try {
-      LOGGER.warn("Closing batch writer!");
+      LOGGER.info("Closing batch writer!");
       batchWriter.close();
     } catch (Exception e) {
       LOGGER.warn("Exception while closing writer:{} ", e.getMessage());

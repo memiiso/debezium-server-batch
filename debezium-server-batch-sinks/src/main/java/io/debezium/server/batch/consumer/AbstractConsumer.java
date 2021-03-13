@@ -43,7 +43,8 @@ public abstract class AbstractConsumer implements BatchWriter {
   final Integer batchUploadRowLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
   final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
   protected static final String cacheStore = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache", String.class).orElse("infinispan");
-  protected final ConcurrentThreadPoolExecutor threadPool = new ConcurrentThreadPoolExecutor();
+  @Inject
+  protected ConcurrentThreadPoolExecutor threadPool;
 
   public AbstractConsumer() {
     setupTimerUpload();
@@ -136,7 +137,7 @@ public abstract class AbstractConsumer implements BatchWriter {
 
   protected void stopTimerUpload() {
     try {
-      LOGGER.info("Stopping timer");
+      LOGGER.info("Stopping timer task");
       timerExecutor.shutdown();
 
       if (!timerExecutor.awaitTermination(3, TimeUnit.MINUTES)) {
@@ -144,7 +145,7 @@ public abstract class AbstractConsumer implements BatchWriter {
         List<Runnable> droppedTasks = timerExecutor.shutdownNow();
         LOGGER.warn("Executor was abruptly shut down. " + droppedTasks.size() + " tasks will not be executed.");
       } else {
-        LOGGER.info("Stopped timer");
+        LOGGER.debug("Stopped timer");
       }
     } catch (Exception e) {
       LOGGER.error("Timer shutdown failed {}", e.getMessage());

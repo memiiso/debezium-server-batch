@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.enterprise.context.Dependent;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
+@Dependent
 public class ConcurrentThreadPoolExecutor {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentThreadPoolExecutor.class);
@@ -36,8 +38,9 @@ public class ConcurrentThreadPoolExecutor {
   }
 
   public ThreadPoolExecutor get(String destination) {
-    return threadPools.computeIfAbsent(destination, k -> new ThreadPoolExecutor(uploadThreadNum, uploadThreadNum, 0L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<>()));
+    return threadPools.computeIfAbsent(destination, k ->
+        new ThreadPoolExecutor(uploadThreadNum, uploadThreadNum, 0L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(12), new ThreadPoolExecutor.DiscardPolicy()));
   }
 
   public void submit(String destination, Runnable task) {
@@ -70,13 +73,16 @@ public class ConcurrentThreadPoolExecutor {
   }
 
   public void shutdownQueue(String destination, ThreadPoolExecutor threadPool) throws InterruptedException {
+
+    LOGGER.debug("Closing upload queue of destination:{}", destination);
+    threadPool.shutdown();
     if (!threadPool.awaitTermination(3, TimeUnit.MINUTES)) {
-      LOGGER.warn("Upload queue for destination '{}' did not terminate in the specified time(3m).", destination);
+      LOGGER.warn("Upload queue of destination '{}' did not terminate in the specified time(3m).", destination);
       List<Runnable> droppedTasks = threadPool.shutdownNow();
-      LOGGER.warn("Upload queue for destination '{}' was abruptly shut down." +
+      LOGGER.warn("Upload queue of destination '{}' was abruptly shut down." +
           " {} tasks will not be executed.", destination, droppedTasks.size());
     } else {
-      LOGGER.info("Closed upload queue for destination '{}'", destination);
+      LOGGER.debug("Closed upload queue of destination '{}'", destination);
     }
   }
 
