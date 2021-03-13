@@ -46,7 +46,7 @@ public class TestCacheLocalThreading extends BaseSparkTest {
 
     int batch = 10000;
     int iteration = 10;
-    int rowsCreated = 20000 * 10;
+    int rowsCreated = iteration * batch;
 
     createDummyPerformanceTable();
 

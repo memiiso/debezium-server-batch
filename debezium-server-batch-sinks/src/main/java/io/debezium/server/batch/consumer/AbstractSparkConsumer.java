@@ -9,11 +9,7 @@
 package io.debezium.server.batch.consumer;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
@@ -37,9 +33,6 @@ public abstract class AbstractSparkConsumer extends AbstractConsumer {
       .setMaster("local[*]");
   protected final String saveFormat = ConfigProvider.getConfig().getOptionalValue("debezium.sink.sparkbatch.save-format", String.class).orElse("json");
   protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
-  final static Integer uploadThreadNum =
-      ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.upload-threads", Integer.class).orElse(1);
-  protected final ThreadPoolExecutor threadPool;
   protected final SparkSession spark;
 
   public AbstractSparkConsumer() {
@@ -52,29 +45,8 @@ public abstract class AbstractSparkConsumer extends AbstractConsumer {
         .getOrCreate();
 
     LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
-    LOGGER.info("Setting concurrent upload number to {}", uploadThreadNum);
-    threadPool = new ThreadPoolExecutor(uploadThreadNum, uploadThreadNum, 0L, TimeUnit.SECONDS,
-        new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
 
   }
-
-  protected void stopUploadQueue() {
-    try {
-      LOGGER.info("Closing upload queue");
-      threadPool.shutdown();
-
-      if (!threadPool.awaitTermination(3, TimeUnit.MINUTES)) {
-        LOGGER.warn("Upload queue did not terminate in the specified time(3m).");
-        List<Runnable> droppedTasks = threadPool.shutdownNow();
-        LOGGER.warn("Upload queue was abruptly shut down. " + droppedTasks.size() + " tasks will not be executed.");
-      } else {
-        LOGGER.info("Closed upload queue");
-      }
-    } catch (Exception e) {
-      LOGGER.warn("Exception during upload queue shutdown ", e);
-    }
-  }
-
 
   protected void stopSparkSession() {
     try {

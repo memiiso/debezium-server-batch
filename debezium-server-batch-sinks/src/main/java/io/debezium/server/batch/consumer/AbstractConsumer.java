@@ -40,13 +40,14 @@ public abstract class AbstractConsumer implements BatchWriter {
   protected BatchCache cache;
   final String objectKeyPrefix = ConfigProvider.getConfig().getValue("debezium.sink.batch.objectkey-prefix", String.class);
   final Integer batchInterval = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.time-limit", Integer.class).orElse(600);
-  final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
+  final Integer batchUploadRowLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
   final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
   protected static final String cacheStore = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache", String.class).orElse("infinispan");
+  protected final ConcurrentThreadPoolExecutor threadPool = new ConcurrentThreadPoolExecutor();
 
   public AbstractConsumer() {
     setupTimerUpload();
-    LOGGER.info("Batch row limit set to {}", batchLimit);
+    LOGGER.info("Batch row limit set to {}", batchUploadRowLimit);
   }
 
   protected String getPartition() {
@@ -78,28 +79,38 @@ public abstract class AbstractConsumer implements BatchWriter {
   }
 
   private void startUploadIfRowLimitReached(String destination) {
-    this.startUpload(destination, true);
+    // get count per destination
+    if (cache.getEstimatedCacheSize(destination) < batchUploadRowLimit) {
+      return;
+    }
+
+    Thread uploadThread = new Thread(() -> {
+      Thread.currentThread().setName("spark-row-limit-upload-" + Thread.currentThread().getId());
+      // data might be already processed
+      if (this.cache.getEstimatedCacheSize(destination) < batchUploadRowLimit) {
+        return;
+      }
+      LOGGER.debug("Batch row limit reached, cache.size > batchLimit {}>={}, starting upload destination:{}",
+          cache.getEstimatedCacheSize(destination), batchUploadRowLimit, destination);
+
+      this.uploadDestination(destination);
+      LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
+    });
+    threadPool.submit(destination, uploadThread);
   }
 
   private void startTimerUpload(String destination) {
-    this.startUpload(destination, false);
-  }
+    // divide it to batches and upload
+    for (int i = 0; i <= (this.cache.getEstimatedCacheSize(destination) / batchUploadRowLimit) + 1; i++) {
 
-  private void startUpload(String destination, boolean checkRowLimit) {
+      Thread uploadThread = new Thread(() -> {
+        Thread.currentThread().setName("spark-timer-upload-" + Thread.currentThread().getId());
+        this.uploadDestination(destination);
+        LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
+      });
+      threadPool.submit(destination, uploadThread);
 
-    if (checkRowLimit) {
-      // get count per destination
-      if (cache.getEstimatedCacheSize(destination) >= batchLimit) {
-        LOGGER.debug("Batch row limit reached, cache.size > batchLimit {}>={}, starting upload destination:{}",
-            cache.getEstimatedCacheSize(destination), batchLimit, destination);
-        // update counter in advance to avoid starting multiple uploads
-        this.uploadDestination(destination, "row-limit");
-      }
-
-    } else {
-      this.uploadDestination(destination, "timer");
     }
-
   }
 
   protected void setupTimerUpload() {
@@ -138,6 +149,10 @@ public abstract class AbstractConsumer implements BatchWriter {
     } catch (Exception e) {
       LOGGER.error("Timer shutdown failed {}", e.getMessage());
     }
+  }
+
+  protected void stopUploadQueue() {
+    threadPool.shutdown();
   }
 
 }

@@ -42,7 +42,7 @@ public class SparkIcebergConsumer extends AbstractSparkConsumer {
 
 
   @Override
-  public void uploadDestination(String destination, String uploadTrigger) {
+  public void uploadDestination(String destination) {
     //String iceberg_table = map(destination);
 
     // Read DF with Schema if schema enabled and exists in the event message

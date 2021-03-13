@@ -86,43 +86,27 @@ public class S3JsonConsumer extends AbstractConsumer {
   }
 
   @Override
-  public void uploadDestination(String destination, String uploadTrigger) {
-    int poolSize = threadPool.getPoolSize();
-    int active = threadPool.getActiveCount();
-    long submitted = threadPool.getTaskCount();
-    long completed = threadPool.getCompletedTaskCount();
-
-    LOGGER.info("Upload poolSize:{}, active:{}, waiting:{}, total submitted:{}, total completed:{}, not completed:{}",
-        poolSize,
-        active,
-        poolSize - active, submitted,
-        completed, submitted - completed);
-    // use thread pool to limit parallel runs
-    Thread uploadThread = new Thread(() -> {
-      Thread.currentThread().setName("s3json-" + uploadTrigger + "-upload-" + Thread.currentThread().getId());
-
-      String s3File = map(destination) + "/" + UUID.randomUUID() + ".json";
-      BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
-      if (tempFile == null) {
-        return;
-      }
-      LOGGER.info("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket, tempFile.getFile().getAbsolutePath(),
-          destination, s3File);
-      final PutObjectRequest putRecord = PutObjectRequest.builder()
-          .bucket(bucket)
-          .key(s3File)
-          .build();
-      s3Client.putObject(putRecord, RequestBody.fromFile(tempFile.getFile().toPath()));
-      tempFile.getFile().delete();
-      LOGGER.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
-
-    });
-    threadPool.submit(uploadThread);
+  public void uploadDestination(String destination) {
+    String s3File = map(destination) + "/" + UUID.randomUUID() + ".json";
+    BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
+    if (tempFile == null) {
+      return;
+    }
+    LOGGER.info("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket, tempFile.getFile().getAbsolutePath(),
+        destination, s3File);
+    final PutObjectRequest putRecord = PutObjectRequest.builder()
+        .bucket(bucket)
+        .key(s3File)
+        .build();
+    s3Client.putObject(putRecord, RequestBody.fromFile(tempFile.getFile().toPath()));
+    tempFile.getFile().delete();
+    LOGGER.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
   }
 
   @Override
   public void close() throws IOException {
     this.stopTimerUpload();
+    this.stopUploadQueue();
     cache.close();
   }
 }

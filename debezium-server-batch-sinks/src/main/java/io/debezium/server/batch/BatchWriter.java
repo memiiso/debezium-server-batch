@@ -15,7 +15,7 @@ import java.util.ArrayList;
 
 public interface BatchWriter {
 
-  void uploadDestination(String destination, String uploadTrigger);
+  void uploadDestination(String destination);
 
   void close() throws IOException;
 
