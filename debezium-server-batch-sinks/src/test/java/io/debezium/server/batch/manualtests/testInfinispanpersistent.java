@@ -8,9 +8,6 @@
 
 package io.debezium.server.batch.manualtests;
 
-
-import io.debezium.server.batch.common.TestUtil;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,8 +19,9 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.manager.DefaultCacheManager;
 
-public class testInfinispanpersistent extends TestUtil {
+import io.debezium.server.batch.common.TestUtil;
 
+public class testInfinispanpersistent extends TestUtil {
 
   public static void main(String[] args) {
     testInfinispanpersistent mytest = new testInfinispanpersistent();
@@ -32,31 +30,39 @@ public class testInfinispanpersistent extends TestUtil {
 
   public void run() {
     ConfigurationBuilder builder = new ConfigurationBuilder();
-    GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-        .cacheContainer().statistics(true)
-        .metrics().gauges(true).histograms(true)
-        .jmx().enable()
-        .shutdown().hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
-        .build();
+    GlobalConfiguration globalConfig =
+        new GlobalConfigurationBuilder()
+            .cacheContainer()
+            .statistics(true)
+            .metrics()
+            .gauges(true)
+            .histograms(true)
+            .jmx()
+            .enable()
+            .shutdown()
+            .hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
+            .build();
 
     DefaultCacheManager cm = new DefaultCacheManager(globalConfig);
-
 
     if (false) {
       builder.simpleCache(true).statistics().enable();
     }
     builder
-        .statistics().enable()
+        .statistics()
+        .enable()
         // The cache passivation is one of the powerful features of Infinispan.
-        // By combining passivation and eviction, we can create a cache that doesn't occupy a lot of memory,
+        // By combining passivation and eviction, we can create a cache that doesn't occupy a lot of
+        // memory,
         // without losing information.
         // https://www.baeldung.com/infinispan#4-passivation-cache
-        //.memory().evictionType(EvictionType.COUNT).size(1)
+        // .memory().evictionType(EvictionType.COUNT).size(1)
         .memory()
         .maxCount(125)
         // PersistenceConfigurationBuilder
         .persistence()
-        // see https://infinispan.org/docs/dev/titles/configuring/configuring.html#passivation_behavior
+        // see
+        // https://infinispan.org/docs/dev/titles/configuring/configuring.html#passivation_behavior
         // Passivation enabled
         // Infinispan adds data to persistent storage only when it evicts data from memory.
         // Passivation disabled
@@ -64,13 +70,15 @@ public class testInfinispanpersistent extends TestUtil {
         .passivation(false)
         // Adds a single file cache store.. Local (non-shared) file store
         .addSingleFileStore()
-        // If true, when the cache starts, data stored in the cache store will be pre-loaded into memory.
+        // If true, when the cache starts, data stored in the cache store will be pre-loaded into
+        // memory.
         .preload(true)
         // local cache file, not shared
         .shared(false)
         // is this needed ?
         .fetchPersistentState(true)
-        // If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be applied to the cache store.
+        // If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be
+        // applied to the cache store.
         // This means that the cache store could become out of sync with the cache.
         .ignoreModifications(false)
         // If true, purges this cache store when it starts up.
@@ -78,15 +86,16 @@ public class testInfinispanpersistent extends TestUtil {
         // Sets a location on disk where the store can write.
         .location("./cache")
         .statistics()
-        .enable()
-    ;
-
+        .enable();
 
     // init cacheRowCounter if cache is restarted
     System.out.println("{1}" + cm.getCacheConfigurationNames());
     for (String destination : cm.getCacheConfigurationNames()) {
-      System.out.println("Loaded-1 {} records from cache for destination:{}" + cm.getCache(destination).size()
-          + "-- " + destination);
+      System.out.println(
+          "Loaded-1 {} records from cache for destination:{}"
+              + cm.getCache(destination).size()
+              + "-- "
+              + destination);
     }
 
     cm.createCache("test", builder.build());
@@ -94,19 +103,22 @@ public class testInfinispanpersistent extends TestUtil {
     // init cacheRowCounter if cache is restarted
     System.out.println("{2}" + cm.getCacheConfigurationNames());
     for (String destination : cm.getCacheConfigurationNames()) {
-      System.out.println("Loaded-2 {} records from cache for destination:{}" + cm.getCache(destination).size()
-          + "-- " + destination);
+      System.out.println(
+          "Loaded-2 {} records from cache for destination:{}"
+              + cm.getCache(destination).size()
+              + "-- "
+              + destination);
     }
     ConcurrentHashMap<String, Integer> cacheRowCounter = new ConcurrentHashMap<>();
 
     Instant start = Instant.now();
     for (int i = 0; i < 1000; i++) {
-      cm.getCache("test").put(randomString(randomInt(31, 32)), randomString(randomInt(5300, 14300)));
+      cm.getCache("test")
+          .put(randomString(randomInt(31, 32)), randomString(randomInt(5300, 14300)));
       cm.getCache("test2").put(randomString(randomInt(31, 32)), randomString(randomInt(11, 22)));
       cacheRowCounter.put("test2", cacheRowCounter.getOrDefault("test2", 0) + 1);
-      //System.out.println("Cache Size: " + cm.getCache("test2").size());
+      // System.out.println("Cache Size: " + cm.getCache("test2").size());
     }
-
 
     System.out.println("Cache Size: " + cm.getCache("test2").size());
     Cache<Object, Object> cache = cm.getCache("test2");
@@ -128,7 +140,9 @@ public class testInfinispanpersistent extends TestUtil {
 
     System.out.println("Cache Size: " + cm.getCache("test2").size());
 
-    System.out.println("Stat:getCurrentNumberOfEntriesInMemory " + cm.getStats().getCurrentNumberOfEntriesInMemory());
+    System.out.println(
+        "Stat:getCurrentNumberOfEntriesInMemory "
+            + cm.getStats().getCurrentNumberOfEntriesInMemory());
     System.out.println("Stat:getDataMemoryUsed " + cm.getStats().getDataMemoryUsed());
     System.out.println("Stat:getOffHeapMemoryUsed " + cm.getStats().getOffHeapMemoryUsed());
 
@@ -137,8 +151,5 @@ public class testInfinispanpersistent extends TestUtil {
     System.out.println("Cache Size: " + cm.getCache("test2").size());
     System.out.println("Cache Size: " + cm.getCache("test").size());
     System.out.println("Execution time in seconds: " + interval.getSeconds());
-
   }
-
-
 }

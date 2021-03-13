@@ -8,8 +8,6 @@
 
 package io.debezium.server.batch.cache;
 
-import io.debezium.engine.ChangeEvent;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,29 +19,32 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.debezium.engine.ChangeEvent;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
  *
  * @author Ismail Simsek
  */
-
 @Dependent
 @Alternative
 public class MemoryCache extends AbstractCache {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(MemoryCache.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MemoryCache.class);
   Map<String, ConcurrentHashMap<String, Object>> cacheManager = new ConcurrentHashMap<>();
 
   public MemoryCache() {
     super();
-    LOGGER.info("Using MemoryCache (ConcurrentHashMap) as in memory cache");
+    LOG.info("Using MemoryCache (ConcurrentHashMap) as in memory cache");
   }
 
   private ConcurrentHashMap<String, Object> getDestinationCache(String destination) {
@@ -58,8 +59,8 @@ public class MemoryCache extends AbstractCache {
       ConcurrentHashMap<String, Object> cache = this.getDestinationCache(destination);
       final String key = UUID.randomUUID().toString();
       cache.putIfAbsent(key, record.value());
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Cache.append key:'{}' val:{}", key, record.value());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Cache.append key:'{}' val:{}", key, record.value());
       }
     }
   }
@@ -69,17 +70,20 @@ public class MemoryCache extends AbstractCache {
 
     // serialize receiving and luploading records. to prevent out of memory issues
     synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object())) {
-      //collect only event values
-      Map<String, Object> destinationEventVals = records.stream()
-          .collect(
-              // in case of conflict keep existing
-              Collectors.toMap(x -> UUID.randomUUID().toString(), ChangeEvent::value, (existing, replacement) -> existing)
-          );
+      // collect only event values
+      Map<String, Object> destinationEventVals =
+          records.stream()
+              .collect(
+                  // in case of conflict keep existing
+                  Collectors.toMap(
+                      x -> UUID.randomUUID().toString(),
+                      ChangeEvent::value,
+                      (existing, replacement) -> existing));
       ConcurrentHashMap<String, Object> cache = this.getDestinationCache(destination);
 
-      if (LOGGER.isTraceEnabled()) {
+      if (LOG.isTraceEnabled()) {
         for (Map.Entry<String, Object> e : destinationEventVals.entrySet()) {
-          LOGGER.trace("Cache.appendAll key:'{}' val:{}", e.getKey(), e.getValue().toString());
+          LOG.trace("Cache.appendAll key:'{}' val:{}", e.getKey(), e.getValue().toString());
         }
       }
 
@@ -91,14 +95,14 @@ public class MemoryCache extends AbstractCache {
 
   @Override
   public void close() throws IOException {
-    LOGGER.info("Closing cache");
+    LOG.info("Closing cache");
     for (String c : this.getCaches()) {
-      LOGGER.info("For destination:{} {} unsent record discarded", c, this.getDestinationCache(c).size());
+      LOG.info(
+          "For destination:{} {} unsent record discarded", c, this.getDestinationCache(c).size());
     }
   }
 
   public BatchJsonlinesFile getJsonLines(String destination) {
-
 
     synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object())) {
       JsonNode schema = null;
@@ -114,12 +118,14 @@ public class MemoryCache extends AbstractCache {
 
           // this could happen if multiple threads reading and removing data
           if (val == null) {
-            LOGGER.debug("Cache.getJsonLines Null Value returned for key:'{}' destination:'{}'! " +
-                    "skipping the entry!",
-                e.getKey(), destination);
+            LOG.debug(
+                "Cache.getJsonLines Null Value returned for key:'{}' destination:'{}'! "
+                    + "skipping the entry!",
+                e.getKey(),
+                destination);
             continue;
           }
-          LOGGER.trace("Cache.getJsonLines key:'{}' val:{}", e.getKey(), getString(val));
+          LOG.trace("Cache.getJsonLines key:'{}' val:{}", e.getKey(), getString(val));
 
           if (isFirst) {
             schema = this.getJsonSchema(val);
@@ -130,14 +136,15 @@ public class MemoryCache extends AbstractCache {
             final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
             final String valData = mapper.writeValueAsString(valNode) + System.lineSeparator();
 
-            if (LOGGER.isTraceEnabled()) {
-              LOGGER.trace("Cache.getJsonLines key:'{}' val Json Node:{}", e.getKey(), valNode.toString());
-              LOGGER.trace("Cache.getJsonLines key:'{}' val String:{}", e.getKey(), valData);
+            if (LOG.isTraceEnabled()) {
+              LOG.trace(
+                  "Cache.getJsonLines key:'{}' val Json Node:{}", e.getKey(), valNode.toString());
+              LOG.trace("Cache.getJsonLines key:'{}' val String:{}", e.getKey(), valData);
             }
 
             fos.write(valData.getBytes(StandardCharsets.UTF_8));
           } catch (IOException ioe) {
-            LOGGER.error("Failed writing record to file", ioe);
+            LOG.error("Failed writing record to file", ioe);
             fos.close();
             throw new UncheckedIOException(ioe);
           }
@@ -158,7 +165,6 @@ public class MemoryCache extends AbstractCache {
 
       return new BatchJsonlinesFile(tempFile, schema);
     }
-
   }
 
   @Override
@@ -170,8 +176,4 @@ public class MemoryCache extends AbstractCache {
   public Set<String> getCaches() {
     return cacheManager.keySet();
   }
-
 }
-
-
-

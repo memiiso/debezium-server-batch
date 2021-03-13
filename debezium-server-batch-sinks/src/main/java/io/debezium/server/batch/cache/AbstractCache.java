@@ -8,25 +8,26 @@
 
 package io.debezium.server.batch.cache;
 
-import io.debezium.DebeziumException;
-import io.debezium.engine.ChangeEvent;
-import io.debezium.serde.DebeziumSerdes;
-import io.debezium.server.batch.BatchCache;
-import io.debezium.server.batch.BatchUtil;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.debezium.DebeziumException;
+import io.debezium.engine.ChangeEvent;
+import io.debezium.serde.DebeziumSerdes;
+import io.debezium.server.batch.BatchCache;
+import io.debezium.server.batch.BatchUtil;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -35,13 +36,17 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractCache implements BatchCache, AutoCloseable {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractCache.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractCache.class);
   // deserializer
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final Deserializer<JsonNode> valDeserializer;
   protected final ObjectMapper mapper = new ObjectMapper();
-  protected static final ConcurrentHashMap<String, Object> cacheUpdateLock = new ConcurrentHashMap<>();
-  final Integer batchRowLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
+  protected static final ConcurrentHashMap<String, Object> cacheUpdateLock =
+      new ConcurrentHashMap<>();
+  final Integer batchRowLimit =
+      ConfigProvider.getConfig()
+          .getOptionalValue("debezium.sink.batch.row-limit", Integer.class)
+          .orElse(500);
 
   public AbstractCache() {
     valSerde.configure(Collections.emptyMap(), false);
@@ -99,7 +104,7 @@ public abstract class AbstractCache implements BatchCache, AutoCloseable {
       }
 
     } catch (Exception e) {
-      LOGGER.debug("Failed to extract schema from event", e);
+      LOG.debug("Failed to extract schema from event", e);
     }
 
     return null;
@@ -115,6 +120,3 @@ public abstract class AbstractCache implements BatchCache, AutoCloseable {
     throw new UnsupportedOperationException("Not implemented!");
   }
 }
-
-
-

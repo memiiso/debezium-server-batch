@@ -22,6 +22,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.types.StructType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -32,12 +34,13 @@ import org.apache.spark.sql.types.StructType;
 @Dependent
 @Default
 public class SparkConsumer extends AbstractSparkConsumer {
+    private static final Logger LOG = LoggerFactory.getLogger(SparkConsumer.class);
 
   public SparkConsumer() {
     super();
 
-    LOGGER.info("Starting Spark Consumer({})", this.getClass().getName());
-    LOGGER.info("Spark save format is '{}'", saveFormat);
+    LOG.info("Starting Spark Consumer({})", this.getClass().getName());
+    LOG.info("Spark save format is '{}'", saveFormat);
   }
 
   @Override
@@ -46,28 +49,28 @@ public class SparkConsumer extends AbstractSparkConsumer {
     // upload different destinations parallel but same destination serial
     BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
     if (tempFile == null) {
-      LOGGER.debug("No data to upload for destination: {}", destination);
+      LOG.debug("No data to upload for destination: {}", destination);
       return;
     }
     // Read DF with Schema if schema enabled and exists in the event message
     StructType dfSchema = BatchUtil.getSparkDfSchema(tempFile.getSchema());
 
-    if (LOGGER.isTraceEnabled()) {
+    if (LOG.isTraceEnabled()) {
       final String fileName = tempFile.getFile().getName();
       try (BufferedReader br = new BufferedReader(new FileReader(tempFile.getFile().getAbsolutePath()))) {
         String line;
         while ((line = br.readLine()) != null) {
-          LOGGER.trace("SparkConsumer.uploadDestination Json file:{} line val:{}", fileName, line);
+          LOG.trace("SparkConsumer.uploadDestination Json file:{} line val:{}", fileName, line);
         }
       } catch (Exception e) {
-        LOGGER.warn("Exception happened during debug logging!", e);
+        LOG.warn("Exception happened during debug logging!", e);
       }
     }
 
     if (dfSchema != null) {
-      LOGGER.debug("Reading data with schema definition. Schema:\n{}", dfSchema);
+      LOG.debug("Reading data with schema definition. Schema:\n{}", dfSchema);
     } else {
-      LOGGER.debug("Reading data without schema definition");
+      LOG.debug("Reading data without schema definition");
     }
 
     String s3File = map(destination);
@@ -79,7 +82,7 @@ public class SparkConsumer extends AbstractSparkConsumer {
           .mode(SaveMode.Append)
           .format(saveFormat)
           .save(bucket + "/" + s3File);
-      LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, " +
+      LOG.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, " +
               "cache size(est): {} saved to:'{}'",
           df.count(),
           dfSchema != null,
@@ -89,9 +92,9 @@ public class SparkConsumer extends AbstractSparkConsumer {
           s3File);
     }
 
-    if (LOGGER.isTraceEnabled()) {
+    if (LOG.isTraceEnabled()) {
       df.toJavaRDD().foreach(x ->
-          LOGGER.trace("SparkConsumer.uploadDestination row val:{}", x.toString())
+          LOG.trace("SparkConsumer.uploadDestination row val:{}", x.toString())
       );
     }
     df.unpersist();

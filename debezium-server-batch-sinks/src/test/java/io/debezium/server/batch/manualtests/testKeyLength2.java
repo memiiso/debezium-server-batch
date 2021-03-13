@@ -8,9 +8,6 @@
 
 package io.debezium.server.batch.manualtests;
 
-
-import io.debezium.server.batch.common.TestUtil;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,8 +16,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 
-public class testKeyLength2 extends TestUtil {
+import io.debezium.server.batch.common.TestUtil;
 
+public class testKeyLength2 extends TestUtil {
 
   public static void main(String[] args) {
     testKeyLength2 mytest = new testKeyLength2();
@@ -37,8 +35,9 @@ public class testKeyLength2 extends TestUtil {
     Instant start = Instant.now();
     int dummy = 0;
     for (int i = 0; i < 100000; i++) {
-      cm.getCache("test2").put(randomString(randomInt(31, 32)), randomString(randomInt(2300, 4300)));
-      //dummy = cm.getCache("test2").size()*2;
+      cm.getCache("test2")
+          .put(randomString(randomInt(31, 32)), randomString(randomInt(2300, 4300)));
+      // dummy = cm.getCache("test2").size()*2;
       cacheRowCounter.put("test2", cacheRowCounter.getOrDefault("test2", 0) + 1);
       dummy = (i + 2) * 2;
     }
@@ -53,8 +52,5 @@ public class testKeyLength2 extends TestUtil {
     Instant end = Instant.now();
     Duration interval = Duration.between(start, end);
     System.out.println("Execution time in seconds: " + interval.getSeconds());
-
   }
-
-
 }

@@ -8,14 +8,14 @@
 
 package io.debezium.server.batch.infinispan.threading;
 
-import io.quarkus.test.junit.QuarkusTestProfile;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import io.quarkus.test.junit.QuarkusTestProfile;
+
 public class TestCacheLocalThreadingProfile implements QuarkusTestProfile {
 
-  //This method allows us to override configuration properties.
+  // This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
@@ -26,7 +26,7 @@ public class TestCacheLocalThreadingProfile implements QuarkusTestProfile {
     config.put("debezium.sink.batch.time-limit", "30");
     config.put("debezium.source.max.batch.size", "1254");
     config.put("debezium.source.poll.interval.ms", "10");
-// ==================== SINK = CACHE ====================
+    // ==================== SINK = CACHE ====================
     config.put("debezium.sink.batch.cache.memory-maxcount", "1254");
     config.put("debezium.sink.batch.cache-store", "simple");
     config.put("debezium.sink.batch.cache.use-batch-append", "true");

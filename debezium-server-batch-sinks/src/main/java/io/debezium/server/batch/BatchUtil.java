@@ -8,10 +8,11 @@
 
 package io.debezium.server.batch;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.spark.sql.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * @author Ismail Simsek
  */
 public class BatchUtil {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchUtil.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BatchUtil.class);
 
   public static StructType getSparkDfSchema(JsonNode eventSchema) {
 
@@ -34,59 +35,77 @@ public class BatchUtil {
     if (eventSchema.has("field")) {
       schemaName = eventSchema.get("field").textValue();
     }
-    LOGGER.debug("Converting Schema of: {}::{}", schemaName, schemaType);
+    LOG.debug("Converting Schema of: {}::{}", schemaName, schemaType);
 
     for (JsonNode jsonSchemaFieldNode : eventSchema.get("fields")) {
       String fieldName = jsonSchemaFieldNode.get("field").textValue();
       String fieldType = jsonSchemaFieldNode.get("type").textValue();
-      LOGGER.debug("Processing Field: {}.{}::{}", schemaName, fieldName, fieldType);
+      LOG.debug("Processing Field: {}.{}::{}", schemaName, fieldName, fieldType);
       // for all the debezium data types please see org.apache.kafka.connect.data.Schema;
       switch (fieldType) {
         case "int8":
         case "int16":
         case "int32":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.IntegerType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.IntegerType, true, Metadata.empty()));
           break;
         case "int64":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.LongType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.LongType, true, Metadata.empty()));
           break;
         case "float8":
         case "float16":
         case "float32":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.FloatType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.FloatType, true, Metadata.empty()));
           break;
         case "float64":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.DoubleType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.DoubleType, true, Metadata.empty()));
           break;
         case "boolean":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.BooleanType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.BooleanType, true, Metadata.empty()));
           break;
         case "string":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.StringType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.StringType, true, Metadata.empty()));
           break;
         case "bytes":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.BinaryType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.BinaryType, true, Metadata.empty()));
           break;
         case "array":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, new ArrayType(), true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(new StructField(fieldName, new ArrayType(), true, Metadata.empty()));
           break;
         case "map":
-          sparkSchema = sparkSchema.add(new StructField(fieldName, new MapType(), true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(new StructField(fieldName, new MapType(), true, Metadata.empty()));
           break;
         case "struct":
           // recursive call
           StructType subSchema = BatchUtil.getSparkDfSchema(jsonSchemaFieldNode);
-          sparkSchema = sparkSchema.add(new StructField(fieldName, subSchema, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(new StructField(fieldName, subSchema, true, Metadata.empty()));
           break;
         default:
           // default to String type
-          sparkSchema = sparkSchema.add(new StructField(fieldName, DataTypes.StringType, true, Metadata.empty()));
+          sparkSchema =
+              sparkSchema.add(
+                  new StructField(fieldName, DataTypes.StringType, true, Metadata.empty()));
           break;
       }
     }
 
     return sparkSchema;
-
   }
 
   public static boolean hasSchema(JsonNode jsonNode) {
@@ -95,5 +114,4 @@ public class BatchUtil {
         && jsonNode.get("schema").has("fields")
         && jsonNode.get("schema").get("fields").isArray();
   }
-
 }

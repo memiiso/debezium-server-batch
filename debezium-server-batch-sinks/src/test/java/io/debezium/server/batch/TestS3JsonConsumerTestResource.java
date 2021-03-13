@@ -8,17 +8,17 @@
 
 package io.debezium.server.batch;
 
-import io.quarkus.test.junit.QuarkusTestProfile;
+import static io.debezium.server.batch.BatchTestConfigSource.S3_BUCKET;
+import static io.debezium.server.batch.BatchTestConfigSource.S3_REGION;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.debezium.server.batch.ConfigSource.S3_BUCKET;
-import static io.debezium.server.batch.ConfigSource.S3_REGION;
+import io.quarkus.test.junit.QuarkusTestProfile;
 
 public class TestS3JsonConsumerTestResource implements QuarkusTestProfile {
 
-  //This method allows us to override configuration properties.
+  // This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();

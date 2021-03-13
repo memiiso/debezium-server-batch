@@ -8,14 +8,14 @@
 
 package io.debezium.server.batch.infinispan.cacheperformance;
 
-import io.quarkus.test.junit.QuarkusTestProfile;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import io.quarkus.test.junit.QuarkusTestProfile;
+
 public class TestInfinispanCache2TestResource implements QuarkusTestProfile {
 
-  //This method allows us to override configuration properties.
+  // This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();

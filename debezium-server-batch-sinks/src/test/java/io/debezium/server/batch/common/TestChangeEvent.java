@@ -8,10 +8,10 @@
 
 package io.debezium.server.batch.common;
 
+import org.apache.kafka.connect.source.SourceRecord;
+
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.RecordChangeEvent;
-
-import org.apache.kafka.connect.source.SourceRecord;
 
 public class TestChangeEvent<K, V> implements ChangeEvent<K, V>, RecordChangeEvent<V> {
 
@@ -51,6 +51,12 @@ public class TestChangeEvent<K, V> implements ChangeEvent<K, V>, RecordChangeEve
 
   @Override
   public String toString() {
-    return "EmbeddedEngineChangeEvent [key=" + key + ", value=" + value + ", sourceRecord=" + sourceRecord + "]";
+    return "EmbeddedEngineChangeEvent [key="
+        + key
+        + ", value="
+        + value
+        + ", sourceRecord="
+        + sourceRecord
+        + "]";
   }
 }

@@ -25,13 +25,14 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 public class TestDatabase implements QuarkusTestResourceLifecycleManager {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TestDatabase.class);
+
   public static final String POSTGRES_USER = "postgres";
   public static final String POSTGRES_PASSWORD = "postgres";
   public static final String POSTGRES_DBNAME = "postgres";
   public static final String POSTGRES_IMAGE = "debezium/example-postgres:1.4";
   public static final String POSTGRES_HOST = "localhost";
   public static final Integer POSTGRES_PORT_DEFAULT = 5432;
-  private static final Logger LOGGER = LoggerFactory.getLogger(TestDatabase.class);
   public static Integer POSTGRES_PORT_MAPPED;
 
   private GenericContainer<?> container;
@@ -45,7 +46,7 @@ public class TestDatabase implements QuarkusTestResourceLifecycleManager {
       st.execute(query);
       con.close();
     } catch (Exception e) {
-      LOGGER.error(query);
+      LOG.error(query);
       throw e;
     }
 

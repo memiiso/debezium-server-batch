@@ -8,9 +8,6 @@
 
 package io.debezium.server.batch.manualtests;
 
-
-import io.debezium.server.batch.common.TestUtil;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -27,8 +24,9 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 
-public class testDataRemoval extends TestUtil {
+import io.debezium.server.batch.common.TestUtil;
 
+public class testDataRemoval extends TestUtil {
 
   public static void main(String[] args) {
     testDataRemoval mytest = new testDataRemoval();
@@ -37,12 +35,18 @@ public class testDataRemoval extends TestUtil {
 
   public void run() {
     ConfigurationBuilder builder = new ConfigurationBuilder();
-    GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-        .cacheContainer().statistics(true)
-        .metrics().gauges(true).histograms(true)
-        .jmx().enable()
-        .shutdown().hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
-        .build();
+    GlobalConfiguration globalConfig =
+        new GlobalConfigurationBuilder()
+            .cacheContainer()
+            .statistics(true)
+            .metrics()
+            .gauges(true)
+            .histograms(true)
+            .jmx()
+            .enable()
+            .shutdown()
+            .hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
+            .build();
 
     DefaultCacheManager cm = new DefaultCacheManager(globalConfig);
     int rownumber = 100013;
@@ -57,9 +61,12 @@ public class testDataRemoval extends TestUtil {
       System.out.println("Using Rocksdb");
       Properties props = new Properties();
       props.put("database.max_background_compactions", "12");
-      //props.put("data.write_buffer_size", "512MB");
-      builder.statistics().enable()
-          .unsafe().unreliableReturnValues(false)
+      // props.put("data.write_buffer_size", "512MB");
+      builder
+          .statistics()
+          .enable()
+          .unsafe()
+          .unreliableReturnValues(false)
           // PersistenceConfigurationBuilder
           .persistence()
           .addStore(RocksDBStoreConfigurationBuilder.class)
@@ -67,14 +74,15 @@ public class testDataRemoval extends TestUtil {
           .expiredLocation("rocksdb/expired")
           .properties(props)
           .shared(false)
-          // If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be applied to the cache store.
+          // If true, any operation that modifies the cache (put, remove, clear, store...etc) won't
+          // be applied to the cache store.
           // This means that the cache store could become out of sync with the cache.
           .ignoreModifications(false)
           // If true, purges this cache store when it starts up.
           .purgeOnStartup(true)
           // Batching
-          .invocationBatching().enable(true)
-      ;
+          .invocationBatching()
+          .enable(true);
     } else {
       System.out.println("Using Local Cache");
       // 339, enabled: 345, 355
@@ -83,8 +91,8 @@ public class testDataRemoval extends TestUtil {
           .addSingleFileStore()
           .purgeOnStartup(true)
           .location("./cache")
-          .invocationBatching().enable(true)
-      ;
+          .invocationBatching()
+          .enable(true);
     }
     // rocksdb 31,32,35
     // local 27,27,27
@@ -96,9 +104,12 @@ public class testDataRemoval extends TestUtil {
     // init cacheRowCounter if cache is restarted
     System.out.println("{2}" + cm.getCacheConfigurationNames());
     for (String destination : cm.getCacheConfigurationNames()) {
-      System.out.println("Loaded " + cm.getCache(destination).size() + " records from cache for destination:" + destination);
+      System.out.println(
+          "Loaded "
+              + cm.getCache(destination).size()
+              + " records from cache for destination:"
+              + destination);
     }
-
 
     Instant start = Instant.now();
     for (int i = 0; i < rownumber; i++) {
@@ -107,12 +118,15 @@ public class testDataRemoval extends TestUtil {
       cache3.put(randomString(randomInt(31, 32)), randomString(randomInt(5300, 14300)));
     }
 
-    System.out.println("Stat:getCurrentNumberOfEntriesInMemory " + cm.getStats().getCurrentNumberOfEntriesInMemory());
+    System.out.println(
+        "Stat:getCurrentNumberOfEntriesInMemory "
+            + cm.getStats().getCurrentNumberOfEntriesInMemory());
     System.out.println("Cache Size - test: " + cache1.size());
     System.out.println("Cache Size - test2: " + cache2.size());
     System.out.println("Cache Size - test3: " + cache3.size());
 
-    System.out.println("Execution time of PUT seconds: " + Duration.between(start, Instant.now()).getSeconds());
+    System.out.println(
+        "Execution time of PUT seconds: " + Duration.between(start, Instant.now()).getSeconds());
 
     String tmp_hash = null;
     // 1111111
@@ -124,13 +138,16 @@ public class testDataRemoval extends TestUtil {
     }
     System.out.println("ignore uuid " + tmp_hash);
     cache1.endBatch(true);
-    System.out.println("Removal Execution time remove1 in seconds: " + Duration.between(start, Instant.now()).getSeconds());
+    System.out.println(
+        "Removal Execution time remove1 in seconds: "
+            + Duration.between(start, Instant.now()).getSeconds());
     // 2222222
     start = Instant.now();
-    Map<Object, Object> streamData2 = cache2.entrySet().parallelStream()
-        .timeout(5, TimeUnit.MINUTES)
-        .limit(rownumber)
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    Map<Object, Object> streamData2 =
+        cache2.entrySet().parallelStream()
+            .timeout(5, TimeUnit.MINUTES)
+            .limit(rownumber)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     cache2.startBatch();
     for (Object k : cache2.keySet()) {
       Object val = cache2.remove(k);
@@ -138,7 +155,9 @@ public class testDataRemoval extends TestUtil {
     }
     System.out.println("ignore uuid " + tmp_hash);
     cache2.endBatch(true);
-    System.out.println("Removal Execution time remove2 in seconds: " + Duration.between(start, Instant.now()).getSeconds());
+    System.out.println(
+        "Removal Execution time remove2 in seconds: "
+            + Duration.between(start, Instant.now()).getSeconds());
 
     // 3333333
     start = Instant.now();
@@ -146,20 +165,20 @@ public class testDataRemoval extends TestUtil {
     cache3.entrySet().parallelStream()
         .timeout(5, TimeUnit.MINUTES)
         .limit(rownumber)
-        .forEach(e -> {
-          Object val = cache3.remove(e.getKey());
-          final String tmp_hash2 = DigestUtils.md5Hex((String) val);
-        })
-    ;
+        .forEach(
+            e -> {
+              Object val = cache3.remove(e.getKey());
+              final String tmp_hash2 = DigestUtils.md5Hex((String) val);
+            });
     cache3.endBatch(true); // fastest
 
     System.out.println("ignore uuid " + "tmp_hash2");
-    System.out.println("Removal Execution time remove3 in seconds: " + Duration.between(start, Instant.now()).getSeconds());
+    System.out.println(
+        "Removal Execution time remove3 in seconds: "
+            + Duration.between(start, Instant.now()).getSeconds());
 
     System.out.println("Cache Size - test: " + cache1.size());
     System.out.println("Cache Size - test2: " + cache2.size());
     System.out.println("Cache Size - test3: " + cache3.size());
-
   }
-
 }

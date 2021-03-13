@@ -8,7 +8,9 @@
 
 package io.debezium.server.batch.infinispan.cachetypes;
 
-import io.debezium.server.batch.ConfigSource;
+import org.junit.jupiter.api.Test;
+
+import io.debezium.server.batch.BatchTestConfigSource;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.TestDatabase;
 import io.debezium.server.batch.common.TestS3Minio;
@@ -17,10 +19,9 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
-import org.junit.jupiter.api.Test;
-
 /**
- * Integration test that verifies basic reading from PostgreSQL database and writing to s3 destination.
+ * Integration test that verifies basic reading from PostgreSQL database and writing to s3
+ * destination.
  *
  * @author Ismail Simsek
  */
@@ -30,10 +31,9 @@ import org.junit.jupiter.api.Test;
 @TestProfile(TestCacheSimpleProfile.class)
 public class TestCacheSimple extends BaseSparkTest {
 
-
   static {
-    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
+    Testing.Files.delete(BatchTestConfigSource.OFFSET_STORE_PATH);
+    Testing.Files.createTestingFile(BatchTestConfigSource.OFFSET_STORE_PATH);
   }
 
   @Test
@@ -41,5 +41,4 @@ public class TestCacheSimple extends BaseSparkTest {
     createDummyPerformanceTable();
     loadDataToDummyPerformanceTable(100000);
   }
-
 }

@@ -8,23 +8,29 @@
 
 package io.debezium.server.batch;
 
-import io.debezium.serde.DebeziumSerdes;
-import io.debezium.util.Testing;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
+
+import org.apache.kafka.common.serialization.Serde;
+import org.apache.spark.sql.types.StructType;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
-class TestBatchUtil {
+import io.debezium.serde.DebeziumSerdes;
+import io.debezium.util.Testing;
+
+class BatchUtilTest {
 
   final String serdeWithSchema = Testing.Files.readResourceAsString("json/serde-with-schema.json");
-  final String unwrapWithSchema = Testing.Files.readResourceAsString("json/unwrap-with-schema.json");
+  final String unwrapWithSchema =
+      Testing.Files.readResourceAsString("json/unwrap-with-schema.json");
 
   public StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
@@ -39,7 +45,10 @@ class TestBatchUtil {
   public void testSimpleSchema() throws JsonProcessingException {
     StructType s = getEventSparkDfSchema(unwrapWithSchema);
     assertNotNull(s);
-    assertTrue(s.catalogString().contains("id:int,order_date:int,purchaser:int,quantity:int,product_id:int,__op:string"));
+    assertTrue(
+        s.catalogString()
+            .contains(
+                "id:int,order_date:int,purchaser:int,quantity:int,product_id:int,__op:string"));
   }
 
   @Test
@@ -55,7 +64,8 @@ class TestBatchUtil {
     // testing Debezium deserializer
     final Serde<JsonNode> valueSerde = DebeziumSerdes.payloadJson(JsonNode.class);
     valueSerde.configure(Collections.emptyMap(), false);
-    JsonNode deserializedData = valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
+    JsonNode deserializedData =
+        valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
     System.out.println(deserializedData.getClass().getSimpleName());
     System.out.println(deserializedData.has("payload"));
     assertEquals(deserializedData.getClass().getSimpleName(), "ObjectNode");
@@ -66,9 +76,9 @@ class TestBatchUtil {
     assertFalse(deserializedData.has("schema"));
 
     valueSerde.configure(Collections.singletonMap("from.field", "schema"), false);
-    JsonNode deserializedSchema = valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
+    JsonNode deserializedSchema =
+        valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
     System.out.println(deserializedSchema);
     assertFalse(deserializedSchema.has("schema"));
   }
-
 }

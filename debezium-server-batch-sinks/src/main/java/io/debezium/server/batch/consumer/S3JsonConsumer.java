@@ -21,6 +21,7 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -41,21 +42,26 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @Dependent
 @Alternative
 public class S3JsonConsumer extends AbstractConsumer {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(S3JsonConsumer.class);
-  protected static final String bucket = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3" +
-      ".bucket-name", String.class).orElse("My-S3-Bucket");
-  protected static final Boolean useInstanceProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink" +
-      ".batch.s3.credentials.use-instance-cred", Boolean.class)
-      .orElse(false);
-  final static String region = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3.region",
-      String.class).orElse("eu-central-1");
-  final static String endpointOverride = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3" +
-      ".endpoint-override", String.class).orElse("false");
-  private final S3Client s3Client;
+    private static final Logger LOG = LoggerFactory.getLogger(S3JsonConsumer.class);
 
-  final static Integer uploadThreads =
-      ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.upload-threads", Integer.class).orElse(16);
-  ThreadPoolExecutor threadPool;
+    private final S3Client s3Client;
+
+    @ConfigProperty(name = "debezium.sink.batch.s3.bucket-name", defaultValue = "My-S3-Bucket")
+    String bucket;
+
+    @ConfigProperty(name = "debezium.sink.batch.s3.credentials.use-instance-cred", defaultValue = "false")
+    Boolean useInstanceProfile;
+
+    @ConfigProperty(name = "debezium.sink.batch.s3.region", defaultValue = "eu-central-1")
+    String region;
+
+    @ConfigProperty(name = "debezium.sink.batch.s3.endpoint-override", defaultValue = "false")
+    String endpointOverride;
+
+    @ConfigProperty(name = "debezium.sink.batch.upload-threads", defaultValue = "16")
+    Integer uploadThreads;
+
+    ThreadPoolExecutor threadPool;
 
 
   public S3JsonConsumer()
@@ -65,10 +71,10 @@ public class S3JsonConsumer extends AbstractConsumer {
     final AwsCredentialsProvider credProvider;
     if (useInstanceProfile) {
       credProvider = InstanceProfileCredentialsProvider.create();
-      LOGGER.info("Using Instance Profile Credentials For S3");
+      LOG.info("Using Instance Profile Credentials For S3");
     } else {
       credProvider = DefaultCredentialsProvider.create();
-      LOGGER.info("Using DefaultCredentialsProvider For S3");
+      LOG.info("Using DefaultCredentialsProvider For S3");
     }
     S3ClientBuilder clientBuilder = S3Client.builder()
         .region(Region.of(region))
@@ -76,13 +82,13 @@ public class S3JsonConsumer extends AbstractConsumer {
     // used for testing, using minio
     if (!endpointOverride.trim().equalsIgnoreCase("false")) {
       clientBuilder.endpointOverride(new URI(endpointOverride));
-      LOGGER.info("Overriding S3 Endpoint with:{}", endpointOverride);
+      LOG.info("Overriding S3 Endpoint with:{}", endpointOverride);
     }
     this.s3Client = clientBuilder.build();
     threadPool = new ThreadPoolExecutor(uploadThreads, uploadThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
-    LOGGER.info("Using default S3Client '{}'", this.s3Client);
-    LOGGER.info("Starting S3 Batch Consumer({})", this.getClass().getName());
+    LOG.info("Using default S3Client '{}'", this.s3Client);
+    LOG.info("Starting S3 Batch Consumer({})", this.getClass().getName());
   }
 
   @Override
@@ -92,7 +98,7 @@ public class S3JsonConsumer extends AbstractConsumer {
     if (tempFile == null) {
       return;
     }
-    LOGGER.info("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket, tempFile.getFile().getAbsolutePath(),
+    LOG.info("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket, tempFile.getFile().getAbsolutePath(),
         destination, s3File);
     final PutObjectRequest putRecord = PutObjectRequest.builder()
         .bucket(bucket)
@@ -100,7 +106,7 @@ public class S3JsonConsumer extends AbstractConsumer {
         .build();
     s3Client.putObject(putRecord, RequestBody.fromFile(tempFile.getFile().toPath()));
     tempFile.getFile().delete();
-    LOGGER.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
+    LOG.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
   }
 
   @Override

@@ -28,13 +28,15 @@ import org.slf4j.LoggerFactory;
 @Dependent
 public class ConcurrentThreadPoolExecutor {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentThreadPoolExecutor.class);
-  protected static final ConcurrentHashMap<String, ThreadPoolExecutor> threadPools = new ConcurrentHashMap<>();
+  private static final Logger LOG = LoggerFactory.getLogger(ConcurrentThreadPoolExecutor.class);
+
+  private static final ConcurrentHashMap<String, ThreadPoolExecutor> threadPools = new ConcurrentHashMap<>();
+
   final static Integer uploadThreadNum =
       ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.upload-threads", Integer.class).orElse(1);
 
   public ConcurrentThreadPoolExecutor() {
-    LOGGER.info("Setting concurrent upload number to {}", uploadThreadNum);
+    LOG.info("Setting concurrent upload number to {}", uploadThreadNum);
   }
 
   public ThreadPoolExecutor get(String destination) {
@@ -54,7 +56,7 @@ public class ConcurrentThreadPoolExecutor {
     long submitted = threadPool.getTaskCount();
     long completed = threadPool.getCompletedTaskCount();
 
-    LOGGER.info("Destination:{} upload poolSize:{}, active:{}, waiting:{}, " +
+    LOG.info("Destination:{} upload poolSize:{}, active:{}, waiting:{}, " +
             "total submitted:{}, total completed:{}, not completed:{}", destination,
         poolSize,
         active,
@@ -67,22 +69,22 @@ public class ConcurrentThreadPoolExecutor {
       try {
         this.shutdownQueue(entry.getKey(), entry.getValue());
       } catch (Exception e) {
-        LOGGER.warn("Exception during upload queue shutdown, destination '{}'", entry.getKey(), e);
+        LOG.warn("Exception during upload queue shutdown, destination '{}'", entry.getKey(), e);
       }
     }
   }
 
   public void shutdownQueue(String destination, ThreadPoolExecutor threadPool) throws InterruptedException {
 
-    LOGGER.debug("Closing upload queue of destination:{}", destination);
+    LOG.debug("Closing upload queue of destination:{}", destination);
     threadPool.shutdown();
     if (!threadPool.awaitTermination(3, TimeUnit.MINUTES)) {
-      LOGGER.warn("Upload queue of destination '{}' did not terminate in the specified time(3m).", destination);
+      LOG.warn("Upload queue of destination '{}' did not terminate in the specified time(3m).", destination);
       List<Runnable> droppedTasks = threadPool.shutdownNow();
-      LOGGER.warn("Upload queue of destination '{}' was abruptly shut down." +
+      LOG.warn("Upload queue of destination '{}' was abruptly shut down." +
           " {} tasks will not be executed.", destination, droppedTasks.size());
     } else {
-      LOGGER.debug("Closed upload queue of destination '{}'", destination);
+      LOG.debug("Closed upload queue of destination '{}'", destination);
     }
   }
 

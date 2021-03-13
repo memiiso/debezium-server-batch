@@ -20,6 +20,8 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException;
 import org.apache.spark.sql.types.StructType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -30,14 +32,16 @@ import org.apache.spark.sql.types.StructType;
 @Alternative
 public class SparkIcebergConsumer extends AbstractSparkConsumer {
 
-  final String saveFormat = "iceberg";
-  protected SparkSessionCatalog sparkSessionCatalog;
+    private static final Logger LOG = LoggerFactory.getLogger(SparkIcebergConsumer.class);
+
+    private final String saveFormat = "iceberg";
+    private SparkSessionCatalog sparkSessionCatalog;
 
   public SparkIcebergConsumer() {
     super();
 
-    LOGGER.info("Starting Spark Iceberg Consumer({})", this.getClass().getName());
-    LOGGER.info("Spark save format is '{}'", saveFormat);
+    LOG.info("Starting Spark Iceberg Consumer({})", this.getClass().getName());
+    LOG.info("Spark save format is '{}'", saveFormat);
   }
 
 
@@ -49,15 +53,15 @@ public class SparkIcebergConsumer extends AbstractSparkConsumer {
 
     BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
     if (tempFile == null) {
-      LOGGER.info("No data received to upload for destination: {}", destination);
+      LOG.info("No data received to upload for destination: {}", destination);
       return;
     }
 
     StructType dfSchema = BatchUtil.getSparkDfSchema(tempFile.getSchema());
 
     if (dfSchema != null) {
-      LOGGER.info("Reading data with schema");
-      LOGGER.debug("Schema:\n{}", tempFile.getSchema());
+      LOG.info("Reading data with schema");
+      LOG.debug("Schema:\n{}", tempFile.getSchema());
     }
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(tempFile.getFile().getAbsolutePath());
@@ -74,7 +78,7 @@ public class SparkIcebergConsumer extends AbstractSparkConsumer {
     }
 
     df.unpersist();
-    LOGGER.info("Saved data to:'{}' rows:{}", destination, df.count());
+    LOG.info("Saved data to:'{}' rows:{}", destination, df.count());
   }
 
 }

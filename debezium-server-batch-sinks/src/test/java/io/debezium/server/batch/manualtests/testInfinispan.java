@@ -8,8 +8,6 @@
 
 package io.debezium.server.batch.manualtests;
 
-import io.debezium.server.batch.common.TestUtil;
-
 import java.time.Duration;
 import java.time.Instant;
 
@@ -17,8 +15,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 
-public class testInfinispan extends TestUtil {
+import io.debezium.server.batch.common.TestUtil;
 
+public class testInfinispan extends TestUtil {
 
   public static void main(String[] args) {
     testInfinispan mytest = new testInfinispan();
@@ -33,7 +32,8 @@ public class testInfinispan extends TestUtil {
 
     Instant start = Instant.now();
     for (int i = 0; i < 100013; i++) {
-      cm.getCache("test").put(randomString(randomInt(31, 32)), randomString(randomInt(5300, 14300)));
+      cm.getCache("test")
+          .put(randomString(randomInt(31, 32)), randomString(randomInt(5300, 14300)));
     }
 
     System.out.println("Cache Size - test: " + cm.getCache("test").size());
@@ -46,6 +46,4 @@ public class testInfinispan extends TestUtil {
     System.out.println("Cache Size - test: " + cm.getCache("test").size());
     System.out.println("Execution time in seconds: " + interval.getSeconds());
   }
-
-
 }

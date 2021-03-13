@@ -20,30 +20,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class testSpark {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(testSpark.class);
+  private static final Logger LOG = LoggerFactory.getLogger(testSpark.class);
 
   public static void main(String[] args) {
     Logger LOGGER = LoggerFactory.getLogger(testSpark.class);
 
-    org.apache.kafka.connect.json.JsonDeserializer test = new org.apache.kafka.connect.json.JsonDeserializer();
+    org.apache.kafka.connect.json.JsonDeserializer test =
+        new org.apache.kafka.connect.json.JsonDeserializer();
 
-    SparkSession spark = SparkSession
-        .builder()
-        .appName("Java Spark SQL basic example")
-        .config("spark.master", "local")
-        .config("spark.io.compression.codec", "snappy")
-        .getOrCreate();
+    SparkSession spark =
+        SparkSession.builder()
+            .appName("Java Spark SQL basic example")
+            .config("spark.master", "local")
+            .config("spark.io.compression.codec", "snappy")
+            .getOrCreate();
     tesbadrecord(spark);
-
   }
 
   private static void tesschema2(SparkSession spark) {
 
-    StructType schemaUntyped = new StructType()
-        .add("a", "int")
-        .add("b", "string")
-        .add("c", "string")
-        .add("d", "string");
+    StructType schemaUntyped =
+        new StructType().add("a", "int").add("b", "string").add("c", "string").add("d", "string");
 
     String data = "{\"id\":100, \"first_name\":\"Edward\"}";
     data += "\n{\"id\":1001, \"first_name\":\"Edward\"}";
@@ -53,21 +50,20 @@ public class testSpark {
     Dataset<String> _df = spark.createDataset(jsonData, Encoders.STRING());
     Dataset<Row> df = spark.read().schema(schemaUntyped).json(_df);
     df.printSchema();
-    LOGGER.info(String.valueOf(df.count()));
-    LOGGER.info(String.valueOf(df.describe()));
-    LOGGER.info(Arrays.toString(df.columns()));
-    LOGGER.info("---------------------------------------------------------------");
-
+    LOG.info(String.valueOf(df.count()));
+    LOG.info(String.valueOf(df.describe()));
+    LOG.info(Arrays.toString(df.columns()));
+    LOG.info("---------------------------------------------------------------");
   }
-
 
   private static void tesbadrecord(SparkSession spark) {
 
-    Dataset<Row> df = spark.read()
-        .option("badRecordsPath", "/tmp/badRecordsPath")
-        .schema("a int, b int")
-        .json("/Users/ismailsimsek/Desktop/badJson");
+    Dataset<Row> df =
+        spark
+            .read()
+            .option("badRecordsPath", "/tmp/badRecordsPath")
+            .schema("a int, b int")
+            .json("/Users/ismailsimsek/Desktop/badJson");
     df.show();
   }
-
 }

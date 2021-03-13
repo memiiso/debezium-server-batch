@@ -8,20 +8,18 @@
 
 package io.debezium.server.batch.manualtests;
 
-
 import io.debezium.server.batch.common.TestUtil;
 
 public class testHazelcast extends TestUtil {
-
 
   public static int testsize = 100000;
 
   public static void main(String[] args) {
     testHazelcast mytest = new testHazelcast();
-    //mytest.runInfinispan();
-    //mytest.runHazelcast();
+    // mytest.runInfinispan();
+    // mytest.runHazelcast();
   }
-/*
+  /*
   public void runHazelcast() {
 
     NearCacheConfig cfg = new NearCacheConfig();

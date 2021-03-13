@@ -8,10 +8,10 @@
 
 package io.debezium.server.batch;
 
-import io.debezium.engine.ChangeEvent;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import io.debezium.engine.ChangeEvent;
 
 public interface BatchWriter {
 
@@ -21,6 +21,6 @@ public interface BatchWriter {
 
   void append(String destination, ChangeEvent<Object, Object> record) throws InterruptedException;
 
-  void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) throws InterruptedException;
-
+  void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records)
+      throws InterruptedException;
 }
