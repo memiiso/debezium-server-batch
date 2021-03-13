@@ -283,7 +283,7 @@ public class InfinispanCache extends AbstractCache {
         return null;
       }
 
-      cacheRowCounter.merge(destination, -batchRowLimit, Integer::sum);
+      cacheRowCounter.merge(destination, -processedNumber, Integer::sum);
       return new BatchJsonlinesFile(tempFile, schema);
     }
   }

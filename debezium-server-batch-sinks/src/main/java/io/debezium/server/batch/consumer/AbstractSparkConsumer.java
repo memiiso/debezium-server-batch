@@ -11,7 +11,7 @@ package io.debezium.server.batch.consumer;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -37,9 +37,8 @@ public abstract class AbstractSparkConsumer extends AbstractConsumer {
       .setMaster("local[*]");
   protected final String saveFormat = ConfigProvider.getConfig().getOptionalValue("debezium.sink.sparkbatch.save-format", String.class).orElse("json");
   protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
-  final static Integer uploadThreads =
+  final static Integer uploadThreadNum =
       ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.upload-threads", Integer.class).orElse(1);
-  // ExecutorService threadPool = Executors.newFixedThreadPool(10);
   protected final ThreadPoolExecutor threadPool;
   protected final SparkSession spark;
 
@@ -53,7 +52,9 @@ public abstract class AbstractSparkConsumer extends AbstractConsumer {
         .getOrCreate();
 
     LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
-    threadPool = new ThreadPoolExecutor(uploadThreads, uploadThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+    LOGGER.info("Setting concurrent upload number to {}", uploadThreadNum);
+    threadPool = new ThreadPoolExecutor(uploadThreadNum, uploadThreadNum, 0L, TimeUnit.SECONDS,
+        new SynchronousQueue<>(), new ThreadPoolExecutor.DiscardPolicy());
 
   }
 

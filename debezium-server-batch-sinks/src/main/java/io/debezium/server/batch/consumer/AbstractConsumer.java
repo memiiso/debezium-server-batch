@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -44,7 +43,6 @@ public abstract class AbstractConsumer implements BatchWriter {
   final Integer batchLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
   final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
   protected static final String cacheStore = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache", String.class).orElse("infinispan");
-  protected ThreadPoolExecutor threadPool;
 
   public AbstractConsumer() {
     setupTimerUpload();
