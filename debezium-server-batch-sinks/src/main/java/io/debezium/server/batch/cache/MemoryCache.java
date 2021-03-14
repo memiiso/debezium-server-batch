@@ -8,6 +8,8 @@
 
 package io.debezium.server.batch.cache;
 
+import io.debezium.engine.ChangeEvent;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,16 +21,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.debezium.engine.ChangeEvent;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -54,7 +52,7 @@ public class MemoryCache extends AbstractCache {
   @Override
   public void append(String destination, ChangeEvent<Object, Object> record) {
 
-    // serialize receiving and luploading records. to prevent out of memory issues
+    // serialize receiving and uploading records. to prevent out of memory issues
     synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object())) {
       ConcurrentHashMap<String, Object> cache = this.getDestinationCache(destination);
       final String key = UUID.randomUUID().toString();
@@ -68,7 +66,7 @@ public class MemoryCache extends AbstractCache {
   @Override
   public void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) {
 
-    // serialize receiving and luploading records. to prevent out of memory issues
+    // serialize receiving and uploading records. to prevent out of memory issues
     synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object())) {
       // collect only event values
       Map<String, Object> destinationEventVals =

@@ -14,6 +14,7 @@
         <groupId>io.debezium</groupId>
         <artifactId>debezium-server-batch</artifactId>
         <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>debezium-server-batch-sinks</artifactId>
