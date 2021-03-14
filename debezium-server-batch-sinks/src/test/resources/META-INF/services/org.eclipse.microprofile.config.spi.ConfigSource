@@ -14,4 +14,4 @@
 #  */
 #
 
-io.debezium.server.batch.BatchTestConfigSource
+io.debezium.server.batch.ConfigSource

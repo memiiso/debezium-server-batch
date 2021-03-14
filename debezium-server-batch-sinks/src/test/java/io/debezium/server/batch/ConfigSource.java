@@ -8,21 +8,21 @@
 
 package io.debezium.server.batch;
 
+import io.debezium.server.TestConfigSource;
+import io.debezium.server.batch.common.TestDatabase;
+import io.debezium.server.batch.common.TestS3Minio;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.kafka.connect.runtime.standalone.StandaloneConfig;
 
-import io.debezium.server.TestConfigSource;
-import io.debezium.server.batch.common.TestDatabase;
-import io.debezium.server.batch.common.TestS3Minio;
-
-public class BatchTestConfigSource extends TestConfigSource {
+public class ConfigSource extends TestConfigSource {
 
   public static final String S3_REGION = "us-east-1";
   public static final String S3_BUCKET = "test-bucket";
 
-  public BatchTestConfigSource() {
+  public ConfigSource() {
     Map<String, String> s3Test = new HashMap<>();
 
     // common sink conf

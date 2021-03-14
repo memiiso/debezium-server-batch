@@ -8,13 +8,13 @@
 
 package io.debezium.server.batch;
 
-import static io.debezium.server.batch.BatchTestConfigSource.S3_BUCKET;
-import static io.debezium.server.batch.BatchTestConfigSource.S3_REGION;
+import io.quarkus.test.junit.QuarkusTestProfile;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import io.quarkus.test.junit.QuarkusTestProfile;
+import static io.debezium.server.batch.ConfigSource.S3_BUCKET;
+import static io.debezium.server.batch.ConfigSource.S3_REGION;
 
 public class TestS3TestResource implements QuarkusTestProfile {
 

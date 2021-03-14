@@ -8,8 +8,8 @@
 
 package io.debezium.server.batch.common;
 
-import static io.debezium.server.batch.common.TestUtil.randomInt;
-import static io.debezium.server.batch.common.TestUtil.randomString;
+import io.debezium.server.batch.ConfigSource;
+import io.debezium.util.Testing;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
@@ -19,9 +19,8 @@ import org.apache.spark.sql.functions;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.BeforeAll;
-
-import io.debezium.server.batch.BatchTestConfigSource;
-import io.debezium.util.Testing;
+import static io.debezium.server.batch.common.TestUtil.randomInt;
+import static io.debezium.server.batch.common.TestUtil.randomString;
 
 /**
  * Integration test that verifies basic reading from PostgreSQL database and writing to s3
@@ -36,8 +35,8 @@ public class BaseSparkTest {
   protected static SparkSession spark;
 
   static {
-    Testing.Files.delete(BatchTestConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(BatchTestConfigSource.OFFSET_STORE_PATH);
+    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
+    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
   }
 
   @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
