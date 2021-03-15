@@ -9,6 +9,7 @@
 package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.BatchUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -122,7 +123,7 @@ public class MemoryCache extends AbstractCache {
           LOGGER.trace("Cache.getJsonLines key:'{}' val:{}", e.getKey(), getString(val));
 
           if (isFirst) {
-            schema = this.getJsonSchema(val);
+            schema = BatchUtil.getJsonSchemaNode(getString(val));
             isFirst = false;
           }
 

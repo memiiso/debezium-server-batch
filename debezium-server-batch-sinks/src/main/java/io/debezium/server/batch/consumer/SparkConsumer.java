@@ -70,7 +70,7 @@ public class SparkConsumer extends AbstractSparkConsumer {
       LOGGER.debug("Reading data without schema definition");
     }
 
-    String s3File = map(destination);
+    String s3File = s3StreamNameMapper.map(destination);
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(tempFile.getFile().getAbsolutePath());
     // serialize same destination uploads

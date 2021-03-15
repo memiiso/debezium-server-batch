@@ -87,7 +87,7 @@ public class S3JsonConsumer extends AbstractConsumer {
 
   @Override
   public void uploadDestination(String destination) {
-    String s3File = map(destination) + "/" + UUID.randomUUID() + ".json";
+    String s3File = s3StreamNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
     BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
     if (tempFile == null) {
       return;

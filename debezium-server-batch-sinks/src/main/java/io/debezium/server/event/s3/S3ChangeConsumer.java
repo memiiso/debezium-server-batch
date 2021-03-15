@@ -12,20 +12,20 @@ import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.server.BaseChangeConsumer;
+import io.debezium.server.batch.S3StreamNameMapper;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
+import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -61,15 +61,8 @@ public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngi
   String bucket;
   @ConfigProperty(name = "debezium.sink.s3.region", defaultValue = "eu-central-1")
   String region;
-
-  public String map(String destination, LocalDateTime batchTime) {
-    Objects.requireNonNull(destination, "destination Cannot be Null");
-    Objects.requireNonNull(batchTime, "batchTime Cannot be Null");
-    String fname = batchTime.toEpochSecond(ZoneOffset.UTC) + UUID.randomUUID().toString() + "." + valueFormat;
-    String partiton = "year=" + batchTime.getYear() + "/month=" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0') + "/day="
-        + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
-    return objectKeyPrefix + destination + "/" + partiton + "/" + fname;
-  }
+  @Inject
+  protected S3StreamNameMapper s3StreamNameMapper;
 
   @PostConstruct
   void connect() throws URISyntaxException {
@@ -108,9 +101,10 @@ public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngi
       throws InterruptedException {
     LocalDateTime batchTime = LocalDateTime.now();
     for (ChangeEvent<Object, Object> record : records) {
+      final String fname = batchTime.toEpochSecond(ZoneOffset.UTC) + UUID.randomUUID().toString() + "." + valueFormat;
       PutObjectRequest putRecord = PutObjectRequest.builder()
           .bucket(bucket)
-          .key(this.map(record.destination(), batchTime))
+          .key(s3StreamNameMapper.map(record.destination()) + "/" + fname)
           .build();
       LOGGER.debug("Uploading s3File bucket:{} key:{} endpint:{}", putRecord.bucket(), putRecord.key(), endpointOverride);
       s3client.putObject(putRecord, RequestBody.fromBytes(getBytes(record.value())));

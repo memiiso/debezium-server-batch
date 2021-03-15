@@ -12,7 +12,6 @@ import io.debezium.DebeziumException;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.batch.BatchCache;
-import io.debezium.server.batch.BatchUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,22 +86,6 @@ public abstract class AbstractCache implements BatchCache, AutoCloseable {
   @Override
   public BatchJsonlinesFile getJsonLines(String destination) {
     throw new UnsupportedOperationException("Not implemented!");
-  }
-
-  protected JsonNode getJsonSchema(Object eventVal) {
-
-    try {
-      JsonNode jsonNode = new ObjectMapper().readTree(getString(eventVal));
-
-      if (BatchUtil.hasSchema(jsonNode)) {
-        return jsonNode.get("schema");
-      }
-
-    } catch (Exception e) {
-      LOGGER.debug("Failed to extract schema from event", e);
-    }
-
-    return null;
   }
 
   @Override

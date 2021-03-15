@@ -9,6 +9,7 @@
 package io.debezium.server.batch;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.spark.sql.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +95,23 @@ public class BatchUtil {
         && jsonNode.has("schema")
         && jsonNode.get("schema").has("fields")
         && jsonNode.get("schema").get("fields").isArray();
+  }
+
+
+  public static JsonNode getJsonSchemaNode(String eventVal) {
+
+    try {
+      JsonNode jsonNode = new ObjectMapper().readTree(eventVal);
+
+      if (BatchUtil.hasSchema(jsonNode)) {
+        return jsonNode.get("schema");
+      }
+
+    } catch (Exception e) {
+      LOGGER.debug("Failed to extract schema from event", e);
+    }
+
+    return null;
   }
 
 }

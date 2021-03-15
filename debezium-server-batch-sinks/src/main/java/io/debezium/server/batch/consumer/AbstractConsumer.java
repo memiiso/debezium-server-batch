@@ -11,17 +11,15 @@ package io.debezium.server.batch.consumer;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.BatchCache;
 import io.debezium.server.batch.BatchWriter;
+import io.debezium.server.batch.S3StreamNameMapper;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,37 +32,20 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractConsumer implements BatchWriter {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractConsumer.class);
-  protected static final Boolean partitionData =
-      ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.objectkey-partition", Boolean.class).orElse(false);
   @Inject
   protected BatchCache cache;
-  final String objectKeyPrefix = ConfigProvider.getConfig().getValue("debezium.sink.batch.objectkey-prefix", String.class);
   final Integer batchInterval = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.time-limit", Integer.class).orElse(600);
   final Integer batchUploadRowLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
   final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
   protected static final String cacheStore = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache", String.class).orElse("infinispan");
   @Inject
   protected ConcurrentThreadPoolExecutor threadPool;
+  @Inject
+  protected S3StreamNameMapper s3StreamNameMapper;
 
   public AbstractConsumer() {
     setupTimerUpload();
     LOGGER.info("Batch row limit set to {}", batchUploadRowLimit);
-  }
-
-  protected String getPartition() {
-    final LocalDateTime batchTime = LocalDateTime.now();
-    return "year=" + batchTime.getYear() + "/month=" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0') + "/day="
-        + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
-  }
-
-  public String map(String destination) {
-    Objects.requireNonNull(destination, "destination Cannot be Null");
-    if (partitionData) {
-      String partitioned = getPartition();
-      return objectKeyPrefix + destination + "/" + partitioned;
-    } else {
-      return objectKeyPrefix + destination;
-    }
   }
 
   @Override

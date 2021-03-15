@@ -22,7 +22,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fest.assertions.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -42,7 +41,6 @@ public class TestSparkConsumer extends BaseSparkTest {
   @Test
   public void simpleUploadTest() {
     Testing.Print.enable();
-    Assertions.assertThat(sinkType.equals("batch"));
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
