@@ -10,8 +10,7 @@ package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.BatchJsonlinesFile;
-import io.debezium.server.batch.consumer.BatchWriter;
-import io.debezium.server.batch.consumer.ConcurrentThreadPoolExecutor;
+import io.debezium.server.batch.writer.BatchWriter;
 
 import java.io.IOException;
 import java.util.List;

@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.consumer;
+package io.debezium.server.batch.writer;
 
 import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.S3StreamNameMapper;
@@ -42,8 +42,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Dependent
 @Alternative
-public class S3JsonConsumer implements BatchWriter {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(S3JsonConsumer.class);
+public class S3JsonWriter implements BatchWriter {
+  protected static final Logger LOGGER = LoggerFactory.getLogger(S3JsonWriter.class);
   protected static final String bucket = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3" +
       ".bucket-name", String.class).orElse("My-S3-Bucket");
   protected static final Boolean useInstanceProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink" +
@@ -62,7 +62,7 @@ public class S3JsonConsumer implements BatchWriter {
   protected S3StreamNameMapper s3StreamNameMapper;
 
 
-  public S3JsonConsumer()
+  public S3JsonWriter()
       throws URISyntaxException {
     super();
 

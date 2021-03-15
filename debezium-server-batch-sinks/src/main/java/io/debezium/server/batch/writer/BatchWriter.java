@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.consumer;
+package io.debezium.server.batch.writer;
 
 import io.debezium.server.batch.BatchJsonlinesFile;
 

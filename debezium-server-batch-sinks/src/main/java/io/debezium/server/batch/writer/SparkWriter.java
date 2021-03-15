@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.consumer;
+package io.debezium.server.batch.writer;
 
 import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.BatchUtil;
@@ -31,9 +31,9 @@ import org.apache.spark.sql.types.StructType;
 
 @Dependent
 @Default
-public class SparkConsumer extends AbstractSparkConsumer {
+public class SparkWriter extends AbstractSparkWriter {
 
-  public SparkConsumer() {
+  public SparkWriter() {
     super();
 
     LOGGER.info("Starting Spark Consumer({})", this.getClass().getName());
@@ -56,7 +56,7 @@ public class SparkConsumer extends AbstractSparkConsumer {
       try (BufferedReader br = new BufferedReader(new FileReader(jsonLinesFile.getFile().getAbsolutePath()))) {
         String line;
         while ((line = br.readLine()) != null) {
-          LOGGER.trace("SparkConsumer.uploadDestination Json file:{} line val:{}", fileName, line);
+          LOGGER.trace("SparkWriter.uploadDestination Json file:{} line val:{}", fileName, line);
         }
       } catch (Exception e) {
         LOGGER.warn("Exception happened during debug logging!", e);
@@ -88,7 +88,7 @@ public class SparkConsumer extends AbstractSparkConsumer {
 
     if (LOGGER.isTraceEnabled()) {
       df.toJavaRDD().foreach(x ->
-          LOGGER.trace("SparkConsumer.uploadDestination row val:{}", x.toString())
+          LOGGER.trace("SparkWriter.uploadDestination row val:{}", x.toString())
       );
     }
     df.unpersist();

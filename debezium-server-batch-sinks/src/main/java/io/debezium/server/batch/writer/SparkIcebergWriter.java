@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.consumer;
+package io.debezium.server.batch.writer;
 
 import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.BatchUtil;
@@ -28,12 +28,12 @@ import org.apache.spark.sql.types.StructType;
  */
 @Dependent
 @Alternative
-public class SparkIcebergConsumer extends AbstractSparkConsumer {
+public class SparkIcebergWriter extends AbstractSparkWriter {
 
   final String saveFormat = "iceberg";
   protected SparkSessionCatalog sparkSessionCatalog;
 
-  public SparkIcebergConsumer() {
+  public SparkIcebergWriter() {
     super();
 
     LOGGER.info("Starting Spark Iceberg Consumer({})", this.getClass().getName());

@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.consumer;
+package io.debezium.server.batch.writer;
 
 import io.debezium.server.batch.S3StreamNameMapper;
 
@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
-public abstract class AbstractSparkConsumer implements BatchWriter {
+public abstract class AbstractSparkWriter implements BatchWriter {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractSparkConsumer.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractSparkWriter.class);
   protected static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
   protected static final String bucket = ConfigProvider.getConfig().getOptionalValue("debezium.sink.sparkbatch.bucket-name",
       String.class).orElse("s3a://My-S3-Bucket");
@@ -40,7 +40,7 @@ public abstract class AbstractSparkConsumer implements BatchWriter {
   @Inject
   protected S3StreamNameMapper s3StreamNameMapper;
 
-  public AbstractSparkConsumer() {
+  public AbstractSparkWriter() {
     super();
     this.initSparkconf();
     LOGGER.info("Creating Spark session");

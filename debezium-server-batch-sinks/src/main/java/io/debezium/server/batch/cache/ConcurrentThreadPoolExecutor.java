@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.consumer;
+package io.debezium.server.batch.cache;
 
 import java.util.List;
 import java.util.Map;

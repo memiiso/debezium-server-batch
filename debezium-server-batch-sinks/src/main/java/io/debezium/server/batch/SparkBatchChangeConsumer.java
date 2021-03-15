@@ -13,7 +13,7 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.consumer.SparkConsumer;
+import io.debezium.server.batch.writer.SparkWriter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,7 +72,7 @@ public class SparkBatchChangeConsumer extends BaseChangeConsumer implements Debe
   private SparkSession spark;
 
   @Inject
-  SparkConsumer batchWriter;
+  SparkWriter batchWriter;
 
   @PreDestroy
   void close() {
