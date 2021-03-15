@@ -49,12 +49,6 @@ public abstract class AbstractConsumer implements BatchWriter {
   }
 
   @Override
-  public void append(String destination, ChangeEvent<Object, Object> record) throws InterruptedException {
-    cache.append(destination, record);
-    this.startUploadIfRowLimitReached(destination);
-  }
-
-  @Override
   public void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) throws InterruptedException {
     cache.appendAll(destination, records);
     this.startUploadIfRowLimitReached(destination);

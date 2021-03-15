@@ -29,7 +29,6 @@ public class TestCacheRocksDbInvocationBatchingTrueProfile implements QuarkusTes
 // ==================== SINK = CACHE ====================
     config.put("debezium.sink.batch.cache.memory-maxcount", "254");
     config.put("debezium.sink.batch.cache-store", "rocksdb");
-    config.put("debezium.sink.batch.cache.use-batch-append", "true");
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
     config.put("debezium.sink.batch.cache.invocation-batching", "true");
     config.put("debezium.sink.batch.cache.max-batch-size", "254");

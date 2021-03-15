@@ -47,9 +47,8 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   @Inject
   @ConfigProperty(name = "debezium.sink.batch.writer")
   String customBatchWriter;
+
   @Inject
-  @ConfigProperty(name = "debezium.sink.batch.cache.use-batch-append", defaultValue = "true")
-  Boolean useBatchAppend;
 
   @PreDestroy
   void close() {
@@ -79,29 +78,21 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
 
-    if (useBatchAppend) {
+    Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
+        .collect(Collectors.groupingBy(
+            ChangeEvent::destination,
+            Collectors.mapping(p -> p,
+                Collectors.toCollection(ArrayList::new))));
 
-
-      Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
-          .collect(Collectors.groupingBy(
-              ChangeEvent::destination,
-              Collectors.mapping(p -> p,
-                  Collectors.toCollection(ArrayList::new))));
-
-      for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destinationEvents : result.entrySet()) {
-        batchWriter.appendAll(destinationEvents.getKey(), destinationEvents.getValue());
-      }
-      // workaround! somehow offset is not saved to file unless we call committer.markProcessed
-      // even its should be saved to file periodically
-      if (!records.isEmpty()) {
-        committer.markProcessed(records.get(0));
-      }
-    } else {
-      for (ChangeEvent<Object, Object> record : records) {
-        batchWriter.append(record.destination(), record);
-        committer.markProcessed(record);
-      }
+    for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destinationEvents : result.entrySet()) {
+      batchWriter.appendAll(destinationEvents.getKey(), destinationEvents.getValue());
     }
+    // workaround! somehow offset is not saved to file unless we call committer.markProcessed
+    // even its should be saved to file periodically
+    if (!records.isEmpty()) {
+      committer.markProcessed(records.get(0));
+    }
+
     committer.markBatchFinished();
   }
 

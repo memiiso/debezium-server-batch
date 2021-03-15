@@ -54,7 +54,6 @@ public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngi
   final String endpointOverride = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.endpoint-override",
       String.class).orElse("false");
   final Boolean useInstanceProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.credentials.use-instance-cred", Boolean.class).orElse(false);
-  final String objectKeyPrefix = ConfigProvider.getConfig().getValue("debezium.sink.s3.objectkey-prefix", String.class);
   final String valueFormat = ConfigProvider.getConfig().getOptionalValue("debezium.format.value", String.class).orElse(Json.class.getSimpleName().toLowerCase());
   S3Client s3client;
   @ConfigProperty(name = "debezium.sink.s3.bucket-name", defaultValue = "My-S3-Bucket")

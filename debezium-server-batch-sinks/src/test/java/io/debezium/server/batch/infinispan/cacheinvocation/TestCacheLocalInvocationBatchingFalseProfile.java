@@ -29,7 +29,6 @@ public class TestCacheLocalInvocationBatchingFalseProfile implements QuarkusTest
 // ==================== SINK = CACHE ====================
     config.put("debezium.sink.batch.cache.memory-maxcount", "254");
     config.put("debezium.sink.batch.cache-store", "local");
-    config.put("debezium.sink.batch.cache.use-batch-append", "false");
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
     config.put("debezium.sink.batch.cache.invocation-batching", "false");
     config.put("debezium.sink.batch.cache.max-batch-size", "254");

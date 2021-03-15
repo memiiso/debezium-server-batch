@@ -19,8 +19,6 @@ public interface BatchCache {
 
   void close() throws IOException;
 
-  void append(String destination, ChangeEvent<Object, Object> record) throws InterruptedException;
-
   void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) throws InterruptedException;
 
   BatchJsonlinesFile getJsonLines(String destination);

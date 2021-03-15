@@ -38,7 +38,6 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.poll.interval.ms", "5");
 
     // cache
-    // s3Test.put("debezium.sink.batch.cache.use-batch-append","false");
     // sparkbatch sink conf
     s3Test.put("debezium.sink.sparkbatch.save-format", "parquet");
     s3Test.put("debezium.sink.sparkbatch.bucket-name", "s3a://" + S3_BUCKET);

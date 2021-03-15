@@ -31,7 +31,6 @@ public class TestCacheSimpleProfile implements QuarkusTestProfile {
     config.put("debezium.sink.batch.cache", "infinispan");
     config.put("debezium.sink.batch.cache.memory-maxcount", "1254");
     config.put("debezium.sink.batch.cache-store", "simple");
-    config.put("debezium.sink.batch.cache.use-batch-append", "true");
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
     config.put("debezium.sink.batch.cache.invocation-batching", "true");
     config.put("debezium.sink.batch.cache.max-batch-size", "1254");
