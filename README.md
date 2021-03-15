@@ -41,7 +41,6 @@ Custom parameters are
 
 ```
 debezium.sink.type=batch
-debezium.sink.batch.writer=s3json
 debezium.sink.batch.s3.region = eu-central-1
 debezium.sink.batch.s3.endpoint-override = http://localhost:9000, default:'false'
 debezium.sink.batch.s3.bucket-name = My-S3-Bucket
@@ -55,7 +54,6 @@ Periodically uploads events using spark
 
 ```
 debezium.sink.type=batch
-debezium.sink.batch.writer=spark
 debezium.sink.sparkbatch.save-format = {json,avro,parquet}
 debezium.sink.sparkbatch.bucket-name = My-S3-Bucket
 debezium.sink.sparkbatch.{spark.prop.param} = xyz-value # passed to spark conf!

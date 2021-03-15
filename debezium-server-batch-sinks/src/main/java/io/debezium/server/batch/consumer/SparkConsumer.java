@@ -8,8 +8,8 @@
 
 package io.debezium.server.batch.consumer;
 
+import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.BatchUtil;
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -41,20 +41,19 @@ public class SparkConsumer extends AbstractSparkConsumer {
   }
 
   @Override
-  public void uploadDestination(String destination) {
+  public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
     Instant start = Instant.now();
     // upload different destinations parallel but same destination serial
-    BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
-    if (tempFile == null) {
+    if (jsonLinesFile == null) {
       LOGGER.debug("No data to upload for destination: {}", destination);
       return;
     }
     // Read DF with Schema if schema enabled and exists in the event message
-    StructType dfSchema = BatchUtil.getSparkDfSchema(tempFile.getSchema());
+    StructType dfSchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getSchema());
 
     if (LOGGER.isTraceEnabled()) {
-      final String fileName = tempFile.getFile().getName();
-      try (BufferedReader br = new BufferedReader(new FileReader(tempFile.getFile().getAbsolutePath()))) {
+      final String fileName = jsonLinesFile.getFile().getName();
+      try (BufferedReader br = new BufferedReader(new FileReader(jsonLinesFile.getFile().getAbsolutePath()))) {
         String line;
         while ((line = br.readLine()) != null) {
           LOGGER.trace("SparkConsumer.uploadDestination Json file:{} line val:{}", fileName, line);
@@ -72,20 +71,18 @@ public class SparkConsumer extends AbstractSparkConsumer {
 
     String s3File = s3StreamNameMapper.map(destination);
 
-    Dataset<Row> df = spark.read().schema(dfSchema).json(tempFile.getFile().getAbsolutePath());
+    Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()
           .mode(SaveMode.Append)
           .format(saveFormat)
           .save(bucket + "/" + s3File);
-      LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, " +
-              "cache size(est): {} saved to:'{}'",
+      LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
           df.count(),
           dfSchema != null,
-          tempFile.getFile().length(),
+          jsonLinesFile.getFile().length(),
           Duration.between(start, Instant.now()),
-          this.cache.getEstimatedCacheSize(destination),
           s3File);
     }
 
@@ -96,10 +93,9 @@ public class SparkConsumer extends AbstractSparkConsumer {
     }
     df.unpersist();
 
-    if (tempFile.getFile() != null && tempFile.getFile().exists()) {
-      tempFile.getFile().delete();
+    if (jsonLinesFile.getFile() != null && jsonLinesFile.getFile().exists()) {
+      jsonLinesFile.getFile().delete();
     }
-    threadPool.logThredPoolStatus(destination);
   }
 
 

@@ -6,19 +6,16 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.consumer;
 
-import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.BatchJsonlinesFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public interface BatchWriter {
 
-  void uploadDestination(String destination);
+  void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile);
 
   void close() throws IOException;
-
-  void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) throws InterruptedException;
 
 }

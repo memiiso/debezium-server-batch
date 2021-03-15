@@ -13,13 +13,14 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
+import io.debezium.server.batch.consumer.SparkConsumer;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -34,11 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.spark.SparkConf;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.StructType;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -73,6 +70,9 @@ public class SparkBatchChangeConsumer extends BaseChangeConsumer implements Debe
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
   private SparkSession spark;
+
+  @Inject
+  SparkConsumer batchWriter;
 
   @PreDestroy
   void close() {
@@ -129,7 +129,8 @@ public class SparkBatchChangeConsumer extends BaseChangeConsumer implements Debe
                 Collectors.toCollection(ArrayList::new))));
 
     for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destinationEvents : result.entrySet()) {
-      this.uploadDestination(destinationEvents.getKey(), destinationEvents.getValue());
+      batchWriter.uploadDestination(destinationEvents.getKey(),
+          getJsonLines(destinationEvents.getKey(), destinationEvents.getValue()));
     }
     // workaround! somehow offset is not saved to file unless we call committer.markProcessed
     // even its should be saved to file periodically
@@ -194,64 +195,6 @@ public class SparkBatchChangeConsumer extends BaseChangeConsumer implements Debe
     }
 
     return new BatchJsonlinesFile(tempFile, schema);
-  }
-
-  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
-    Instant start = Instant.now();
-    // upload different destinations parallel but same destination serial
-    BatchJsonlinesFile tempFile = this.getJsonLines(destination, data);
-    if (tempFile == null) {
-      LOGGER.debug("No data to upload for destination: {}", destination);
-      return;
-    }
-    // Read DF with Schema if schema enabled and exists in the event message
-    StructType dfSchema = BatchUtil.getSparkDfSchema(tempFile.getSchema());
-
-    if (LOGGER.isTraceEnabled()) {
-      final String fileName = tempFile.getFile().getName();
-      try (BufferedReader br = new BufferedReader(new FileReader(tempFile.getFile().getAbsolutePath()))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          LOGGER.trace("SparkConsumer.uploadDestination Json file:{} line val:{}", fileName, line);
-        }
-      } catch (Exception e) {
-        LOGGER.warn("Exception happened during debug logging!", e);
-      }
-    }
-
-    if (dfSchema != null) {
-      LOGGER.debug("Reading data with schema definition. Schema:\n{}", dfSchema);
-    } else {
-      LOGGER.debug("Reading data without schema definition");
-    }
-
-    String s3File = s3StreamNameMapper.map(destination);
-
-    Dataset<Row> df = spark.read().schema(dfSchema).json(tempFile.getFile().getAbsolutePath());
-    // serialize same destination uploads
-    synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-      df.write()
-          .mode(SaveMode.Append)
-          .format(saveFormat)
-          .save(bucket + "/" + s3File);
-      LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
-          df.count(),
-          dfSchema != null,
-          tempFile.getFile().length(),
-          Duration.between(start, Instant.now()),
-          s3File);
-    }
-
-    if (LOGGER.isTraceEnabled()) {
-      df.toJavaRDD().foreach(x ->
-          LOGGER.trace("SparkConsumer.uploadDestination row val:{}", x.toString())
-      );
-    }
-    df.unpersist();
-
-    if (tempFile.getFile() != null && tempFile.getFile().exists()) {
-      tempFile.getFile().delete();
-    }
   }
 
 }

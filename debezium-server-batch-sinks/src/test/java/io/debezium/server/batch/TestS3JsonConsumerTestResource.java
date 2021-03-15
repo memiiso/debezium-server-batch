@@ -24,7 +24,6 @@ public class TestS3JsonConsumerTestResource implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "batch");
-    config.put("debezium.sink.batch.writer", "s3json");
     config.put("debezium.sink.batch.s3.region", S3_REGION);
     config.put("debezium.sink.batch.s3.endpoint-override", "http://localhost:9000");
     config.put("debezium.sink.batch.s3.bucket-name", "s3a://" + S3_BUCKET);

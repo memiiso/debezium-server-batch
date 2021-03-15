@@ -8,7 +8,8 @@
 
 package io.debezium.server.batch.consumer;
 
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
+import io.debezium.server.batch.BatchJsonlinesFile;
+import io.debezium.server.batch.S3StreamNameMapper;
 
 import java.io.IOException;
 import java.net.URI;
@@ -19,6 +20,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
+import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -40,7 +42,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Dependent
 @Alternative
-public class S3JsonConsumer extends AbstractConsumer {
+public class S3JsonConsumer implements BatchWriter {
   protected static final Logger LOGGER = LoggerFactory.getLogger(S3JsonConsumer.class);
   protected static final String bucket = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3" +
       ".bucket-name", String.class).orElse("My-S3-Bucket");
@@ -56,6 +58,8 @@ public class S3JsonConsumer extends AbstractConsumer {
   final static Integer uploadThreads =
       ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.upload-threads", Integer.class).orElse(16);
   ThreadPoolExecutor threadPool;
+  @Inject
+  protected S3StreamNameMapper s3StreamNameMapper;
 
 
   public S3JsonConsumer()
@@ -86,27 +90,24 @@ public class S3JsonConsumer extends AbstractConsumer {
   }
 
   @Override
-  public void uploadDestination(String destination) {
+  public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
     String s3File = s3StreamNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
-    BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
-    if (tempFile == null) {
+    if (jsonLinesFile == null) {
       return;
     }
-    LOGGER.info("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket, tempFile.getFile().getAbsolutePath(),
+    LOGGER.info("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket, jsonLinesFile.getFile().getAbsolutePath(),
         destination, s3File);
     final PutObjectRequest putRecord = PutObjectRequest.builder()
         .bucket(bucket)
         .key(s3File)
         .build();
-    s3Client.putObject(putRecord, RequestBody.fromFile(tempFile.getFile().toPath()));
-    tempFile.getFile().delete();
+    s3Client.putObject(putRecord, RequestBody.fromFile(jsonLinesFile.getFile().toPath()));
+    jsonLinesFile.getFile().delete();
     LOGGER.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
   }
 
   @Override
   public void close() throws IOException {
-    this.stopTimerUpload();
-    this.stopUploadQueue();
-    cache.close();
+    return;
   }
 }

@@ -6,20 +6,22 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
+import io.debezium.server.batch.BatchJsonlinesFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-public interface BatchCache {
+public interface BatchCacheConsumer {
+
+  void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile);
 
   void close() throws IOException;
 
-  void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) throws InterruptedException;
+  void appendAll(String destination, List<ChangeEvent<Object, Object>> records) throws InterruptedException;
 
   BatchJsonlinesFile getJsonLines(String destination);
 

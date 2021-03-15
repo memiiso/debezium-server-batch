@@ -8,13 +8,14 @@
 
 package io.debezium.server.batch.infinispan.cacheperformance;
 
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
+import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.cache.InfinispanCache;
 import io.debezium.server.batch.common.TestChangeEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.fest.assertions.Assertions;
@@ -39,7 +40,7 @@ class TestInfinispanCache2 {
       final TestChangeEvent<Object, Object> a = new TestChangeEvent<>("key",
           "{\"id\": 1, \"first_name\": \"" + randomString(randomInt(1024, 1524)) + "\"}",
           null);
-      mycache.append(destination, a);
+      mycache.appendAll(destination, List.of(a));
     }
     for (int i = 0; i < (rownumber / rowLimit); i++) {
       BatchJsonlinesFile jsonlines = mycache.getJsonLines(destination);

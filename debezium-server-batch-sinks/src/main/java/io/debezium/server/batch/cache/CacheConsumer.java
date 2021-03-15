@@ -6,18 +6,20 @@
  *
  */
 
-package io.debezium.server.batch.consumer;
+package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.BatchCache;
-import io.debezium.server.batch.BatchWriter;
-import io.debezium.server.batch.S3StreamNameMapper;
+import io.debezium.server.batch.BatchJsonlinesFile;
+import io.debezium.server.batch.consumer.BatchWriter;
+import io.debezium.server.batch.consumer.ConcurrentThreadPoolExecutor;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -29,9 +31,10 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
-public abstract class AbstractConsumer implements BatchWriter {
+@Dependent
+public class CacheConsumer implements BatchCacheConsumer {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractConsumer.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(CacheConsumer.class);
   @Inject
   protected BatchCache cache;
   final Integer batchInterval = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.time-limit", Integer.class).orElse(600);
@@ -40,18 +43,48 @@ public abstract class AbstractConsumer implements BatchWriter {
   protected static final String cacheStore = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache", String.class).orElse("infinispan");
   @Inject
   protected ConcurrentThreadPoolExecutor threadPool;
-  @Inject
-  protected S3StreamNameMapper s3StreamNameMapper;
 
-  public AbstractConsumer() {
+  @Inject
+  BatchWriter batchWriter;
+
+  public CacheConsumer() {
     setupTimerUpload();
     LOGGER.info("Batch row limit set to {}", batchUploadRowLimit);
   }
 
   @Override
-  public void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) throws InterruptedException {
+  public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
+    batchWriter.uploadDestination(destination, jsonLinesFile);
+  }
+
+  @Override
+  public void close() throws IOException {
+    this.stopTimerUpload();
+    this.stopUploadQueue();
+    batchWriter.close();
+    cache.close();
+
+  }
+
+  @Override
+  public void appendAll(String destination, List<ChangeEvent<Object, Object>> records) throws InterruptedException {
     cache.appendAll(destination, records);
     this.startUploadIfRowLimitReached(destination);
+  }
+
+  @Override
+  public BatchJsonlinesFile getJsonLines(String destination) {
+    return cache.getJsonLines(destination);
+  }
+
+  @Override
+  public Integer getEstimatedCacheSize(String destination) {
+    return cache.getEstimatedCacheSize(destination);
+  }
+
+  @Override
+  public Set<String> getCaches() {
+    return cache.getCaches();
   }
 
   private void startUploadIfRowLimitReached(String destination) {
@@ -69,7 +102,7 @@ public abstract class AbstractConsumer implements BatchWriter {
       LOGGER.debug("Batch row limit reached, cache.size > batchLimit {}>={}, starting upload destination:{}",
           cache.getEstimatedCacheSize(destination), batchUploadRowLimit, destination);
 
-      this.uploadDestination(destination);
+      this.uploadDestination(destination, this.cache.getJsonLines(destination));
       LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
     });
     threadPool.submit(destination, uploadThread);
@@ -81,7 +114,7 @@ public abstract class AbstractConsumer implements BatchWriter {
 
       Thread uploadThread = new Thread(() -> {
         Thread.currentThread().setName("spark-timer-upload-" + Thread.currentThread().getId());
-        this.uploadDestination(destination);
+        this.uploadDestination(destination, this.cache.getJsonLines(destination));
         LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
       });
       threadPool.submit(destination, uploadThread);

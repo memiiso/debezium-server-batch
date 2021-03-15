@@ -21,7 +21,6 @@ public class TestCacheLocalThreadingProfile implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "batch");
-    config.put("debezium.sink.batch.writer", "spark");
     config.put("debezium.sink.batch.row-limit", "10000");
     config.put("debezium.sink.batch.time-limit", "30");
     config.put("debezium.source.max.batch.size", "1254");

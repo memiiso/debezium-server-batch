@@ -22,7 +22,6 @@ debezium.source.decimal.handling.mode=double
 # ==================== SINK ====================
 
 debezium.sink.type=batch
-debezium.sink.batch.writer=spark
 debezium.sink.sparkbatch.bucket-name=s3a://my-Bucket
 debezium.sink.sparkbatch.save-format=parquet
 debezium.sink.batch.objectkey-prefix=rawdata/cdc/

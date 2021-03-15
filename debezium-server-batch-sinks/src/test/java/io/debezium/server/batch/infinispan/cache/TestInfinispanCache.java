@@ -9,7 +9,7 @@
 package io.debezium.server.batch.infinispan.cache;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
+import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.cache.InfinispanCache;
 import io.debezium.server.batch.common.TestChangeEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.fest.assertions.Assertions;
@@ -42,12 +43,12 @@ class TestInfinispanCache {
     Assertions.assertThat(0 == mycache.getEstimatedCacheSize(destination));
     ChangeEvent<Object, Object> a = new TestChangeEvent<>("key", "{\"id\": 1, \"first_name\": \"mytest123Value\"}",
         null);
-    mycache.append(destination, a);
+    mycache.appendAll(destination, List.of(a));
     Assertions.assertThat(1 == mycache.getEstimatedCacheSize(destination));
 
     a = new TestChangeEvent<>("key", "{\"id\": 1, \"first_name\": \"mytest2222Value\"}",
         null);
-    mycache.append(destination, a);
+    mycache.appendAll(destination, List.of(a));
     Assertions.assertThat(2 == mycache.getEstimatedCacheSize(destination));
 
     ArrayList<ChangeEvent<Object, Object>> batchData = new ArrayList<>();
@@ -85,7 +86,7 @@ class TestInfinispanCache {
       final TestChangeEvent<Object, Object> a = new TestChangeEvent<>("key",
           "{\"id\": 1, \"first_name\": \"" + randomString(randomInt(5300, 14300)) + "\"}",
           null);
-      mycache.append(destination, a);
+      mycache.appendAll(destination, List.of(a));
     }
     for (int i = 0; i < (rownumber / maxBatchSize); i++) {
       BatchJsonlinesFile jsonlines = mycache.getJsonLines(destination);

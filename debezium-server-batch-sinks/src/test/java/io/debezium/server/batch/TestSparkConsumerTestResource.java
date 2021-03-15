@@ -21,7 +21,6 @@ public class TestSparkConsumerTestResource implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "batch");
-    config.put("debezium.sink.batch.writer", "spark");
     return config;
   }
 }

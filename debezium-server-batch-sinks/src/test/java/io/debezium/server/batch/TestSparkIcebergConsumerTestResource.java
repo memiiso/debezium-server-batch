@@ -23,7 +23,6 @@ public class TestSparkIcebergConsumerTestResource implements QuarkusTestProfile 
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "batch");
-    config.put("debezium.sink.batch.writer", "sparkiceberg");
     config.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
     config.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.type", "hadoop");
     config.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.catalog-impl", "org.apache.iceberg.hadoop.HadoopCatalog");

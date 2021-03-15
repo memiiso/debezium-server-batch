@@ -15,7 +15,6 @@ debezium.source.schema.include.list=inventory
 debezium.sink.iceberg.fs.defaultFS=xyz
 debezium.sink.batch.objectkey.mapper=xyz
 debezium.format.schemas.enable=xyz
-debezium.sink.batch.writer=xyz
 debezium.sink.iceberg.warehouse=xyz
 debezium.transforms=xyz
 

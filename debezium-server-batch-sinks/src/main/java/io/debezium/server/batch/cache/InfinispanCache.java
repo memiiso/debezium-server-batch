@@ -10,6 +10,7 @@ package io.debezium.server.batch.cache;
 
 import io.debezium.DebeziumException;
 import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.BatchUtil;
 
 import java.io.File;
@@ -163,22 +164,7 @@ public class InfinispanCache extends AbstractCache {
   }
 
   @Override
-  public void append(String destination, ChangeEvent<Object, Object> record) {
-    /*synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object()))*/
-    {
-      Cache<Object, Object> cache = this.getDestinationCache(destination);
-      // append record to cache
-      final String key = UUID.randomUUID().toString();
-      cache.put(key, record.value());
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Cache.append key:'{}' val:{}", key, record.value());
-      }
-      cacheRowCounter.merge(destination, 1, Integer::sum);
-    }
-  }
-
-  @Override
-  public void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) {
+  public void appendAll(String destination, List<ChangeEvent<Object, Object>> records) {
     /*synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object()))*/
     {
       //collect only event values
@@ -198,7 +184,6 @@ public class InfinispanCache extends AbstractCache {
       cache.putAll(destinationEventVals);
       cacheRowCounter.merge(destination, destinationEventVals.size(), Integer::sum);
       destinationEventVals.clear();
-      records.clear();
     }
   }
 

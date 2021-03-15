@@ -9,6 +9,7 @@
 package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.BatchUtil;
 
 import java.io.File;
@@ -16,7 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -52,21 +53,7 @@ public class MemoryCache extends AbstractCache {
   }
 
   @Override
-  public void append(String destination, ChangeEvent<Object, Object> record) {
-
-    // serialize receiving and luploading records. to prevent out of memory issues
-    synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object())) {
-      ConcurrentHashMap<String, Object> cache = this.getDestinationCache(destination);
-      final String key = UUID.randomUUID().toString();
-      cache.putIfAbsent(key, record.value());
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("Cache.append key:'{}' val:{}", key, record.value());
-      }
-    }
-  }
-
-  @Override
-  public void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) {
+  public void appendAll(String destination, List<ChangeEvent<Object, Object>> records) {
 
     // serialize receiving and luploading records. to prevent out of memory issues
     synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object())) {

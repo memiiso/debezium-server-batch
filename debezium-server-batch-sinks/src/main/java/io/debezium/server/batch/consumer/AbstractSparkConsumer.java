@@ -8,8 +8,11 @@
 
 package io.debezium.server.batch.consumer;
 
+import io.debezium.server.batch.S3StreamNameMapper;
+
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
@@ -22,7 +25,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
-public abstract class AbstractSparkConsumer extends AbstractConsumer {
+public abstract class AbstractSparkConsumer implements BatchWriter {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractSparkConsumer.class);
   protected static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
@@ -34,6 +37,8 @@ public abstract class AbstractSparkConsumer extends AbstractConsumer {
   protected final String saveFormat = ConfigProvider.getConfig().getOptionalValue("debezium.sink.sparkbatch.save-format", String.class).orElse("json");
   protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
   protected final SparkSession spark;
+  @Inject
+  protected S3StreamNameMapper s3StreamNameMapper;
 
   public AbstractSparkConsumer() {
     super();
@@ -75,11 +80,7 @@ public abstract class AbstractSparkConsumer extends AbstractConsumer {
 
   @Override
   public void close() throws IOException {
-    this.stopTimerUpload();
-    this.stopUploadQueue();
     this.stopSparkSession();
-    cache.close();
-
   }
 
 }

@@ -11,11 +11,11 @@ package io.debezium.server.batch.cache;
 import io.debezium.DebeziumException;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.serde.DebeziumSerdes;
-import io.debezium.server.batch.BatchCache;
+import io.debezium.server.batch.BatchJsonlinesFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -74,12 +74,7 @@ public abstract class AbstractCache implements BatchCache, AutoCloseable {
   }
 
   @Override
-  public void append(String destination, ChangeEvent<Object, Object> record) {
-    throw new UnsupportedOperationException("Not implemented!");
-  }
-
-  @Override
-  public void appendAll(String destination, ArrayList<ChangeEvent<Object, Object>> records) {
+  public void appendAll(String destination, List<ChangeEvent<Object, Object>> records) {
     throw new UnsupportedOperationException("Not implemented!");
   }
 

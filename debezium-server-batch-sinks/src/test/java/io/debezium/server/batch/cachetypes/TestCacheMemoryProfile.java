@@ -21,7 +21,6 @@ public class TestCacheMemoryProfile implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "sparkbatch");
-    config.put("debezium.sink.batch.writer", "spark");
     config.put("debezium.sink.batch.row-limit", "20000");
     config.put("debezium.sink.batch.time-limit", "3000");
     config.put("debezium.source.max.batch.size", "20000");

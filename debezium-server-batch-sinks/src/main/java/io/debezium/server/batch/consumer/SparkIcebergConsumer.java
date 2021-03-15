@@ -8,8 +8,8 @@
 
 package io.debezium.server.batch.consumer;
 
+import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.BatchUtil;
-import io.debezium.server.batch.cache.BatchJsonlinesFile;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
@@ -42,25 +42,23 @@ public class SparkIcebergConsumer extends AbstractSparkConsumer {
 
 
   @Override
-  public void uploadDestination(String destination) {
+  public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
     //String iceberg_table = map(destination);
 
     // Read DF with Schema if schema enabled and exists in the event message
-
-    BatchJsonlinesFile tempFile = this.cache.getJsonLines(destination);
-    if (tempFile == null) {
+    if (jsonLinesFile == null) {
       LOGGER.info("No data received to upload for destination: {}", destination);
       return;
     }
 
-    StructType dfSchema = BatchUtil.getSparkDfSchema(tempFile.getSchema());
+    StructType dfSchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getSchema());
 
     if (dfSchema != null) {
       LOGGER.info("Reading data with schema");
-      LOGGER.debug("Schema:\n{}", tempFile.getSchema());
+      LOGGER.debug("Schema:\n{}", jsonLinesFile.getSchema());
     }
 
-    Dataset<Row> df = spark.read().schema(dfSchema).json(tempFile.getFile().getAbsolutePath());
+    Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
     try {
       // @TODO add database and create get function to clean table name+return table identifier
       df.writeTo("default." + destination.replace(".", "_")).append();
