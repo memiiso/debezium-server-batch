@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
-@Named("batch")
+@Named("cachedbatch")
 @Dependent
 public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
