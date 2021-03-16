@@ -44,7 +44,11 @@ public class MemoryCache extends AbstractCache {
   Map<String, ConcurrentHashMap<String, Object>> cacheManager = new ConcurrentHashMap<>();
 
   public MemoryCache() {
-    super();
+  }
+
+  @Override
+  public void initialize() {
+    super.initialize();
     LOGGER.info("Using MemoryCache (ConcurrentHashMap) as in memory cache");
   }
 

@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.enterprise.context.Dependent;
 
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,11 +30,11 @@ public class ConcurrentThreadPoolExecutor {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentThreadPoolExecutor.class);
   protected static final ConcurrentHashMap<String, ThreadPoolExecutor> threadPools = new ConcurrentHashMap<>();
-  final static Integer uploadThreadNum =
-      ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.upload-threads", Integer.class).orElse(1);
+
+  @ConfigProperty(name = "debezium.sink.batch.destination-upload-threads", defaultValue = "1")
+  Integer uploadThreadNum;
 
   public ConcurrentThreadPoolExecutor() {
-    LOGGER.info("Setting concurrent upload number to {}", uploadThreadNum);
   }
 
   public ThreadPoolExecutor get(String destination) {

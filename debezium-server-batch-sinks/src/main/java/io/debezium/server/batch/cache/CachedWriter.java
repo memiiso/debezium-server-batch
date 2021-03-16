@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,24 +31,34 @@ import org.slf4j.LoggerFactory;
  * @author Ismail Simsek
  */
 @Dependent
-public class CacheConsumer implements BatchCacheConsumer {
+public class CachedWriter implements BatchCachedConsumer {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(CacheConsumer.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(CachedWriter.class);
+
   @Inject
   protected BatchCache cache;
-  final Integer batchInterval = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.time-limit", Integer.class).orElse(600);
-  final Integer batchUploadRowLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
+
+  @ConfigProperty(name = "debezium.sink.batch.time-limit", defaultValue = "600")
+  Integer batchInterval;
+  @ConfigProperty(name = "debezium.sink.batch.row-limit", defaultValue = "10000")
+  Integer batchUploadRowLimit;
   final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
-  protected static final String cacheStore = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache", String.class).orElse("infinispan");
   @Inject
   protected ConcurrentThreadPoolExecutor threadPool;
 
   @Inject
   BatchWriter batchWriter;
 
-  public CacheConsumer() {
-    setupTimerUpload();
+  public CachedWriter() {
+  }
+
+  @Override
+  public void initialize() {
     LOGGER.info("Batch row limit set to {}", batchUploadRowLimit);
+    LOGGER.info("Using '{}' as cache", cache.getClass().getSimpleName());
+    cache.initialize();
+    batchWriter.initialize();
+    setupTimerUpload();
   }
 
   @Override
@@ -62,7 +72,6 @@ public class CacheConsumer implements BatchCacheConsumer {
     this.stopUploadQueue();
     batchWriter.close();
     cache.close();
-
   }
 
   @Override
@@ -102,6 +111,7 @@ public class CacheConsumer implements BatchCacheConsumer {
           cache.getEstimatedCacheSize(destination), batchUploadRowLimit, destination);
 
       this.uploadDestination(destination, this.cache.getJsonLines(destination));
+      threadPool.logThredPoolStatus(destination);
       LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
     });
     threadPool.submit(destination, uploadThread);
@@ -114,6 +124,7 @@ public class CacheConsumer implements BatchCacheConsumer {
       Thread uploadThread = new Thread(() -> {
         Thread.currentThread().setName("spark-timer-upload-" + Thread.currentThread().getId());
         this.uploadDestination(destination, this.cache.getJsonLines(destination));
+        threadPool.logThredPoolStatus(destination);
         LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
       });
       threadPool.submit(destination, uploadThread);

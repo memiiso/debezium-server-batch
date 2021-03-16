@@ -25,13 +25,10 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
@@ -48,27 +45,33 @@ import org.slf4j.LoggerFactory;
 public class InfinispanCache extends AbstractCache {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(InfinispanCache.class);
-  protected static final String cacheStore =
-      ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache-store", String.class).orElse("local");
-  protected static final String cacheLocation = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.location", String.class).orElse("cache");
-  protected static final long memoryMaxCount = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.memory-maxcount", long.class).orElse(MemoryConfiguration.MAX_COUNT.getDefaultValue());
-  protected static final Integer maxBatchSize = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.max-batch-size", Integer.class).orElse(1024);
-  protected static final Boolean purgeOnStartup = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.purge-on-startup", Boolean.class).orElse(AbstractStoreConfiguration.PURGE_ON_STARTUP.getDefaultValue());
-  protected static final Boolean invocationBatching = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.invocation-batching", Boolean.class).orElse(false);
 
-  protected static final boolean statistics = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.statistics", boolean.class).orElse(false);
-  protected static final boolean metricsGauges = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.metrics-gauges", boolean.class).orElse(GlobalMetricsConfiguration.GAUGES.getDefaultValue());
-  protected static final boolean metricsHistograms = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.metrics-histograms", boolean.class).orElse(GlobalMetricsConfiguration.HISTOGRAMS.getDefaultValue());
-  protected static final boolean unreliableReturnValues = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.batch.cache.unreliable-return-values", boolean.class).orElse(false);
+  @ConfigProperty(name = "debezium.sink.batch.cache.store", defaultValue = "local")
+  String cacheStore;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.location", defaultValue = "cache")
+  String cacheLocation;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.memory-maxcount", defaultValue = "-1")
+  long memoryMaxCount;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.max-batch-size", defaultValue = "1024")
+  Integer maxBatchSize;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.purge-on-startup", defaultValue = "false")
+  Boolean purgeOnStartup;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.statistics", defaultValue = "false")
+  boolean statistics;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.metrics-gauges", defaultValue = "true")
+  boolean metricsGauges;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.metrics-histograms", defaultValue = "false")
+  boolean metricsHistograms;
+
+  @ConfigProperty(name = "debezium.sink.batch.cache.unreliable-return-values", defaultValue = "false")
+  boolean unreliableReturnValues;
 
   protected static final ConcurrentHashMap<String, Integer> cacheRowCounter = new ConcurrentHashMap<>();
   protected final DefaultCacheManager cm = new DefaultCacheManager(
@@ -82,8 +85,12 @@ public class InfinispanCache extends AbstractCache {
   final ConfigurationBuilder builder = new ConfigurationBuilder();
 
   public InfinispanCache() {
-    super();
+  }
 
+
+  @Override
+  public void initialize() {
+    super.initialize();
     boolean preloadCache = true;
     if (purgeOnStartup) {
       preloadCache = false;
@@ -93,20 +100,18 @@ public class InfinispanCache extends AbstractCache {
       builder
           .memory()
           .maxCount(memoryMaxCount)
-          .invocationBatching().enable(invocationBatching)
           .unsafe().unreliableReturnValues(unreliableReturnValues);
       LOGGER.info("Infinispan cache unreliableReturnValues set to {}", unreliableReturnValues);
-      LOGGER.info("Infinispan cache invocationBatching set to {}", invocationBatching);
       LOGGER.info("Infinispan cache memory MaxCount set to {}", memoryMaxCount);
       LOGGER.info("Infinispan cache purgeOnStartup set to {}", purgeOnStartup);
       LOGGER.info("Infinispan cache maxBatchSize set to {}", maxBatchSize);
     }
 
     if (cacheStore.equalsIgnoreCase("simple")) {
-      LOGGER.info("Using Infinispan simple cache");
+      LOGGER.info("Infinispan cache set to simple cache");
       builder.simpleCache(true);
     } else if (cacheStore.equalsIgnoreCase("local")) {
-      LOGGER.info("Using Infinispan local cache, location: {}", cacheLocation);
+      LOGGER.info("Infinispan cache set to local cache, location: {}", cacheLocation);
       builder
           // PersistenceConfigurationBuilder
           .persistence()
@@ -120,7 +125,7 @@ public class InfinispanCache extends AbstractCache {
           // Sets a location on disk where the store can write.
           .location(cacheLocation + "/local");
     } else if (cacheStore.equalsIgnoreCase("rocksdb")) {
-      LOGGER.info("Using Infinispan RocksDB cache, location: {}", cacheLocation);
+      LOGGER.info("Infinispan cache set to RocksDB cache, location: {}", cacheLocation);
       Properties props = new Properties();
       props.put("database.max_background_compactions", "4");
       props.put("data.write_buffer_size", "512MB");
@@ -144,7 +149,6 @@ public class InfinispanCache extends AbstractCache {
 
     LOGGER.debug("Starting cache manager");
     cm.start();
-
   }
 
   private Cache<Object, Object> getDestinationCache(String destination) {

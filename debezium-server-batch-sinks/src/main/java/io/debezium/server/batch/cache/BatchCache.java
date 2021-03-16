@@ -27,4 +27,6 @@ public interface BatchCache {
 
   Set<String> getCaches();
 
+  void initialize();
+
 }

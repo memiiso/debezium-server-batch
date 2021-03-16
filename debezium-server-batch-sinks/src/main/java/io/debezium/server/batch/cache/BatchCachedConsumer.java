@@ -15,9 +15,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-public interface BatchCacheConsumer {
+public interface BatchCachedConsumer {
 
   void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile);
+
+  void initialize();
 
   void close() throws IOException;
 

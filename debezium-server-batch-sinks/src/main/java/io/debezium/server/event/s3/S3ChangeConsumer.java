@@ -10,9 +10,8 @@ package io.debezium.server.event.s3;
 
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
-import io.debezium.engine.format.Json;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.S3StreamNameMapper;
+import io.debezium.server.batch.ObjectStorageNameMapper;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,7 +25,6 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,19 +47,29 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(S3ChangeConsumer.class);
-  final String credentialsProfile = ConfigProvider.getConfig()
-      .getOptionalValue("debezium.sink.s3.credentials.profile", String.class).orElse("default");
-  final String endpointOverride = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.endpoint-override",
-      String.class).orElse("false");
-  final Boolean useInstanceProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink.s3.credentials.use-instance-cred", Boolean.class).orElse(false);
-  final String valueFormat = ConfigProvider.getConfig().getOptionalValue("debezium.format.value", String.class).orElse(Json.class.getSimpleName().toLowerCase());
+
+  @ConfigProperty(name = "debezium.sink.s3.credentials.profile", defaultValue = "default")
+  String credentialsProfile;
+
+  @ConfigProperty(name = "debezium.sink.s3.endpoint-override", defaultValue = "false")
+  String endpointOverride;
+
+  @ConfigProperty(name = "debezium.sink.s3.credentials.use-instance-cred", defaultValue = "false")
+  Boolean useInstanceProfile;
+
+  @ConfigProperty(name = "debezium.format.value", defaultValue = "json")
+  String valueFormat;
+
   S3Client s3client;
+
   @ConfigProperty(name = "debezium.sink.s3.bucket-name", defaultValue = "My-S3-Bucket")
   String bucket;
+
   @ConfigProperty(name = "debezium.sink.s3.region", defaultValue = "eu-central-1")
   String region;
+
   @Inject
-  protected S3StreamNameMapper s3StreamNameMapper;
+  protected ObjectStorageNameMapper objectStorageNameMapper;
 
   @PostConstruct
   void connect() throws URISyntaxException {
@@ -103,7 +111,7 @@ public class S3ChangeConsumer extends BaseChangeConsumer implements DebeziumEngi
       final String fname = batchTime.toEpochSecond(ZoneOffset.UTC) + UUID.randomUUID().toString() + "." + valueFormat;
       PutObjectRequest putRecord = PutObjectRequest.builder()
           .bucket(bucket)
-          .key(s3StreamNameMapper.map(record.destination()) + "/" + fname)
+          .key(objectStorageNameMapper.map(record.destination()) + "/" + fname)
           .build();
       LOGGER.debug("Uploading s3File bucket:{} key:{} endpint:{}", putRecord.bucket(), putRecord.key(), endpointOverride);
       s3client.putObject(putRecord, RequestBody.fromBytes(getBytes(record.value())));

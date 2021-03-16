@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
-import org.apache.spark.sql.SparkSession;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,11 +50,13 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final ObjectMapper mapper = new ObjectMapper();
   protected Deserializer<JsonNode> valDeserializer;
+
   @ConfigProperty(name = "debezium.format.value", defaultValue = "json")
   String valueFormat;
+
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
-  private SparkSession spark;
+
   @Inject
   BatchWriter batchWriter;
 
@@ -63,7 +64,7 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   void close() {
     try {
       LOGGER.info("Closing spark!");
-      spark.close();
+      batchWriter.close();
     } catch (Exception e) {
       LOGGER.warn("Exception while closing spark:{} ", e.getMessage());
       e.printStackTrace();
@@ -74,6 +75,7 @@ public class BatchChangeConsumer extends BaseChangeConsumer implements DebeziumE
   void connect() throws URISyntaxException, InterruptedException {
 
     LOGGER.info("Using '{}' batch writer", batchWriter.getClass().getName());
+    batchWriter.initialize();
 
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();

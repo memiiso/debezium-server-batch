@@ -9,20 +9,17 @@
 package io.debezium.server.batch.writer;
 
 import io.debezium.server.batch.BatchJsonlinesFile;
-import io.debezium.server.batch.S3StreamNameMapper;
+import io.debezium.server.batch.ObjectStorageNameMapper;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -44,27 +41,31 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @Alternative
 public class S3JsonWriter implements BatchWriter {
   protected static final Logger LOGGER = LoggerFactory.getLogger(S3JsonWriter.class);
-  protected static final String bucket = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3" +
-      ".bucket-name", String.class).orElse("My-S3-Bucket");
-  protected static final Boolean useInstanceProfile = ConfigProvider.getConfig().getOptionalValue("debezium.sink" +
-      ".batch.s3.credentials.use-instance-cred", Boolean.class)
-      .orElse(false);
-  final static String region = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3.region",
-      String.class).orElse("eu-central-1");
-  final static String endpointOverride = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.s3" +
-      ".endpoint-override", String.class).orElse("false");
-  private final S3Client s3Client;
 
-  final static Integer uploadThreads =
-      ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.upload-threads", Integer.class).orElse(16);
-  ThreadPoolExecutor threadPool;
+  @ConfigProperty(name = "debezium.sink.batch.s3.bucket-name", defaultValue = "My-S3-Bucket")
+  String bucket;
+
+  @ConfigProperty(name = "debezium.sink.batch.s3.credentials-use-instance-cred", defaultValue = "false")
+  Boolean useInstanceProfile;
+
+  @ConfigProperty(name = "debezium.sink.batch.s3.region", defaultValue = "eu-central-1")
+  String region;
+
+  @ConfigProperty(name = "debezium.sink.batch.s3.endpoint-override", defaultValue = "false")
+  String endpointOverride;
+
+  private S3Client s3Client;
+
   @Inject
-  protected S3StreamNameMapper s3StreamNameMapper;
+  protected ObjectStorageNameMapper objectStorageNameMapper;
 
 
-  public S3JsonWriter()
-      throws URISyntaxException {
-    super();
+  public S3JsonWriter() {
+  }
+
+
+  @Override
+  public void initialize() {
 
     final AwsCredentialsProvider credProvider;
     if (useInstanceProfile) {
@@ -79,11 +80,14 @@ public class S3JsonWriter implements BatchWriter {
         .credentialsProvider(credProvider);
     // used for testing, using minio
     if (!endpointOverride.trim().equalsIgnoreCase("false")) {
-      clientBuilder.endpointOverride(new URI(endpointOverride));
       LOGGER.info("Overriding S3 Endpoint with:{}", endpointOverride);
+      try {
+        clientBuilder.endpointOverride(new URI(endpointOverride));
+      } catch (URISyntaxException e) {
+        throw new RuntimeException("Failed to override S3 endpoint", e);
+      }
     }
     this.s3Client = clientBuilder.build();
-    threadPool = new ThreadPoolExecutor(uploadThreads, uploadThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
     LOGGER.info("Using default S3Client '{}'", this.s3Client);
     LOGGER.info("Starting S3 Batch Consumer({})", this.getClass().getName());
@@ -91,7 +95,7 @@ public class S3JsonWriter implements BatchWriter {
 
   @Override
   public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
-    String s3File = s3StreamNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
+    String s3File = objectStorageNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
     if (jsonLinesFile == null) {
       return;
     }
@@ -108,6 +112,5 @@ public class S3JsonWriter implements BatchWriter {
 
   @Override
   public void close() throws IOException {
-    return;
   }
 }

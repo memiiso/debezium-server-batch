@@ -12,7 +12,7 @@ import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.cache.BatchCacheConsumer;
+import io.debezium.server.batch.cache.BatchCachedConsumer;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -44,13 +44,13 @@ public class CachedBatchChangeConsumer extends BaseChangeConsumer implements Deb
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
   @Inject
-  BatchCacheConsumer cacheConsumer;
+  BatchCachedConsumer cachedConsumer;
 
   @PreDestroy
   void close() {
     try {
       LOGGER.info("Closing batch writer!");
-      cacheConsumer.close();
+      cachedConsumer.close();
     } catch (Exception e) {
       LOGGER.warn("Exception while closing writer:{} ", e.getMessage());
       e.printStackTrace();
@@ -60,7 +60,8 @@ public class CachedBatchChangeConsumer extends BaseChangeConsumer implements Deb
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {
 
-    LOGGER.info("Using '{}' batch writer", cacheConsumer.getClass().getName());
+    cachedConsumer.initialize();
+    LOGGER.info("Using '{}' batch writer", cachedConsumer.getClass().getName());
 
     if (!valueFormat.equalsIgnoreCase(Json.class.getSimpleName().toLowerCase())) {
       throw new InterruptedException("debezium.format.value={" + valueFormat + "} not supported! Supported (debezium.format.value=*) formats are {json,}!");
@@ -81,7 +82,7 @@ public class CachedBatchChangeConsumer extends BaseChangeConsumer implements Deb
                 Collectors.toCollection(ArrayList::new))));
 
     for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destinationEvents : result.entrySet()) {
-      cacheConsumer.appendAll(destinationEvents.getKey(), destinationEvents.getValue());
+      cachedConsumer.appendAll(destinationEvents.getKey(), destinationEvents.getValue());
     }
     // workaround! somehow offset is not saved to file unless we call committer.markProcessed
     // even its should be saved to file periodically

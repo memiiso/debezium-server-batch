@@ -29,9 +29,8 @@ public class TestCacheMemoryProfile implements QuarkusTestProfile {
 // ==================== SINK = CACHE ====================
     config.put("debezium.sink.batch.cache", "memory");
     config.put("debezium.sink.batch.cache.memory-maxcount", "1254");
-    config.put("debezium.sink.batch.cache-store", "simple");
+    config.put("debezium.sink.batch.cache.store", "simple");
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
-    config.put("debezium.sink.batch.cache.invocation-batching", "true");
     config.put("debezium.sink.batch.cache.max-batch-size", "1254");
 
     return config;

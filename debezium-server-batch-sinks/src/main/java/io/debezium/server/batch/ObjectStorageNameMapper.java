@@ -18,7 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @Dependent
-public class S3StreamNameMapper implements StreamNameMapper {
+public class ObjectStorageNameMapper implements StreamNameMapper {
 
   @ConfigProperty(name = "debezium.sink.batch.objectkey-partition", defaultValue = "false")
   protected Boolean partitionData;

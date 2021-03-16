@@ -21,7 +21,7 @@ public class TestInfinispanCache2TestResource implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.batch.row-limit", "100000");
-    config.put("debezium.sink.batch.cache-store", "simple");
+    config.put("debezium.sink.batch.cache.store", "simple");
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
     config.put("debezium.sink.batch.cache.jsonlines-writer-buffer-kb", "32");
 

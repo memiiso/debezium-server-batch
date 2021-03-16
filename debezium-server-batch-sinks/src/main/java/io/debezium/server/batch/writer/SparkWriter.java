@@ -20,7 +20,6 @@ import javax.enterprise.inject.Default;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.types.StructType;
 
 /**
@@ -34,8 +33,11 @@ import org.apache.spark.sql.types.StructType;
 public class SparkWriter extends AbstractSparkWriter {
 
   public SparkWriter() {
-    super();
+  }
 
+  @Override
+  public void initialize() {
+    super.initialize();
     LOGGER.info("Starting Spark Consumer({})", this.getClass().getName());
     LOGGER.info("Spark save format is '{}'", saveFormat);
   }
@@ -69,21 +71,21 @@ public class SparkWriter extends AbstractSparkWriter {
       LOGGER.debug("Reading data without schema definition");
     }
 
-    String s3File = s3StreamNameMapper.map(destination);
+    String uploadFile = objectStorageNameMapper.map(destination);
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()
-          .mode(SaveMode.Append)
+          .mode(saveMode)
           .format(saveFormat)
-          .save(bucket + "/" + s3File);
+          .save(bucket + "/" + uploadFile);
       LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
           df.count(),
           dfSchema != null,
           jsonLinesFile.getFile().length(),
           Duration.between(start, Instant.now()),
-          s3File);
+          uploadFile);
     }
 
     if (LOGGER.isTraceEnabled()) {

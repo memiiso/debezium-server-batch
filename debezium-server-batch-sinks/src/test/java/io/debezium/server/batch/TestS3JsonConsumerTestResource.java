@@ -27,7 +27,7 @@ public class TestS3JsonConsumerTestResource implements QuarkusTestProfile {
     config.put("debezium.sink.batch.s3.region", S3_REGION);
     config.put("debezium.sink.batch.s3.endpoint-override", "http://localhost:9000");
     config.put("debezium.sink.batch.s3.bucket-name", "s3a://" + S3_BUCKET);
-    config.put("debezium.sink.batch.s3.credentials.use-instance-cred", "false");
+    config.put("debezium.sink.batch.s3.credentials-use-instance-cred", "false");
     return config;
   }
 }

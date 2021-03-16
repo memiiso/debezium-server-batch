@@ -18,4 +18,6 @@ public interface BatchWriter {
 
   void close() throws IOException;
 
+  void initialize();
+
 }

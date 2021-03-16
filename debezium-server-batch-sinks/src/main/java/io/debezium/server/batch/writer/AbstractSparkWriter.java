@@ -8,7 +8,7 @@
 
 package io.debezium.server.batch.writer;
 
-import io.debezium.server.batch.S3StreamNameMapper;
+import io.debezium.server.batch.ObjectStorageNameMapper;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,19 +30,31 @@ public abstract class AbstractSparkWriter implements BatchWriter {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractSparkWriter.class);
   protected static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
-  protected static final String bucket = ConfigProvider.getConfig().getOptionalValue("debezium.sink.sparkbatch.bucket-name",
-      String.class).orElse("s3a://My-S3-Bucket");
+
+  @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
+  String bucket;
+
   protected final SparkConf sparkconf = new SparkConf()
       .setAppName("CDC-Batch-Spark-Sink")
       .setMaster("local[*]");
-  protected final String saveFormat = ConfigProvider.getConfig().getOptionalValue("debezium.sink.sparkbatch.save-format", String.class).orElse("json");
+
+  @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "json")
+  String saveFormat;
+
+  @ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
+  String saveMode;
+
   protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
-  protected final SparkSession spark;
+  protected SparkSession spark;
   @Inject
-  protected S3StreamNameMapper s3StreamNameMapper;
+  protected ObjectStorageNameMapper objectStorageNameMapper;
 
   public AbstractSparkWriter() {
-    super();
+
+  }
+
+  @Override
+  public void initialize() {
     this.initSparkconf();
     LOGGER.info("Creating Spark session");
     this.spark = SparkSession
@@ -50,7 +63,6 @@ public abstract class AbstractSparkWriter implements BatchWriter {
         .getOrCreate();
 
     LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
-
   }
 
   protected void stopSparkSession() {
@@ -71,8 +83,6 @@ public abstract class AbstractSparkWriter implements BatchWriter {
       if (name.startsWith(SPARK_PROP_PREFIX)
           && !name.contains("secret") && !name.contains("password") && !name.contains("acess.key")) {
         this.sparkconf.set(name.substring(SPARK_PROP_PREFIX.length()), ConfigProvider.getConfig().getValue(name, String.class));
-        //LOGGER.info("Setting Spark Conf '{}'='{}'", name.substring(SPARK_PROP_PREFIX.length()),
-        //    ConfigProvider.getConfig().getValue(name, String.class));
       }
     }
     this.sparkconf.set("spark.ui.enabled", "false");

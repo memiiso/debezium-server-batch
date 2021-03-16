@@ -31,15 +31,18 @@ import org.apache.spark.sql.types.StructType;
 public class SparkIcebergWriter extends AbstractSparkWriter {
 
   final String saveFormat = "iceberg";
+
   protected SparkSessionCatalog sparkSessionCatalog;
 
   public SparkIcebergWriter() {
-    super();
+  }
 
+  @Override
+  public void initialize() {
+    super.initialize();
     LOGGER.info("Starting Spark Iceberg Consumer({})", this.getClass().getName());
     LOGGER.info("Spark save format is '{}'", saveFormat);
   }
-
 
   @Override
   public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {

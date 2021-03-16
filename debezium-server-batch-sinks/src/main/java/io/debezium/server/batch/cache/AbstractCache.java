@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,12 +37,18 @@ public abstract class AbstractCache implements BatchCache, AutoCloseable {
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractCache.class);
   // deserializer
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
-  protected final Deserializer<JsonNode> valDeserializer;
+  protected Deserializer<JsonNode> valDeserializer;
   protected final ObjectMapper mapper = new ObjectMapper();
   protected static final ConcurrentHashMap<String, Object> cacheUpdateLock = new ConcurrentHashMap<>();
-  final Integer batchRowLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(500);
+
+  @ConfigProperty(name = "debezium.sink.batch.row-limit", defaultValue = "500")
+  Integer batchRowLimit;
 
   public AbstractCache() {
+  }
+
+  @Override
+  public void initialize() {
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();
   }
