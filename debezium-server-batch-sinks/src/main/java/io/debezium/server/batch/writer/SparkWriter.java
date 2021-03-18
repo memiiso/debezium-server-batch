@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 
@@ -84,7 +85,7 @@ public class SparkWriter extends AbstractSparkWriter {
           df.count(),
           dfSchema != null,
           jsonLinesFile.getFile().length(),
-          Duration.between(start, Instant.now()),
+          Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
           uploadFile);
     }
 

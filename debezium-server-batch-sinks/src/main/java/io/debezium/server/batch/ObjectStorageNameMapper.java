@@ -10,7 +10,8 @@ package io.debezium.server.batch;
 
 import io.debezium.server.StreamNameMapper;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import javax.enterprise.context.Dependent;
 
@@ -23,11 +24,14 @@ public class ObjectStorageNameMapper implements StreamNameMapper {
   @ConfigProperty(name = "debezium.sink.batch.objectkey-partition", defaultValue = "false")
   protected Boolean partitionData;
 
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-partition-time-zone", defaultValue = "UTC")
+  protected String partitionDataZone;
+
   @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
   protected String objectKeyPrefix;
 
   protected String getPartition() {
-    final LocalDateTime batchTime = LocalDateTime.now();
+    final ZonedDateTime batchTime = ZonedDateTime.now(ZoneId.of(partitionDataZone));
     return "year=" + batchTime.getYear() + "/month=" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0') + "/day="
         + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
   }
