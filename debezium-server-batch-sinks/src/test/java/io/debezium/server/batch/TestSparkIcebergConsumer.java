@@ -9,8 +9,8 @@
 package io.debezium.server.batch;
 
 import io.debezium.server.batch.common.BaseSparkTest;
-import io.debezium.server.batch.common.TestDatabase;
-import io.debezium.server.batch.common.TestS3Minio;
+import io.debezium.server.batch.common.S3Minio;
+import io.debezium.server.batch.common.SourcePostgresqlDB;
 import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test;
  * @author Ismail Simsek
  */
 @QuarkusTest
-@QuarkusTestResource(TestS3Minio.class)
-@QuarkusTestResource(TestDatabase.class)
+@QuarkusTestResource(S3Minio.class)
+@QuarkusTestResource(SourcePostgresqlDB.class)
 @TestProfile(TestSparkIcebergConsumerTestResource.class)
 public class TestSparkIcebergConsumer extends BaseSparkTest {
 
@@ -54,7 +54,7 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
         return false;
       }
     });
-    TestS3Minio.listFiles();
+    S3Minio.listFiles();
   }
 
   @Test
@@ -77,7 +77,7 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
         "            c_uuid UUID,\n" +
         "            c_bytea BYTEA\n" +
         "          );";
-    TestDatabase.runSQL(sql);
+    SourcePostgresqlDB.runSQL(sql);
     sql = "INSERT INTO inventory.table_datatypes (" +
         "c_id, " +
         "c_text, c_varchar, c_int, c_date, c_timestamp, c_timestamptz, " +
@@ -90,7 +90,7 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
         "'1.23'::float,'1234566.34456'::decimal,'345.452'::numeric(18,4), interval '1 day',false," +
         "'3f207ac6-5dba-11eb-ae93-0242ac130002'::UUID, 'aBC'::bytea" +
         ")";
-    TestDatabase.runSQL(sql);
+    SourcePostgresqlDB.runSQL(sql);
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
@@ -146,18 +146,18 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
       }
     });
 
-    TestDatabase.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1' WHERE ID = 1002 ;");
-//    TestDatabase.runSQL("ALTER TABLE inventory.customers ADD test_varchar_column varchar(255);");
-//    TestDatabase.runSQL("ALTER TABLE inventory.customers ADD test_boolean_column boolean;");
-//    TestDatabase.runSQL("ALTER TABLE inventory.customers ADD test_date_column date;");
+    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1' WHERE ID = 1002 ;");
+//    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_varchar_column varchar(255);");
+//    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_boolean_column boolean;");
+//    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_date_column date;");
 
-    TestDatabase.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1'  WHERE id = 1002 ;");
-    TestDatabase.runSQL("ALTER TABLE inventory.customers ALTER COLUMN email DROP NOT NULL;");
-    TestDatabase.runSQL("INSERT INTO inventory.customers VALUES " +
+    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1'  WHERE id = 1002 ;");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ALTER COLUMN email DROP NOT NULL;");
+    SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
         "(default,'SallyUSer2','Thomas',null);");
-    TestDatabase.runSQL("ALTER TABLE inventory.customers ALTER COLUMN last_name DROP NOT NULL;");
-    TestDatabase.runSQL("UPDATE inventory.customers SET last_name = NULL  WHERE id = 1002 ;");
-    TestDatabase.runSQL("DELETE FROM inventory.customers WHERE id = 1004 ;");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ALTER COLUMN last_name DROP NOT NULL;");
+    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET last_name = NULL  WHERE id = 1002 ;");
+    SourcePostgresqlDB.runSQL("DELETE FROM inventory.customers WHERE id = 1004 ;");
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
@@ -174,8 +174,8 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
     });
 
     spark.sql("select * from default.testc_inventory_customers").show();
-    TestDatabase.runSQL("ALTER TABLE inventory.customers DROP COLUMN email;");
-    TestDatabase.runSQL("INSERT INTO inventory.customers VALUES " +
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers DROP COLUMN email;");
+    SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
         "(default,'User3','lastname_value3');");
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {

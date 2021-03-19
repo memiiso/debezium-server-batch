@@ -22,6 +22,7 @@
 
     <properties>
         <assembly.descriptor>server-distribution</assembly.descriptor>
+        <quarkus.package.type>legacy-jar</quarkus.package.type>
     </properties>
 
     <dependencies>

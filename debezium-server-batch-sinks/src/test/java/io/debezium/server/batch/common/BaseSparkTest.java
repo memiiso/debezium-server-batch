@@ -66,7 +66,7 @@ public class BaseSparkTest {
   }
 
 
-  public static void createDummyPerformanceTable() throws Exception {
+  public static void createPGDummyPerformanceTable() throws Exception {
     // create test table
     String sql = "\n" +
         "        CREATE TABLE IF NOT EXISTS inventory.dummy_performance_table (\n" +
@@ -74,10 +74,10 @@ public class BaseSparkTest {
         "            c_text TEXT,\n" +
         "            c_varchar VARCHAR" +
         "          );";
-    TestDatabase.runSQL(sql);
+    SourcePostgresqlDB.runSQL(sql);
   }
 
-  public static int loadDataToDummyPerformanceTable(int numRows) throws Exception {
+  public static int loadPGDataToDummyPerformanceTable(int numRows) throws Exception {
     int numInsert = 0;
     do {
       String sql = "INSERT INTO inventory.dummy_performance_table (c_id, c_text, c_varchar ) " +
@@ -86,12 +86,38 @@ public class BaseSparkTest {
       for (int i = 0; i < 10; i++) {
         values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
       }
-      TestDatabase.runSQL(sql + values);
-      TestDatabase.runSQL("COMMIT;");
+      SourcePostgresqlDB.runSQL(sql + values);
+      SourcePostgresqlDB.runSQL("COMMIT;");
       numInsert += 10;
     } while (numInsert <= numRows);
     return numInsert;
+  }
 
+
+  public static void createMysqlDummyPerformanceTable() throws Exception {
+    // create test table
+    String sql = "\n" +
+        "        CREATE TABLE IF NOT EXISTS inventory.dummy_performance_table (\n" +
+        "            c_id INTEGER ,\n" +
+        "            c_text TEXT,\n" +
+        "            c_varchar TEXT\n" +
+        "          );";
+    SourceMysqlDB.runSQL(sql);
+  }
+
+  public static int loadMysqlDataToDummyPerformanceTable(int numRows) throws Exception {
+    int numInsert = 0;
+    do {
+      String sql = "INSERT INTO inventory.dummy_performance_table (c_id, c_text, c_varchar ) " +
+          "VALUES ";
+      StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
+      for (int i = 0; i < 10; i++) {
+        values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
+      }
+      SourceMysqlDB.runSQL(sql + values);
+      numInsert += 10;
+    } while (numInsert <= numRows);
+    return numInsert;
   }
 
 }

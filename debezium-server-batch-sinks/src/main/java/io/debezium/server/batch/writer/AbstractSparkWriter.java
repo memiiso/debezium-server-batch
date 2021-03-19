@@ -8,9 +8,11 @@
 
 package io.debezium.server.batch.writer;
 
+import io.debezium.server.batch.BatchUtil;
 import io.debezium.server.batch.ObjectStorageNameMapper;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
@@ -55,7 +57,10 @@ public abstract class AbstractSparkWriter implements BatchWriter {
 
   @Override
   public void initialize() {
-    this.initSparkconf();
+    Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
+    appSparkConf.forEach(this.sparkconf::set);
+    this.sparkconf.set("spark.ui.enabled", "false");
+
     LOGGER.info("Creating Spark session");
     this.spark = SparkSession
         .builder()
@@ -75,17 +80,6 @@ public abstract class AbstractSparkWriter implements BatchWriter {
     } catch (Exception e) {
       LOGGER.warn("Exception during Spark shutdown ", e);
     }
-  }
-
-  private void initSparkconf() {
-
-    for (String name : ConfigProvider.getConfig().getPropertyNames()) {
-      if (name.startsWith(SPARK_PROP_PREFIX)
-          && !name.contains("secret") && !name.contains("password") && !name.contains("acess.key")) {
-        this.sparkconf.set(name.substring(SPARK_PROP_PREFIX.length()), ConfigProvider.getConfig().getValue(name, String.class));
-      }
-    }
-    this.sparkconf.set("spark.ui.enabled", "false");
   }
 
   @Override

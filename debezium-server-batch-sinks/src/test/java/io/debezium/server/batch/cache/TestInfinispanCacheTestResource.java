@@ -6,21 +6,22 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.cache;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestSparkConsumerTestResource implements QuarkusTestProfile {
+public class TestInfinispanCacheTestResource implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "batch");
+    config.put("debezium.sink.batch.row-limit", "3");
+
     return config;
   }
 }

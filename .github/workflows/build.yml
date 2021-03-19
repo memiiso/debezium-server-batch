@@ -29,4 +29,4 @@ jobs:
         with:
           java-version: 1.11
       - name: Build with Maven
-        run: mvn -B package --file pom.xml -Dquarkus.version=1.11.3.Final
+        run: mvn -B package --file pom.xml -Dquarkus.version=1.12.2.Final

@@ -13,14 +13,21 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestSparkConsumerTestResource implements QuarkusTestProfile {
+public class TestPostgresqlProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
+    config.put("debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector");
     config.put("debezium.sink.type", "batch");
+    config.put("debezium.source.max.batch.size", "70000");
+    config.put("debezium.source.max.queue.size", "700000");
+    // 30000 30-second
+    //config.put("debezium.source.poll.interval.ms", "30000");
+    config.put("quarkus.log.level", "INFO");
+
     return config;
   }
 }

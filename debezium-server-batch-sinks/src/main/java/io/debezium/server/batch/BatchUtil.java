@@ -8,9 +8,13 @@
 
 package io.debezium.server.batch;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.spark.sql.types.*;
+import org.eclipse.microprofile.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +116,19 @@ public class BatchUtil {
     }
 
     return null;
+  }
+
+  public static Map<String, String> getConfigSubset(Config config, String prefix) {
+    final Map<String, String> ret = new HashMap<>();
+
+    for (String propName : config.getPropertyNames()) {
+      if (propName.startsWith(prefix)) {
+        final String newPropName = propName.substring(prefix.length());
+        ret.put(newPropName, config.getValue(propName, String.class));
+      }
+    }
+
+    return ret;
   }
 
 }

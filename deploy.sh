@@ -9,7 +9,7 @@
 JAVA_HOME=$(/usr/libexec/java_home -v 11) || exit
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" || exit
 cd $DIR || exit
-mvn clean install package -Passembly -Dquarkus.version=1.11.3.Final || exit
+mvn clean install package -Passembly -Dquarkus.version=1.12.2.Final || exit
 cd ./debezium-server-dist/target || exit
 rm -rf debezium-server-batch
 unzip debezium-server-dist-1.0.1-SNAPSHOT.zip

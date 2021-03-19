@@ -10,7 +10,7 @@ package io.debezium.server.batch;
 
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
-import io.debezium.server.batch.common.SourcePostgresqlDB;
+import io.debezium.server.batch.common.SourceMysqlDB;
 import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -30,9 +30,9 @@ import org.junit.jupiter.api.Test;
  */
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
-@QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(TestDebeziumFilterProfile.class)
-public class TestDebeziumFilter extends BaseSparkTest {
+@QuarkusTestResource(SourceMysqlDB.class)
+@TestProfile(TestPostgresqlProfile.class)
+public class TestPostgresql extends BaseSparkTest {
 
 
   static {
@@ -41,25 +41,33 @@ public class TestDebeziumFilter extends BaseSparkTest {
   }
 
   @Test
-  public void testFiltering() throws Exception {
-    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1' WHERE ID = 1002 ;");
-    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE2' WHERE ID = 1001 ;");
-    SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers (id, first_name,last_name ,email) VALUES (default," +
-        "'SallyUSer2', 'lastname','email@email.com')");
+  public void testPerformance() throws Exception {
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    int batch = 10;
+    int iteration = 100;
+    int rowsCreated = iteration * batch;
+
+    createPGDummyPerformanceTable();
+
+    new Thread(() -> {
       try {
-        Dataset<Row> ds = getTableData("testc.inventory.customers");
-        ds.show(false);
-        return ds.where("first_name == 'George__UPDATE2'").count() == 0
-            && ds.where("first_name == 'George__UPDATE1'").count() == 1
-            && ds.where("first_name == 'SallyUSer2'").count() == 1
-            && ds.count() >= 5;
+        for (int i = 0; i <= iteration; i++) {
+          //Thread.sleep(10000);
+          loadPGDataToDummyPerformanceTable(batch);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }).start();
+
+    Awaitility.await().atMost(Duration.ofSeconds(8000)).until(() -> {
+      try {
+        Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
+        return df.count() >= rowsCreated;
       } catch (Exception e) {
         return false;
       }
     });
-
   }
 
 }

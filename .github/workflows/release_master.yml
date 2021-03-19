@@ -19,7 +19,7 @@ jobs:
           echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Build project
-        run: mvn -B package -Passembly --file pom.xml -Drevision=latest -Dquarkus.version=1.11.3.Final
+        run: mvn -B package -Passembly --file pom.xml -Drevision=latest -Dquarkus.version=1.12.2.Final
 
       - name: Delete latest release
         uses: dev-drprasad/delete-tag-and-release@v0.1.3
