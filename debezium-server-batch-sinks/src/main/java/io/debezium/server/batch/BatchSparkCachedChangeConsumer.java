@@ -13,10 +13,8 @@ import io.debezium.server.batch.cache.BatchCache;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -34,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 @Named("sparkcachedbatch")
 @Dependent
-public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer {
+public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer implements InterfaceCachedChangeConsumer {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkCachedChangeConsumer.class);
 
@@ -76,84 +74,28 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer {
     this.startUploadIfRowLimitReached(destination);
   }
 
-  private void startUploadIfRowLimitReached(String destination) {
-    // get count per destination
-    if (cache.getEstimatedCacheSize(destination) < batchUploadRowLimit) {
-      return;
-    }
-
-    Thread uploadThread = new Thread(() -> {
-      Thread.currentThread().setName("spark-row-limit-upload-" + Thread.currentThread().getId());
-      // data might be already processed
-      if (this.cache.getEstimatedCacheSize(destination) < batchUploadRowLimit) {
-        return;
-      }
-      LOGGER.debug("Batch row limit reached, cache.size > batchLimit {}>={}, starting upload destination:{}",
-          cache.getEstimatedCacheSize(destination), batchUploadRowLimit, destination);
-
-      this.uploadDestination(destination, this.cache.getJsonLines(destination));
-      threadPool.logThredPoolStatus(destination);
-      LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
-    });
-    threadPool.submit(destination, uploadThread);
+  @Override
+  public BatchCache getCache() {
+    return cache;
   }
 
-  private void startTimerUpload(String destination) {
-    // divide it to batches and upload
-    for (int i = 0; i <= (this.cache.getEstimatedCacheSize(destination) / batchUploadRowLimit) + 1; i++) {
-
-      Thread uploadThread = new Thread(() -> {
-        Thread.currentThread().setName("spark-timer-upload-" + Thread.currentThread().getId());
-        this.uploadDestination(destination, this.cache.getJsonLines(destination));
-        threadPool.logThredPoolStatus(destination);
-        LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
-      });
-      threadPool.submit(destination, uploadThread);
-
-    }
+  @Override
+  public ConcurrentThreadPoolExecutor getThreadPool() {
+    return threadPool;
   }
 
-  protected void setupTimerUpload() {
-    LOGGER.info("Batch time limit set to {} second", batchInterval);
-    // Runnable timerTask = () -> {
-    Thread timerTask = new Thread(() -> {
-      try {
-        Thread.currentThread().setName("timer-upload-" + Thread.currentThread().getId());
-        LOGGER.info("Timer upload, uploading all cache data(all destinations)!");
-        // get cachedestination
-        for (String k : cache.getCaches()) {
-          this.startTimerUpload(k);
-        }
-
-      } catch (Exception e) {
-        e.printStackTrace();
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Timer based data upload failed!", e);
-      }
-    });
-    timerExecutor.scheduleWithFixedDelay(timerTask, batchInterval, batchInterval, TimeUnit.SECONDS);
+  @Override
+  public Integer getBatchInterval() {
+    return batchInterval;
   }
 
-  protected void stopTimerUpload() {
-    try {
-      LOGGER.info("Stopping timer task");
-      timerExecutor.shutdown();
-
-      if (!timerExecutor.awaitTermination(3, TimeUnit.MINUTES)) {
-        LOGGER.warn("Timer did not terminate in the specified time(3m).");
-        List<Runnable> droppedTasks = timerExecutor.shutdownNow();
-        LOGGER.warn("Executor was abruptly shut down. " + droppedTasks.size() + " tasks will not be executed.");
-      } else {
-        LOGGER.debug("Stopped timer");
-      }
-    } catch (Exception e) {
-      LOGGER.error("Timer shutdown failed {}", e.getMessage());
-    }
+  @Override
+  public Integer getBatchUploadRowLimit() {
+    return batchUploadRowLimit;
   }
 
-  protected void stopUploadQueue() {
-    threadPool.shutdown();
+  @Override
+  public void uploadDestination(String destination, JsonlinesBatchFile jsonLines) {
+    super.uploadDestination(destination, jsonLines);
   }
-
-
 }
