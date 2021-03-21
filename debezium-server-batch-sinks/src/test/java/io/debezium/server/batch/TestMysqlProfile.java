@@ -13,8 +13,6 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.debezium.server.batch.common.SourceMysqlDB.*;
-
 public class TestMysqlProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
@@ -22,7 +20,7 @@ public class TestMysqlProfile implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.source.connector.class", "io.debezium.connector.mysql.MySqlConnector");
+    config.put("%mysql.debezium.source.connector.class", "io.debezium.connector.mysql.MySqlConnector");
     config.put("debezium.sink.type", "batch");
     config.put("debezium.source.max.batch.size", "70000");
     config.put("debezium.source.max.queue.size", "700000");
@@ -30,13 +28,13 @@ public class TestMysqlProfile implements QuarkusTestProfile {
     config.put("debezium.source.poll.interval.ms", "10000");
     config.put("quarkus.log.level", "INFO");
     config.put("debezium.source.internal.implementation", "legacy");
-    config.put("debezium.source.database.hostname", MYSQL_HOST);
-    config.put("debezium.source.database.port", MYSQL_PORT_DEFAULT.toString());
-    config.put("debezium.source.database.user", MYSQL_DEBEZIUM_USER);
-    config.put("debezium.source.database.password", MYSQL_DEBEZIUM_PASSWORD);
-    config.put("debezium.source.database.dbname", MYSQL_DATABASE);
-    config.put("debezium.source.database.include.list", MYSQL_DATABASE);
 
     return config;
   }
+
+  @Override
+  public String getConfigProfile() {
+    return "mysql";
+  }
+
 }

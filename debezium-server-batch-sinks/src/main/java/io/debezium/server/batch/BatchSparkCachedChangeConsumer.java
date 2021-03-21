@@ -6,20 +6,22 @@
  *
  */
 
-package io.debezium.server.batch.cache;
+package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.BatchJsonlinesFile;
-import io.debezium.server.batch.writer.BatchWriter;
+import io.debezium.server.batch.cache.BatchCache;
 
-import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -30,69 +32,48 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
+@Named("sparkcachedbatch")
 @Dependent
-public class CachedWriter implements BatchCachedConsumer {
+public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(CachedWriter.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkCachedChangeConsumer.class);
 
+  final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
   @Inject
   protected BatchCache cache;
-
+  @Inject
+  protected ConcurrentThreadPoolExecutor threadPool;
   @ConfigProperty(name = "debezium.sink.batch.time-limit", defaultValue = "600")
   Integer batchInterval;
   @ConfigProperty(name = "debezium.sink.batch.row-limit", defaultValue = "10000")
   Integer batchUploadRowLimit;
-  final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
-  @Inject
-  protected ConcurrentThreadPoolExecutor threadPool;
 
-  @Inject
-  BatchWriter batchWriter;
-
-  public CachedWriter() {
+  @PreDestroy
+  void close() {
+    try {
+      LOGGER.info("Closing batch writer!");
+      this.stopTimerUpload();
+      this.stopUploadQueue();
+      cache.close();
+    } catch (Exception e) {
+      LOGGER.warn("Exception while closing writer:{} ", e.getMessage());
+      e.printStackTrace();
+    }
   }
 
-  @Override
-  public void initialize() {
+  @PostConstruct
+  void connect() throws URISyntaxException, InterruptedException {
+    super.connect();
     LOGGER.info("Batch row limit set to {}", batchUploadRowLimit);
     LOGGER.info("Using '{}' as cache", cache.getClass().getSimpleName());
     cache.initialize();
-    batchWriter.initialize();
     setupTimerUpload();
   }
 
   @Override
-  public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
-    batchWriter.uploadDestination(destination, jsonLinesFile);
-  }
-
-  @Override
-  public void close() throws IOException {
-    this.stopTimerUpload();
-    this.stopUploadQueue();
-    batchWriter.close();
-    cache.close();
-  }
-
-  @Override
-  public void appendAll(String destination, List<ChangeEvent<Object, Object>> records) throws InterruptedException {
-    cache.appendAll(destination, records);
+  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
+    this.cache.appendAll(destination, data);
     this.startUploadIfRowLimitReached(destination);
-  }
-
-  @Override
-  public BatchJsonlinesFile getJsonLines(String destination) {
-    return cache.getJsonLines(destination);
-  }
-
-  @Override
-  public Integer getEstimatedCacheSize(String destination) {
-    return cache.getEstimatedCacheSize(destination);
-  }
-
-  @Override
-  public Set<String> getCaches() {
-    return cache.getCaches();
   }
 
   private void startUploadIfRowLimitReached(String destination) {
@@ -173,5 +154,6 @@ public class CachedWriter implements BatchCachedConsumer {
   protected void stopUploadQueue() {
     threadPool.shutdown();
   }
+
 
 }

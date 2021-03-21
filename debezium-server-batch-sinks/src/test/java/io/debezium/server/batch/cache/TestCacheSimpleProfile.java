@@ -20,7 +20,7 @@ public class TestCacheSimpleProfile implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "batch");
+    config.put("debezium.sink.type", "sparkcachedbatch");
     config.put("debezium.sink.batch.row-limit", "20000");
     config.put("debezium.sink.batch.time-limit", "3000");
     config.put("debezium.source.max.batch.size", "10000");

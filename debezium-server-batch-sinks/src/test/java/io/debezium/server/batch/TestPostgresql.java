@@ -10,7 +10,7 @@ package io.debezium.server.batch;
 
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
-import io.debezium.server.batch.common.SourceMysqlDB;
+import io.debezium.server.batch.common.SourcePostgresqlDB;
 import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
  */
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
-@QuarkusTestResource(SourceMysqlDB.class)
+@QuarkusTestResource(SourcePostgresqlDB.class)
 @TestProfile(TestPostgresqlProfile.class)
 public class TestPostgresql extends BaseSparkTest {
 

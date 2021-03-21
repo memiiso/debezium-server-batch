@@ -6,18 +6,19 @@
  *
  */
 
-package io.debezium.server.batch.writer;
+package io.debezium.server.batch;
 
-import io.debezium.server.batch.BatchJsonlinesFile;
-import io.debezium.server.batch.ObjectStorageNameMapper;
+import io.debezium.engine.ChangeEvent;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -36,36 +37,31 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
  *
  * @author Ismail Simsek
  */
-
+@Named("s3jsonbatch")
 @Dependent
-@Alternative
-public class S3JsonWriter implements BatchWriter {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(S3JsonWriter.class);
-
-  @ConfigProperty(name = "debezium.sink.batch.s3.bucket-name", defaultValue = "My-S3-Bucket")
-  String bucket;
-
-  @ConfigProperty(name = "debezium.sink.batch.s3.credentials-use-instance-cred", defaultValue = "false")
-  Boolean useInstanceProfile;
-
-  @ConfigProperty(name = "debezium.sink.batch.s3.region", defaultValue = "eu-central-1")
-  String region;
-
-  @ConfigProperty(name = "debezium.sink.batch.s3.endpoint-override", defaultValue = "false")
-  String endpointOverride;
-
-  private S3Client s3Client;
-
+public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
+  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchS3JsonChangeConsumer.class);
   @Inject
   protected ObjectStorageNameMapper objectStorageNameMapper;
+  @ConfigProperty(name = "debezium.sink.batch.s3.bucket-name", defaultValue = "My-S3-Bucket")
+  String bucket;
+  @ConfigProperty(name = "debezium.sink.batch.s3.credentials-use-instance-cred", defaultValue = "false")
+  Boolean useInstanceProfile;
+  @ConfigProperty(name = "debezium.sink.batch.s3.region", defaultValue = "eu-central-1")
+  String region;
+  @ConfigProperty(name = "debezium.sink.batch.s3.endpoint-override", defaultValue = "false")
+  String endpointOverride;
+  private S3Client s3Client;
 
-
-  public S3JsonWriter() {
+  @PreDestroy
+  void close() {
+    s3Client.close();
   }
 
+  @PostConstruct
+  void connect() throws URISyntaxException, InterruptedException {
+    super.connect();
 
-  @Override
-  public void initialize() {
 
     final AwsCredentialsProvider credProvider;
     if (useInstanceProfile) {
@@ -94,7 +90,8 @@ public class S3JsonWriter implements BatchWriter {
   }
 
   @Override
-  public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
+  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
+    JsonlinesBatchFile jsonLinesFile = this.getJsonLines(destination, data);
     String s3File = objectStorageNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
     if (jsonLinesFile == null) {
       return;
@@ -110,7 +107,4 @@ public class S3JsonWriter implements BatchWriter {
     LOGGER.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
   }
 
-  @Override
-  public void close() throws IOException {
-  }
 }

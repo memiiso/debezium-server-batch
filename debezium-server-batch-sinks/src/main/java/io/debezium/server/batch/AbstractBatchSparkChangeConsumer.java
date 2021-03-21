@@ -6,14 +6,13 @@
  *
  */
 
-package io.debezium.server.batch.writer;
+package io.debezium.server.batch;
 
-import io.debezium.server.batch.BatchUtil;
-import io.debezium.server.batch.ObjectStorageNameMapper;
-
-import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import org.apache.spark.SparkConf;
@@ -28,47 +27,23 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
-public abstract class AbstractSparkWriter implements BatchWriter {
+public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChangeConsumer {
+  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchSparkChangeConsumer.class);
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractSparkWriter.class);
   protected static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
-
-  @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
-  String bucket;
-
+  protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
   protected final SparkConf sparkconf = new SparkConf()
       .setAppName("CDC-Batch-Spark-Sink")
       .setMaster("local[*]");
-
-  @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "json")
-  String saveFormat;
-
-  @ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
-  String saveMode;
-
-  protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
   protected SparkSession spark;
   @Inject
   protected ObjectStorageNameMapper objectStorageNameMapper;
-
-  public AbstractSparkWriter() {
-
-  }
-
-  @Override
-  public void initialize() {
-    Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
-    appSparkConf.forEach(this.sparkconf::set);
-    this.sparkconf.set("spark.ui.enabled", "false");
-
-    LOGGER.info("Creating Spark session");
-    this.spark = SparkSession
-        .builder()
-        .config(this.sparkconf)
-        .getOrCreate();
-
-    LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
-  }
+  @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
+  String bucket;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "json")
+  String saveFormat;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
+  String saveMode;
 
   protected void stopSparkSession() {
     try {
@@ -82,9 +57,26 @@ public abstract class AbstractSparkWriter implements BatchWriter {
     }
   }
 
-  @Override
-  public void close() throws IOException {
+  @PreDestroy
+  void close() {
     this.stopSparkSession();
+  }
+
+  @PostConstruct
+  void connect() throws URISyntaxException, InterruptedException {
+    super.connect();
+
+    Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
+    appSparkConf.forEach(this.sparkconf::set);
+    this.sparkconf.set("spark.ui.enabled", "false");
+
+    LOGGER.info("Creating Spark session");
+    this.spark = SparkSession
+        .builder()
+        .config(this.sparkconf)
+        .getOrCreate();
+
+    LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
   }
 
 }

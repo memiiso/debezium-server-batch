@@ -26,7 +26,7 @@ public class ConfigSource extends TestConfigSource {
 
   public ConfigSource() {
     // common sink conf
-    s3Test.put("debezium.sink.type", "batch");
+    s3Test.put("debezium.sink.type", "sparkbatch");
     //s3Test.put("quarkus.arc.selected-alternatives", "SparkWriter,MemoryCache");
     s3Test.put("debezium.sink.batch.objectkey-prefix", "debezium-cdc-");
     s3Test.put("debezium.sink.batch.objectkey-partition", "true");

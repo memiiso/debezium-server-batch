@@ -20,7 +20,7 @@ public class TestSparkConsumerTestResource implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "batch");
+    config.put("debezium.sink.type", "sparkbatch");
     return config;
   }
 }

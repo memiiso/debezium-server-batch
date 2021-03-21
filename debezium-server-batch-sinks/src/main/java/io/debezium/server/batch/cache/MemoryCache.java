@@ -9,8 +9,8 @@
 package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.BatchJsonlinesFile;
 import io.debezium.server.batch.BatchUtil;
+import io.debezium.server.batch.JsonlinesBatchFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -89,7 +89,7 @@ public class MemoryCache extends AbstractCache {
     }
   }
 
-  public BatchJsonlinesFile getJsonLines(String destination) {
+  public JsonlinesBatchFile getJsonLines(String destination) {
 
 
     synchronized (cacheUpdateLock.computeIfAbsent(destination, k -> new Object())) {
@@ -148,7 +148,7 @@ public class MemoryCache extends AbstractCache {
         return null;
       }
 
-      return new BatchJsonlinesFile(tempFile, schema);
+      return new JsonlinesBatchFile(tempFile, schema);
     }
 
   }

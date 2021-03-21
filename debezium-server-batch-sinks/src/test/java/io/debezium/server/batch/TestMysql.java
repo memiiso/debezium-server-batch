@@ -50,7 +50,7 @@ public class TestMysql extends BaseSparkTest {
     new Thread(() -> {
       try {
         for (int i = 0; i <= iteration; i++) {
-          Thread.sleep(10000);
+          //Thread.sleep(10000);
           loadMysqlDataToDummyPerformanceTable(batch);
         }
       } catch (Exception e) {

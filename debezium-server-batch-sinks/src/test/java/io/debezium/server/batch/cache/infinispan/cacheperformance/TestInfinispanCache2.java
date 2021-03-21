@@ -8,7 +8,7 @@
 
 package io.debezium.server.batch.cache.infinispan.cacheperformance;
 
-import io.debezium.server.batch.BatchJsonlinesFile;
+import io.debezium.server.batch.JsonlinesBatchFile;
 import io.debezium.server.batch.cache.InfinispanCache;
 import io.debezium.server.batch.common.TestChangeEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -43,7 +43,7 @@ class TestInfinispanCache2 {
       mycache.appendAll(destination, List.of(a));
     }
     for (int i = 0; i < (rownumber / rowLimit); i++) {
-      BatchJsonlinesFile jsonlines = mycache.getJsonLines(destination);
+      JsonlinesBatchFile jsonlines = mycache.getJsonLines(destination);
       System.out.println("File size : " + jsonlines.getFile().length());
       jsonlines.getFile().delete();
     }

@@ -17,11 +17,11 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * @author Ismail Simsek
  */
-public class BatchJsonlinesFile {
+public class JsonlinesBatchFile {
   private final File file;
   private JsonNode schema;
 
-  public BatchJsonlinesFile(File file, JsonNode schema) {
+  public JsonlinesBatchFile(File file, JsonNode schema) {
     this.file = file;
     this.schema = schema;
   }

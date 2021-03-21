@@ -70,11 +70,11 @@ public class SourceMysqlDB implements QuarkusTestResourceLifecycleManager {
     MYSQL_PORT_MAPPED = container.getMappedPort(MYSQL_PORT_DEFAULT);
 
     Map<String, String> params = new ConcurrentHashMap<>();
-    params.put("debezium.source.database.hostname", MYSQL_HOST);
-    params.put("debezium.source.database.port", container.getMappedPort(MYSQL_PORT_DEFAULT).toString());
-    params.put("debezium.source.database.user", MYSQL_DEBEZIUM_USER);
-    params.put("debezium.source.database.password", MYSQL_DEBEZIUM_PASSWORD);
-    params.put("debezium.source.database.dbname", MYSQL_DATABASE);
+    params.put("%mysql.debezium.source.database.hostname", MYSQL_HOST);
+    params.put("%mysql.debezium.source.database.port", container.getMappedPort(MYSQL_PORT_DEFAULT).toString());
+    params.put("%mysql.debezium.source.database.user", MYSQL_DEBEZIUM_USER);
+    params.put("%mysql.debezium.source.database.password", MYSQL_DEBEZIUM_PASSWORD);
+    params.put("%mysql.debezium.source.database.dbname", MYSQL_DATABASE);
     return params;
   }
 

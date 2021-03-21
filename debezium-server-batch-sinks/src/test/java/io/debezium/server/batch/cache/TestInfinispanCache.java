@@ -9,7 +9,7 @@
 package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.BatchJsonlinesFile;
+import io.debezium.server.batch.JsonlinesBatchFile;
 import io.debezium.server.batch.common.TestChangeEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -59,7 +59,7 @@ class TestInfinispanCache {
     mycache.appendAll(destination, batchData);
     Assertions.assertThat(5 == mycache.getEstimatedCacheSize(destination));
 
-    BatchJsonlinesFile jsonlines = mycache.getJsonLines("test");
+    JsonlinesBatchFile jsonlines = mycache.getJsonLines("test");
     String fileContent = Files.readString(Paths.get(jsonlines.getFile().getAbsolutePath()));
 
     System.out.println(jsonlines);
@@ -88,7 +88,7 @@ class TestInfinispanCache {
       mycache.appendAll(destination, List.of(a));
     }
     for (int i = 0; i < (rownumber / maxBatchSize); i++) {
-      BatchJsonlinesFile jsonlines = mycache.getJsonLines(destination);
+      JsonlinesBatchFile jsonlines = mycache.getJsonLines(destination);
       jsonlines.getFile().delete();
     }
     System.out.println("Final cache size is " + mycache.getEstimatedCacheSize(destination));

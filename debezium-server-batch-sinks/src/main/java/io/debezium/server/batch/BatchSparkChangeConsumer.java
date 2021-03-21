@@ -6,45 +6,51 @@
  *
  */
 
-package io.debezium.server.batch.writer;
+package io.debezium.server.batch;
 
-import io.debezium.server.batch.BatchJsonlinesFile;
-import io.debezium.server.batch.BatchUtil;
+import io.debezium.engine.ChangeEvent;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Default;
+import javax.inject.Named;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
  *
  * @author Ismail Simsek
  */
-
+@Named("sparkbatch")
 @Dependent
-@Default
-public class SparkWriter extends AbstractSparkWriter {
+public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
+  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkChangeConsumer.class);
 
-  public SparkWriter() {
-  }
-
-  @Override
-  public void initialize() {
-    super.initialize();
+  @PostConstruct
+  void connect() throws URISyntaxException, InterruptedException {
+    super.connect();
     LOGGER.info("Starting Spark Consumer({})", this.getClass().getName());
     LOGGER.info("Spark save format is '{}'", saveFormat);
   }
 
   @Override
-  public void uploadDestination(String destination, BatchJsonlinesFile jsonLinesFile) {
+  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
+    this.uploadDestination(destination, this.getJsonLines(destination, data));
+  }
+
+  protected void uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
+
     Instant start = Instant.now();
     // upload different destinations parallel but same destination serial
     if (jsonLinesFile == null) {
@@ -100,6 +106,5 @@ public class SparkWriter extends AbstractSparkWriter {
       jsonLinesFile.getFile().delete();
     }
   }
-
 
 }

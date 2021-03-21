@@ -11,7 +11,7 @@ package io.debezium.server.batch.cache;
 import io.debezium.DebeziumException;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.serde.DebeziumSerdes;
-import io.debezium.server.batch.BatchJsonlinesFile;
+import io.debezium.server.batch.JsonlinesBatchFile;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -75,29 +75,19 @@ public abstract class AbstractCache implements BatchCache, AutoCloseable {
   }
 
   @Override
-  public void close() throws IOException {
-    throw new UnsupportedOperationException("Not implemented!");
-  }
+  public abstract void close() throws IOException;
 
   @Override
-  public void appendAll(String destination, List<ChangeEvent<Object, Object>> records) {
-    throw new UnsupportedOperationException("Not implemented!");
-  }
+  public abstract void appendAll(String destination, List<ChangeEvent<Object, Object>> records);
 
   @Override
-  public BatchJsonlinesFile getJsonLines(String destination) {
-    throw new UnsupportedOperationException("Not implemented!");
-  }
+  public abstract JsonlinesBatchFile getJsonLines(String destination);
 
   @Override
-  public Integer getEstimatedCacheSize(String destination) {
-    throw new UnsupportedOperationException("Not implemented!");
-  }
+  public abstract Integer getEstimatedCacheSize(String destination);
 
   @Override
-  public Set<String> getCaches() {
-    throw new UnsupportedOperationException("Not implemented!");
-  }
+  public abstract Set<String> getCaches();
 }
 
 

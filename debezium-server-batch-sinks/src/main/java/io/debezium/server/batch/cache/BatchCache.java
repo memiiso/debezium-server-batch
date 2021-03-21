@@ -9,7 +9,7 @@
 package io.debezium.server.batch.cache;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.BatchJsonlinesFile;
+import io.debezium.server.batch.JsonlinesBatchFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,7 +21,7 @@ public interface BatchCache {
 
   void appendAll(String destination, List<ChangeEvent<Object, Object>> records) throws InterruptedException;
 
-  BatchJsonlinesFile getJsonLines(String destination);
+  JsonlinesBatchFile getJsonLines(String destination);
 
   Integer getEstimatedCacheSize(String destination);
 
