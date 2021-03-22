@@ -39,6 +39,13 @@ public class SourceMysqlDB implements QuarkusTestResourceLifecycleManager {
 
   private GenericContainer<?> container;
 
+  @Override
+  public void stop() {
+    if (container != null) {
+      container.stop();
+    }
+  }
+
   public static void runSQL(String query) throws SQLException {
     try {
       String url = "jdbc:mysql://" + MYSQL_HOST + ":" + MYSQL_PORT_MAPPED + "/" + MYSQL_DATABASE;
@@ -53,12 +60,6 @@ public class SourceMysqlDB implements QuarkusTestResourceLifecycleManager {
   }
 
   @Override
-  public void stop() {
-    if (container != null) {
-      container.stop();
-    }
-  }
-
   public Map<String, String> start() {
     container = new GenericContainer<>(MYSQL_IMAGE)
         .waitingFor(Wait.forLogMessage(".*mysqld: ready for connections.*", 2))
@@ -77,5 +78,6 @@ public class SourceMysqlDB implements QuarkusTestResourceLifecycleManager {
     params.put("%mysql.debezium.source.database.dbname", MYSQL_DATABASE);
     return params;
   }
+
 
 }

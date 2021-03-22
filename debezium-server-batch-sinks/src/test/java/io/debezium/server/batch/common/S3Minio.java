@@ -52,6 +52,40 @@ public class S3Minio implements QuarkusTestResourceLifecycleManager {
       .withEnv("MINIO_REGION_NAME", ConfigSource.S3_REGION)
       .withCommand("server " + DEFAULT_STORAGE_DIRECTORY);
 
+  @Override
+  public Map<String, String> start() {
+    this.container.start();
+
+    client = MinioClient.builder()
+        .endpoint("http://" + container.getHost() + ":" + container.getMappedPort(MINIO_DEFAULT_PORT))
+        .credentials(MINIO_ACCESS_KEY, MINIO_SECRET_KEY)
+        .build();
+    try {
+      client.ignoreCertCheck();
+      client.makeBucket(MakeBucketArgs.builder()
+          .region(ConfigSource.S3_REGION)
+          .bucket(ConfigSource.S3_BUCKET)
+          .build());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    MINIO_MAPPED_PORT = container.getMappedPort(MINIO_DEFAULT_PORT);
+    LOGGER.info("Minio Started!");
+    Map<String, String> params = new ConcurrentHashMap<>();
+    params.put("debezium.sink.s3.endpoint-override", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
+    params.put("debezium.sink.batch.s3.endpoint-override", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
+    params.put("debezium.sink.iceberg.fs.s3a.endpoint", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
+    params.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.endpoint", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
+    params.put("AWS_ACCESS_KEY_ID", MINIO_ACCESS_KEY);
+    params.put("AWS_SECRET_KEY", MINIO_SECRET_KEY);
+    return params;
+  }
+
+  @Override
+  public void stop() {
+    container.stop();
+  }
+
   public static void listFiles() {
     LOGGER.info("-----------------------------------------------------------------");
     try {
@@ -99,39 +133,6 @@ public class S3Minio implements QuarkusTestResourceLifecycleManager {
       LOGGER.info("Failed listing bucket");
     }
     return objects;
-  }
-
-  public Map<String, String> start() {
-    this.container.start();
-
-    client = MinioClient.builder()
-        .endpoint("http://" + container.getHost() + ":" + container.getMappedPort(MINIO_DEFAULT_PORT))
-        .credentials(MINIO_ACCESS_KEY, MINIO_SECRET_KEY)
-        .build();
-    try {
-      client.ignoreCertCheck();
-      client.makeBucket(MakeBucketArgs.builder()
-          .region(ConfigSource.S3_REGION)
-          .bucket(ConfigSource.S3_BUCKET)
-          .build());
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    MINIO_MAPPED_PORT = container.getMappedPort(MINIO_DEFAULT_PORT);
-    LOGGER.info("Minio Started!");
-    Map<String, String> params = new ConcurrentHashMap<>();
-    params.put("debezium.sink.s3.endpoint-override", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
-    params.put("debezium.sink.batch.s3.endpoint-override", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
-    params.put("debezium.sink.iceberg.fs.s3a.endpoint", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
-    params.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.endpoint", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
-    params.put("AWS_ACCESS_KEY_ID", MINIO_ACCESS_KEY);
-    params.put("AWS_SECRET_KEY", MINIO_SECRET_KEY);
-    return params;
-  }
-
-  @Override
-  public void stop() {
-    container.stop();
   }
 
 }

@@ -36,6 +36,7 @@ public class SourcePostgresqlDB implements QuarkusTestResourceLifecycleManager {
 
   private GenericContainer<?> container;
 
+  @Override
   public Map<String, String> start() {
     container = new GenericContainer<>(POSTGRES_IMAGE)
         .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 2))

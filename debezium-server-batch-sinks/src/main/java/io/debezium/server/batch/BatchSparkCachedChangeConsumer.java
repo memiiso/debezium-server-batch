@@ -13,8 +13,6 @@ import io.debezium.server.batch.cache.BatchCache;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -36,7 +34,6 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer imp
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkCachedChangeConsumer.class);
 
-  final ScheduledExecutorService timerExecutor = Executors.newSingleThreadScheduledExecutor();
   @Inject
   protected BatchCache cache;
   @Inject

@@ -34,7 +34,7 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.sink.batch.time-limit", "10"); // second
 
     s3Test.put("debezium.source.max.batch.size", "1");
-    s3Test.put("debezium.source.poll.interval.ms", "5");
+    s3Test.put("debezium.source.poll.interval.ms", "5000");
 
     s3Test.put("debezium.source.database.history.kafka.bootstrap.servers", "kafka:9092");
     s3Test.put("debezium.source.database.history.kafka.topic", "dbhistory.fullfillment");

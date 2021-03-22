@@ -20,9 +20,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +53,9 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
 
+  @Inject
+  BatchDynamicWait batchDynamicWait;
+
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {
 
@@ -67,7 +73,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
-
+    Instant start = Instant.now();
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
         .collect(Collectors.groupingBy(
             ChangeEvent::destination,
@@ -83,6 +89,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       committer.markProcessed(records.get(0));
     }
     committer.markBatchFinished();
+    batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
   }
 
   public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {

@@ -43,8 +43,8 @@ public class TestPostgresql extends BaseSparkTest {
   @Test
   public void testPerformance() throws Exception {
 
-    int batch = 10;
-    int iteration = 100;
+    int batch = 2000;
+    int iteration = 50;
     int rowsCreated = iteration * batch;
 
     createPGDummyPerformanceTable();
@@ -52,7 +52,6 @@ public class TestPostgresql extends BaseSparkTest {
     new Thread(() -> {
       try {
         for (int i = 0; i <= iteration; i++) {
-          //Thread.sleep(10000);
           loadPGDataToDummyPerformanceTable(batch);
         }
       } catch (Exception e) {

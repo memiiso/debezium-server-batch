@@ -83,12 +83,12 @@ public class BaseSparkTest {
       String sql = "INSERT INTO inventory.dummy_performance_table (c_id, c_text, c_varchar ) " +
           "VALUES ";
       StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 100; i++) {
         values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
       }
       SourcePostgresqlDB.runSQL(sql + values);
       SourcePostgresqlDB.runSQL("COMMIT;");
-      numInsert += 10;
+      numInsert += 100;
     } while (numInsert <= numRows);
     return numInsert;
   }
