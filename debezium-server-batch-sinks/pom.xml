@@ -17,7 +17,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>debezium-server-batch-sinks</artifactId>
-    <name>Debezium Server Batch Sink Adapters</name>
+    <name>Debezium Server Batch Consumers</name>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -224,7 +224,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>3.0.0-M5</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
