@@ -102,11 +102,11 @@
             <artifactId>spark-sql_2.12</artifactId>
             <version>${version.spark}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-spark3-runtime</artifactId>
-            <version>0.11.0</version>
-        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.iceberg</groupId>-->
+        <!--            <artifactId>iceberg-spark3-runtime</artifactId>-->
+        <!--            <version>0.11.0</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
