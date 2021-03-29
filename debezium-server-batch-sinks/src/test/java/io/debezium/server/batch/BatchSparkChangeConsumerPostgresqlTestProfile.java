@@ -26,7 +26,6 @@ public class BatchSparkChangeConsumerPostgresqlTestProfile implements QuarkusTes
     config.put("debezium.source.max.queue.size", "70000");
     // 30000 30-second
     config.put("debezium.source.poll.interval.ms", "60000");
-    config.put("quarkus.log.level", "WARN");
 
     return config;
   }

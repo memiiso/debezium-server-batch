@@ -39,7 +39,7 @@ public class BatchSparkChangeConsumerTest extends BaseSparkTest {
   String sinkType;
 
   @Test
-  public void simpleUploadTest() {
+  public void testSimpleUpload() {
     Testing.Print.enable();
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
@@ -106,9 +106,6 @@ public class BatchSparkChangeConsumerTest extends BaseSparkTest {
             "").
             count() == 1;
       } catch (Exception e) {
-        if (e.getMessage().contains("cast")) {
-          System.out.println(e.getMessage());
-        }
         return false;
       }
     });

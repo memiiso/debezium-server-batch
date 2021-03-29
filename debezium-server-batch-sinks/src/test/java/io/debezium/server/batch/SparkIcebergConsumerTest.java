@@ -23,6 +23,7 @@ import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.fest.assertions.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -41,7 +42,8 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
   String sinkType;
 
   @Test
-  public void simpleUploadTest() {
+  @Disabled
+  public void testSimpleUpload() {
     Testing.Print.enable();
     Assertions.assertThat(sinkType.equals("batch"));
 
@@ -58,6 +60,7 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
   }
 
   @Test
+  @Disabled
   public void testDatatypes() throws Exception {
     String sql = "\n" +
         "        DROP TABLE IF EXISTS inventory.table_datatypes;\n" +
@@ -111,9 +114,6 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
             "").
             count() == 1;
       } catch (Exception e) {
-        if (e.getMessage().contains("cast")) {
-          System.out.println(e.getMessage());
-        }
         return false;
       }
     });
@@ -135,6 +135,7 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
   }
 
   @Test
+  @Disabled
   public void testUpdateDeleteDrop() throws Exception {
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
@@ -180,7 +181,6 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
         Dataset<Row> ds = spark.sql("select * from default.testc_inventory_customers");
-        System.out.println("----------------------");
         return ds.where("first_name == 'User3'").count() == 1
             && ds.where("test_varchar_column == 'test_varchar_value3'").count() == 1;
       } catch (Exception e) {

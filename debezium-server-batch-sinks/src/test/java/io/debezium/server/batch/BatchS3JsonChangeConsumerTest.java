@@ -47,7 +47,7 @@ public class BatchS3JsonChangeConsumerTest extends BaseSparkTest {
 
   @Test
   @Disabled
-  public void simpleUploadTest() {
+  public void testSimpleUpload() {
     Testing.Print.enable();
     Assertions.assertThat(sinkType.equals("batch"));
 

@@ -89,7 +89,7 @@ public class ConfigSource extends TestConfigSource {
 //    all DECIMAL and NUMERIC values as Java double values and encodes them as follows:
     s3Test.put("debezium.source.decimal.handling.mode", "double");
 
-    s3Test.put("quarkus.log.level", "WARN");
+    config.put("quarkus.log.level", "WARN");
     s3Test.put("quarkus.log.category.\"org.apache.spark\".level", "WARN");
     s3Test.put("quarkus.log.category.\"org.apache.hadoop\".level", "ERROR");
     s3Test.put("quarkus.log.category.\"org.apache.parquet\".level", "WARN");

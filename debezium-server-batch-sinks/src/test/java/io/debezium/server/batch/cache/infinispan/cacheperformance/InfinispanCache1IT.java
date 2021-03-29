@@ -47,6 +47,7 @@ class InfinispanCache1IT {
       System.out.println("File size : " + jsonlines.getFile().length());
       jsonlines.getFile().delete();
     }
+    // @TODO assert
     System.out.println("Final cache size is " + mycache.getEstimatedCacheSize(destination));
   }
 

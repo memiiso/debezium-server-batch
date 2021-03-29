@@ -37,7 +37,6 @@ class InfinispanCacheTest {
   void testGetJsonLines() throws IOException {
     InfinispanCache mycache = new InfinispanCache();
     String destination = "test";
-    System.out.println(maxBatchSize);
 
     Assertions.assertThat(0 == mycache.getEstimatedCacheSize(destination));
     ChangeEvent<Object, Object> a = new TestChangeEvent<>("key", "{\"id\": 1, \"first_name\": \"mytest123Value\"}",
@@ -62,8 +61,6 @@ class InfinispanCacheTest {
     JsonlinesBatchFile jsonlines = mycache.getJsonLines("test");
     String fileContent = Files.readString(Paths.get(jsonlines.getFile().getAbsolutePath()));
 
-    System.out.println(jsonlines);
-
     String[] lines = fileContent.split("\r\n|\r|\n");
     Assertions.assertThat(lines[0].contains("mytest123Value"));
     Assertions.assertThat(lines[1].contains("mytest2222Value"));
@@ -71,8 +68,6 @@ class InfinispanCacheTest {
     Assertions.assertThat(lines.length == 3);
 
     Assertions.assertThat(5 - maxBatchSize == mycache.getEstimatedCacheSize(destination));
-
-    System.out.println(jsonlines.getFile().getAbsolutePath());
   }
 
   @Test
@@ -91,6 +86,7 @@ class InfinispanCacheTest {
       JsonlinesBatchFile jsonlines = mycache.getJsonLines(destination);
       jsonlines.getFile().delete();
     }
+    // @TODO assert
     System.out.println("Final cache size is " + mycache.getEstimatedCacheSize(destination));
   }
 

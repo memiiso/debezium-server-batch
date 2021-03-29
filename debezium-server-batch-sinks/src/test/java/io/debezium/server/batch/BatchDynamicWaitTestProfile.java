@@ -21,7 +21,6 @@ public class BatchDynamicWaitTestProfile implements QuarkusTestProfile {
     config.put("debezium.source.max.batch.size", "100");
     config.put("debezium.source.poll.interval.ms", "5000");
     config.put("debezium.sink.type", "batch");
-    config.put("quarkus.log.level", "WARN");
     return config;
   }
 }

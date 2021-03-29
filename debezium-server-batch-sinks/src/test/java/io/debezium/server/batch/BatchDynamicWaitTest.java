@@ -28,7 +28,7 @@ class BatchDynamicWaitTest {
   Integer pollIntervalMs;
 
   @Test
-  void getSleepMsFastConsuming() {
+  void shouldIncreaseSleepMs() {
     // if its consuming small batch sizes, the sleep delay should increase to adjust batch size
     // sleep size should increase and stay at max (pollIntervalMs)
     int sleep = 0;
@@ -45,7 +45,7 @@ class BatchDynamicWaitTest {
   }
 
   @Test
-  void getSleepMsSlowConsuming() {
+  void shouldDecreaseSleepMs() {
     // if its consuming large batch sizes, the sleep delay should decrease
     dynamicSleep.getWaitMs(3);
     dynamicSleep.getWaitMs(2);

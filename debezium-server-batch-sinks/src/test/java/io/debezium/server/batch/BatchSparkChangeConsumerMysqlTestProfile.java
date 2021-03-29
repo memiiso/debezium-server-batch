@@ -26,7 +26,6 @@ public class BatchSparkChangeConsumerMysqlTestProfile implements QuarkusTestProf
     config.put("debezium.source.max.queue.size", "700000");
     // 30000 30-second
     config.put("debezium.source.poll.interval.ms", "10000");
-    config.put("quarkus.log.level", "INFO");
     config.put("debezium.source.internal.implementation", "legacy");
 
     return config;
