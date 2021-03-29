@@ -42,7 +42,7 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
   String sinkType;
 
   @Test
-  @Disabled
+  @Disabled // @TODO implement consumer
   public void testSimpleUpload() {
     Testing.Print.enable();
     Assertions.assertThat(sinkType.equals("batch"));
@@ -60,7 +60,7 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
   }
 
   @Test
-  @Disabled
+  @Disabled // @TODO implement consumer
   public void testDatatypes() throws Exception {
     String sql = "\n" +
         "        DROP TABLE IF EXISTS inventory.table_datatypes;\n" +
@@ -135,7 +135,7 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
   }
 
   @Test
-  @Disabled
+  @Disabled // @TODO implement consumer
   public void testUpdateDeleteDrop() throws Exception {
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {

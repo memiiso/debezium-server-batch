@@ -46,7 +46,7 @@ public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
   }
 
   @Test
-  @Disabled
+  @Disabled // @TODO fix
   public void testPerformance() throws Exception {
 
     int iteration = 10;
