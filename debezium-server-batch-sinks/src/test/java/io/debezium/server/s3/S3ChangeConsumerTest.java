@@ -52,7 +52,7 @@ public class S3ChangeConsumerTest {
   public void testS3() {
     Testing.Print.enable();
     Assertions.assertThat(sinkType.equals("s3"));
-    Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() ->
+    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() ->
         S3Minio.getObjectList(ConfigSource.S3_BUCKET).size() >= MESSAGE_COUNT);
   }
 }
