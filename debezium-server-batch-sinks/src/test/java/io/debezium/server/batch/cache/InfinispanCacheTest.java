@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.fest.assertions.Assertions;
@@ -33,9 +34,12 @@ import static io.debezium.server.batch.common.TestUtil.randomString;
 class InfinispanCacheTest {
   protected static final Integer maxBatchSize = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache.max-batch-size", Integer.class).orElse(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue());
 
+  @Inject
+  InfinispanCache mycache;
+
   @Test
   void testGetJsonLines() throws IOException {
-    InfinispanCache mycache = new InfinispanCache();
+    mycache.initialize();
     String destination = "test";
 
     Assertions.assertThat(0 == mycache.getEstimatedCacheSize(destination));
@@ -72,8 +76,8 @@ class InfinispanCacheTest {
 
   @Test
   void testResetCacheSize() throws IOException {
+    mycache.initialize();
     String destination = "cachesizetest";
-    InfinispanCache mycache = new InfinispanCache();
     Assertions.assertThat(0 == mycache.getEstimatedCacheSize(destination));
     int rownumber = 1000;
     for (int i = 0; i < rownumber; i++) {
