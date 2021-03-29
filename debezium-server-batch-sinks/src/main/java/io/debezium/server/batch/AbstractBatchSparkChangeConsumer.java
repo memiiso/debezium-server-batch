@@ -76,6 +76,7 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
         .config(this.sparkconf)
         .getOrCreate();
 
+    LOGGER.info("Spark Version {}", this.spark.version());
     LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
   }
 
