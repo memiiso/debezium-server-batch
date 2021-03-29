@@ -22,7 +22,7 @@ public class BatchSparkChangeConsumerPostgresqlTestProfile implements QuarkusTes
 
     config.put("debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector");
     config.put("debezium.sink.type", "batch");
-    config.put("debezium.source.max.batch.size", "7000");
+    config.put("debezium.source.max.batch.size", "500");
     config.put("debezium.source.max.queue.size", "70000");
     // 30000 30-second
     config.put("debezium.source.poll.interval.ms", "60000");

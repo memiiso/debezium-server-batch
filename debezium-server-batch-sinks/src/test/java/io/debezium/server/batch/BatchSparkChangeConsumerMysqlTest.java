@@ -21,6 +21,7 @@ import java.time.Duration;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -34,6 +35,10 @@ import org.junit.jupiter.api.Test;
 @TestProfile(BatchSparkChangeConsumerMysqlTestProfile.class)
 public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
 
+
+  @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "1000")
+  Integer maxBatchSize;
+
   static {
     Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
     Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
@@ -42,23 +47,22 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
   @Test
   public void testPerformance() throws Exception {
 
-    int batch = 15;
     int iteration = 100;
-    int rowsCreated = iteration * batch;
+    int rowsCreated = iteration * maxBatchSize;
 
     createMysqlDummyPerformanceTable();
     new Thread(() -> {
       try {
         for (int i = 0; i <= iteration; i++) {
           //Thread.sleep(10000);
-          loadMysqlDataToDummyPerformanceTable(batch);
+          loadMysqlDataToDummyPerformanceTable(maxBatchSize);
         }
       } catch (Exception e) {
         e.printStackTrace();
       }
     }).start();
 
-    Awaitility.await().atMost(Duration.ofSeconds(80000)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
         return df.count() >= rowsCreated;

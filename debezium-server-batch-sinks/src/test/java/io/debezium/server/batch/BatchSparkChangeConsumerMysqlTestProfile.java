@@ -22,11 +22,10 @@ public class BatchSparkChangeConsumerMysqlTestProfile implements QuarkusTestProf
 
     config.put("%mysql.debezium.source.connector.class", "io.debezium.connector.mysql.MySqlConnector");
     config.put("debezium.sink.type", "batch");
-    config.put("debezium.source.max.batch.size", "70000");
-    config.put("debezium.source.max.queue.size", "700000");
+    config.put("debezium.source.max.batch.size", "500");
+    config.put("debezium.source.max.queue.size", "70000");
     // 30000 30-second
-    config.put("debezium.source.poll.interval.ms", "10000");
-    config.put("debezium.source.internal.implementation", "legacy");
+    config.put("debezium.source.poll.interval.ms", "60000");
 
     return config;
   }

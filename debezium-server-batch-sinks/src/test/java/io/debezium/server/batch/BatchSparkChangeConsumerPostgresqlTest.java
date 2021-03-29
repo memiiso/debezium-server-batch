@@ -21,6 +21,7 @@ import java.time.Duration;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,6 +36,9 @@ import org.junit.jupiter.api.Test;
 public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
 
 
+  @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "1000")
+  Integer maxBatchSize;
+
   static {
     Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
     Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
@@ -43,23 +47,22 @@ public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
   @Test
   public void testPerformance() throws Exception {
 
-    int batch = 2000;
-    int iteration = 50;
-    int rowsCreated = iteration * batch;
+    int iteration = 100;
+    int rowsCreated = iteration * maxBatchSize;
 
     createPGDummyPerformanceTable();
 
     new Thread(() -> {
       try {
         for (int i = 0; i <= iteration; i++) {
-          loadPGDataToDummyPerformanceTable(batch);
+          loadPGDataToDummyPerformanceTable(maxBatchSize);
         }
       } catch (Exception e) {
         e.printStackTrace();
       }
     }).start();
 
-    Awaitility.await().atMost(Duration.ofSeconds(8000)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
         return df.count() >= rowsCreated;
