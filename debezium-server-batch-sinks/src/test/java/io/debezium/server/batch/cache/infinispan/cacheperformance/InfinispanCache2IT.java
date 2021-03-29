@@ -26,8 +26,8 @@ import static io.debezium.server.batch.common.TestUtil.randomString;
 
 
 @QuarkusTest
-@TestProfile(TestInfinispanCache2TestResource.class)
-class TestInfinispanCache2 {
+@TestProfile(InfinispanCache2ITResource.class)
+class InfinispanCache2IT {
   protected static final Integer rowLimit = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.row-limit", Integer.class).orElse(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue());
 
   @Test

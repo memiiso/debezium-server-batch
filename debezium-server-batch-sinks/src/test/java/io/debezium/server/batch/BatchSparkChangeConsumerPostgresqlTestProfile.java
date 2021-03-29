@@ -13,7 +13,7 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestPostgresqlProfile implements QuarkusTestProfile {
+public class BatchSparkChangeConsumerPostgresqlTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
@@ -26,7 +26,7 @@ public class TestPostgresqlProfile implements QuarkusTestProfile {
     config.put("debezium.source.max.queue.size", "70000");
     // 30000 30-second
     config.put("debezium.source.poll.interval.ms", "60000");
-    config.put("quarkus.log.level", "INFO");
+    config.put("quarkus.log.level", "WARN");
 
     return config;
   }

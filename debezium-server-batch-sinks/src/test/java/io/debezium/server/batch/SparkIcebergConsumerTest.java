@@ -33,8 +33,8 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(TestSparkIcebergConsumerTestResource.class)
-public class TestSparkIcebergConsumer extends BaseSparkTest {
+@TestProfile(SparkIcebergConsumerTestProfile.class)
+public class SparkIcebergConsumerTest extends BaseSparkTest {
 
 
   @ConfigProperty(name = "debezium.sink.type")

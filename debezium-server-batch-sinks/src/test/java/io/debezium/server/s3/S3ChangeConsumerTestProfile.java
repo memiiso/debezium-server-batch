@@ -16,7 +16,7 @@ import java.util.Map;
 import static io.debezium.server.batch.ConfigSource.S3_BUCKET;
 import static io.debezium.server.batch.ConfigSource.S3_REGION;
 
-public class TestS3TestResource implements QuarkusTestProfile {
+public class S3ChangeConsumerTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override

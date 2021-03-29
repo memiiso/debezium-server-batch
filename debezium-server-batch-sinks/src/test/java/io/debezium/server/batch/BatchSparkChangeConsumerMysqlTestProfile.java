@@ -13,7 +13,7 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestMysqlProfile implements QuarkusTestProfile {
+public class BatchSparkChangeConsumerMysqlTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override

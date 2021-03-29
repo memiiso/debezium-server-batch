@@ -27,8 +27,8 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(TestCacheSimpleProfile.class)
-public class TestCacheSimple extends BaseSparkTest {
+@TestProfile(InfinispanCacheSimpleTestProfile.class)
+public class InfinispanCacheSimpleTest extends BaseSparkTest {
 
 
   static {

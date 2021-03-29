@@ -6,8 +6,9 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.cache.infinispan.cachetypes;
 
+import io.debezium.server.batch.ConfigSource;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
@@ -16,11 +17,6 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
-import java.time.Duration;
-
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,8 +27,8 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(TestPostgresqlProfile.class)
-public class TestPostgresql extends BaseSparkTest {
+@TestProfile(InfinispanCacheSimpleITProfile.class)
+public class InfinispanCacheSimpleIT extends BaseSparkTest {
 
 
   static {
@@ -42,31 +38,8 @@ public class TestPostgresql extends BaseSparkTest {
 
   @Test
   public void testPerformance() throws Exception {
-
-    int batch = 2000;
-    int iteration = 50;
-    int rowsCreated = iteration * batch;
-
     createPGDummyPerformanceTable();
-
-    new Thread(() -> {
-      try {
-        for (int i = 0; i <= iteration; i++) {
-          loadPGDataToDummyPerformanceTable(batch);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }).start();
-
-    Awaitility.await().atMost(Duration.ofSeconds(8000)).until(() -> {
-      try {
-        Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
-        return df.count() >= rowsCreated;
-      } catch (Exception e) {
-        return false;
-      }
-    });
+    loadPGDataToDummyPerformanceTable(100000);
   }
 
 }

@@ -6,24 +6,21 @@
  *
  */
 
-package io.debezium.server.batch.cache.infinispan.cacheperformance;
+package io.debezium.server.batch.cache;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestInfinispanCache1TestResource implements QuarkusTestProfile {
+public class InfinispanCacheTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.batch.row-limit", "100000");
-    config.put("debezium.sink.batch.cache.store", "simple");
-    config.put("debezium.sink.batch.cache.purge-on-startup", "true");
-    config.put("debezium.sink.batch.cache.jsonlines-writer-buffer-kb", "5");
+    config.put("debezium.sink.batch.row-limit", "3");
 
     return config;
   }

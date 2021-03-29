@@ -21,7 +21,7 @@ import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class TestBatchUtil {
+class BatchUtilTest {
 
   final String serdeWithSchema = Testing.Files.readResourceAsString("json/serde-with-schema.json");
   final String unwrapWithSchema = Testing.Files.readResourceAsString("json/unwrap-with-schema.json");

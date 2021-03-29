@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourceMysqlDB.class)
-@TestProfile(TestMysqlProfile.class)
-public class TestMysql extends BaseSparkTest {
+@TestProfile(BatchSparkChangeConsumerMysqlTestProfile.class)
+public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
 
   static {
     Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);

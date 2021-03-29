@@ -29,8 +29,8 @@ import static io.debezium.server.batch.common.TestUtil.randomString;
 
 
 @QuarkusTest
-@TestProfile(TestInfinispanCacheTestResource.class)
-class TestInfinispanCache {
+@TestProfile(InfinispanCacheTestProfile.class)
+class InfinispanCacheTest {
   protected static final Integer maxBatchSize = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache.max-batch-size", Integer.class).orElse(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue());
 
   @Test
