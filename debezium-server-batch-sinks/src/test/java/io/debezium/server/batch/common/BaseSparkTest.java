@@ -68,7 +68,7 @@ public class BaseSparkTest {
 
   public static void createPGDummyPerformanceTable() throws Exception {
     // create test table
-    String sql = "\n" +
+    String sql = "" +
         "        CREATE TABLE IF NOT EXISTS inventory.dummy_performance_table (\n" +
         "            c_id INTEGER ,\n" +
         "            c_text TEXT,\n" +
