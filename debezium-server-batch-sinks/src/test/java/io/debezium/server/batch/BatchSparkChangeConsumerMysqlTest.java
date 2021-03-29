@@ -22,6 +22,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -45,16 +46,15 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
   }
 
   @Test
+  @Disabled
   public void testPerformance() throws Exception {
 
-    int iteration = 100;
-    int rowsCreated = iteration * maxBatchSize;
+    int iteration = 10;
 
     createMysqlDummyPerformanceTable();
     new Thread(() -> {
       try {
         for (int i = 0; i <= iteration; i++) {
-          //Thread.sleep(10000);
           loadMysqlDataToDummyPerformanceTable(maxBatchSize);
         }
       } catch (Exception e) {
@@ -65,7 +65,7 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
-        return df.count() >= rowsCreated;
+        return df.count() >= (long) iteration * maxBatchSize;
       } catch (Exception e) {
         return false;
       }
