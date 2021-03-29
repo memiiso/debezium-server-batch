@@ -57,12 +57,6 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.sink.sparkbatch.fs.s3a.secret.key", S3Minio.MINIO_SECRET_KEY);
     s3Test.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.path.style.access", "true");
     s3Test.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.endpoint", "http://localhost:9000"); // minio specific setting
-    s3Test.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
-    s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
-    s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.type", "hadoop");
-    s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.warehouse", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
-    s3Test.put("debezium.sink.sparkbatch.spark.sql.warehouse.dir", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
-    s3Test.put("debezium.sink.sparkbatch.spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore");
 
     // DEBEZIUM PROP
     // enable disable schema

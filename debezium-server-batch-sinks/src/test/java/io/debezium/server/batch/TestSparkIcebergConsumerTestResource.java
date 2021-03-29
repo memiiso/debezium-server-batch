@@ -28,12 +28,18 @@ public class TestSparkIcebergConsumerTestResource implements QuarkusTestProfile 
     config.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.type", "hadoop");
     config.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.catalog-impl", "org.apache.iceberg.hadoop.HadoopCatalog");
     config.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.warehouse", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
+    //s3Test.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
+    //s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
+    //s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.type", "hadoop");
+    //s3Test.put("debezium.sink.sparkbatch.spark.sql.catalog.spark_catalog.warehouse", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
+    //s3Test.put("debezium.sink.sparkbatch.spark.sql.warehouse.dir", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
+    //s3Test.put("debezium.sink.sparkbatch.spark.delta.logStore.class", "org.apache.spark.sql.delta.storage" +  ".S3SingleDriverLogStore");
 
     config.put("debezium.sink.icebergsparkbatch.catalog-impl", "org.apache.iceberg.hadoop.HadoopCatalog");
     config.put("debezium.sink.icebergsparkbatch.warehouse", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
 
 
-    config.put("quarkus.log.level", "WARN");
+    config.put("quarkus.log.level", "INFO");
     config.put("quarkus.log.category.\"org.apache.spark\".level", "WARN");
     config.put("quarkus.log.category.\"org.apache.hadoop\".level", "ERROR");
     config.put("quarkus.log.category.\"org.apache.parquet\".level", "WARN");
