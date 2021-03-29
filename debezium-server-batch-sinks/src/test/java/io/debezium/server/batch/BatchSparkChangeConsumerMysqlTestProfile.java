@@ -13,21 +13,26 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestPostgresqlProfile implements QuarkusTestProfile {
+public class BatchSparkChangeConsumerMysqlTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector");
+    config.put("%mysql.debezium.source.connector.class", "io.debezium.connector.mysql.MySqlConnector");
     config.put("debezium.sink.type", "batch");
-    config.put("debezium.source.max.batch.size", "7000");
+    config.put("debezium.source.max.batch.size", "500");
     config.put("debezium.source.max.queue.size", "70000");
     // 30000 30-second
-    config.put("debezium.source.poll.interval.ms", "60000");
-    config.put("quarkus.log.level", "INFO");
+    config.put("debezium.source.poll.interval.ms", "1000");
 
     return config;
   }
+
+  @Override
+  public String getConfigProfile() {
+    return "mysql";
+  }
+
 }

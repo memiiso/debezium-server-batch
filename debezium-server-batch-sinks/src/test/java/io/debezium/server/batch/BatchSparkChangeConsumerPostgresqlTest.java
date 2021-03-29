@@ -18,9 +18,10 @@ import io.quarkus.test.junit.TestProfile;
 
 import java.time.Duration;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fest.assertions.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -32,30 +33,43 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(TestS3JsonConsumerTestResource.class)
-public class TestS3JsonConsumer extends BaseSparkTest {
+@TestProfile(BatchSparkChangeConsumerPostgresqlTestProfile.class)
+public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
+
+
+  @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "1000")
+  Integer maxBatchSize;
 
   static {
-    // Testing.Debug.enable();
     Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
     Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
   }
 
-
-  @ConfigProperty(name = "debezium.sink.type")
-  String sinkType;
-
   @Test
-  @Disabled
-  public void simpleUploadTest() {
-    Testing.Print.enable();
-    Assertions.assertThat(sinkType.equals("batch"));
+  @Disabled // @TODO fix
+  public void testPerformance() throws Exception {
 
-    Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
-      S3Minio.listFiles();
-      return S3Minio.getIcebergDataFiles(ConfigSource.S3_BUCKET).size() > 4;
+    int iteration = 10;
+    createPGDummyPerformanceTable();
+
+    new Thread(() -> {
+      try {
+        for (int i = 0; i <= iteration; i++) {
+          loadPGDataToDummyPerformanceTable(maxBatchSize);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }).start();
+
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
+      try {
+        Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
+        return df.count() >= (long) iteration * maxBatchSize;
+      } catch (Exception e) {
+        return false;
+      }
     });
-
-    S3Minio.listFiles();
   }
+
 }

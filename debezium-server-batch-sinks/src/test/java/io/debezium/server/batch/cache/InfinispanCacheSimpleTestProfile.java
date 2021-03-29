@@ -13,21 +13,21 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TestCacheMemoryProfile implements QuarkusTestProfile {
+public class InfinispanCacheSimpleTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "sparkbatch");
+    config.put("debezium.sink.type", "sparkcachedbatch");
     config.put("debezium.sink.batch.row-limit", "20000");
     config.put("debezium.sink.batch.time-limit", "3000");
-    config.put("debezium.source.max.batch.size", "20000");
+    config.put("debezium.source.max.batch.size", "10000");
     config.put("debezium.source.max.queue.size", "40000");
-    config.put("debezium.source.poll.interval.ms", "20000");
+    config.put("debezium.source.poll.interval.ms", "30000");
 // ==================== SINK = CACHE ====================
-    config.put("debezium.sink.batch.cache", "memory");
+    config.put("debezium.sink.batch.cache", "infinispan");
     config.put("debezium.sink.batch.cache.memory-maxcount", "1254");
     config.put("debezium.sink.batch.cache.store", "simple");
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");

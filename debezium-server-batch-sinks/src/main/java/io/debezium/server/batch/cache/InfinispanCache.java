@@ -290,5 +290,3 @@ public class InfinispanCache extends AbstractCache {
 
 }
 
-
-

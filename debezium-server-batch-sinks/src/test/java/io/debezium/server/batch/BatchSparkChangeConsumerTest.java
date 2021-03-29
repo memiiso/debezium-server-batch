@@ -22,7 +22,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fest.assertions.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -33,21 +32,19 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(TestSparkIcebergConsumerTestResource.class)
-public class TestSparkIcebergConsumer extends BaseSparkTest {
-
+@TestProfile(BatchSparkChangeConsumerTestProfile.class)
+public class BatchSparkChangeConsumerTest extends BaseSparkTest {
 
   @ConfigProperty(name = "debezium.sink.type")
   String sinkType;
 
   @Test
-  public void simpleUploadTest() {
+  public void testSimpleUpload() {
     Testing.Print.enable();
-    Assertions.assertThat(sinkType.equals("batch"));
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> df = spark.sql("select * from default.testc_inventory_customers");
+        Dataset<Row> df = getTableData("testc.inventory.customers");
         df.show(false);
         return df.filter("id is not null").count() >= 4;
       } catch (Exception e) {
@@ -94,14 +91,12 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> df = spark.sql("select * from default.testc_inventory_table_datatypes where c_id = 2");
-
+        Dataset<Row> df = getTableData("testc.inventory.table_datatypes");
         df = df.withColumn("c_bytea", df.col("c_bytea").cast("string"));
         df = df.withColumn("c_numeric", df.col("c_numeric").cast("float"));
         df = df.withColumn("c_float", df.col("c_float").cast("float"));
         df = df.withColumn("c_decimal", df.col("c_decimal").cast("float"));
         df.show(false);
-        df.printSchema();
         return df.where("c_bytea == 'aBC' " +
             "AND c_float == '1.23'" +
             "AND c_decimal == '1234566.3446'" +
@@ -111,9 +106,6 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
             "").
             count() == 1;
       } catch (Exception e) {
-        if (e.getMessage().contains("cast")) {
-          System.out.println(e.getMessage());
-        }
         return false;
       }
     });
@@ -121,8 +113,7 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
     // check null values
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> df = spark.sql("select * from default.testc_inventory_table_datatypes");
-
+        Dataset<Row> df = getTableData("testc.inventory.table_datatypes");
         df.show();
         return df.where("c_text is null AND c_varchar is null AND c_int is null " +
             "AND c_date is null AND c_timestamp is null AND c_timestamptz is null " +
@@ -138,7 +129,7 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
   public void testUpdateDeleteDrop() throws Exception {
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> ds = spark.sql("select * from default.testc_inventory_customers");
+        Dataset<Row> ds = getTableData("testc.inventory.customers");
         ds.show();
         return ds.count() >= 2;
       } catch (Exception e) {
@@ -147,21 +138,21 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
     });
 
     SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1' WHERE ID = 1002 ;");
-//    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_varchar_column varchar(255);");
-//    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_boolean_column boolean;");
-//    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_date_column date;");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_varchar_column varchar(255);");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_boolean_column boolean;");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_date_column date;");
 
     SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1'  WHERE id = 1002 ;");
     SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ALTER COLUMN email DROP NOT NULL;");
     SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
-        "(default,'SallyUSer2','Thomas',null);");
+        "(default,'SallyUSer2','Thomas',null,'value1',false, '2020-01-01');");
     SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ALTER COLUMN last_name DROP NOT NULL;");
     SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET last_name = NULL  WHERE id = 1002 ;");
     SourcePostgresqlDB.runSQL("DELETE FROM inventory.customers WHERE id = 1004 ;");
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> ds = spark.sql("select * from default.testc_inventory_customers");
+        Dataset<Row> ds = getTableData("testc.inventory.customers");
         ds.show(false);
         return ds.where("first_name == 'George__UPDATE1'").count() == 3
             && ds.where("first_name == 'SallyUSer2'").count() == 1
@@ -173,14 +164,15 @@ public class TestSparkIcebergConsumer extends BaseSparkTest {
       }
     });
 
-    spark.sql("select * from default.testc_inventory_customers").show();
+    getTableData("testc.inventory.customers").show();
     SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers DROP COLUMN email;");
     SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
-        "(default,'User3','lastname_value3');");
+        "(default,'User3','lastname_value3','test_varchar_value3',true, '2020-01-01'::DATE);");
+
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> ds = spark.sql("select * from default.testc_inventory_customers");
-        System.out.println("----------------------");
+        Dataset<Row> ds = getTableData("testc.inventory.customers");
+        ds.show();
         return ds.where("first_name == 'User3'").count() == 1
             && ds.where("test_varchar_column == 'test_varchar_value3'").count() == 1;
       } catch (Exception e) {

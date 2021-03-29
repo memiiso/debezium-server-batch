@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.fest.assertions.Assertions;
@@ -29,15 +30,17 @@ import static io.debezium.server.batch.common.TestUtil.randomString;
 
 
 @QuarkusTest
-@TestProfile(TestInfinispanCacheTestResource.class)
-class TestInfinispanCache {
+@TestProfile(InfinispanCacheTestProfile.class)
+class InfinispanCacheTest {
   protected static final Integer maxBatchSize = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache.max-batch-size", Integer.class).orElse(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue());
+
+  @Inject
+  InfinispanCache mycache;
 
   @Test
   void testGetJsonLines() throws IOException {
-    InfinispanCache mycache = new InfinispanCache();
+    mycache.initialize();
     String destination = "test";
-    System.out.println(maxBatchSize);
 
     Assertions.assertThat(0 == mycache.getEstimatedCacheSize(destination));
     ChangeEvent<Object, Object> a = new TestChangeEvent<>("key", "{\"id\": 1, \"first_name\": \"mytest123Value\"}",
@@ -62,8 +65,6 @@ class TestInfinispanCache {
     JsonlinesBatchFile jsonlines = mycache.getJsonLines("test");
     String fileContent = Files.readString(Paths.get(jsonlines.getFile().getAbsolutePath()));
 
-    System.out.println(jsonlines);
-
     String[] lines = fileContent.split("\r\n|\r|\n");
     Assertions.assertThat(lines[0].contains("mytest123Value"));
     Assertions.assertThat(lines[1].contains("mytest2222Value"));
@@ -71,14 +72,12 @@ class TestInfinispanCache {
     Assertions.assertThat(lines.length == 3);
 
     Assertions.assertThat(5 - maxBatchSize == mycache.getEstimatedCacheSize(destination));
-
-    System.out.println(jsonlines.getFile().getAbsolutePath());
   }
 
   @Test
   void testResetCacheSize() throws IOException {
+    mycache.initialize();
     String destination = "cachesizetest";
-    InfinispanCache mycache = new InfinispanCache();
     Assertions.assertThat(0 == mycache.getEstimatedCacheSize(destination));
     int rownumber = 1000;
     for (int i = 0; i < rownumber; i++) {
@@ -91,6 +90,7 @@ class TestInfinispanCache {
       JsonlinesBatchFile jsonlines = mycache.getJsonLines(destination);
       jsonlines.getFile().delete();
     }
+    // @TODO assert
     System.out.println("Final cache size is " + mycache.getEstimatedCacheSize(destination));
   }
 

@@ -90,5 +90,3 @@ public abstract class AbstractCache implements BatchCache, AutoCloseable {
   public abstract Set<String> getCaches();
 }
 
-
-

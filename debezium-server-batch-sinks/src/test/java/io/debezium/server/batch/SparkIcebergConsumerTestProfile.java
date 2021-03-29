@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static io.debezium.server.batch.ConfigSource.S3_BUCKET;
 
-public class TestSparkIcebergConsumerTestResource implements QuarkusTestProfile {
+public class SparkIcebergConsumerTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
@@ -37,13 +37,6 @@ public class TestSparkIcebergConsumerTestResource implements QuarkusTestProfile 
 
     config.put("debezium.sink.icebergsparkbatch.catalog-impl", "org.apache.iceberg.hadoop.HadoopCatalog");
     config.put("debezium.sink.icebergsparkbatch.warehouse", "s3a://" + S3_BUCKET + "/iceberg_warehouse");
-
-
-    config.put("quarkus.log.level", "INFO");
-    config.put("quarkus.log.category.\"org.apache.spark\".level", "WARN");
-    config.put("quarkus.log.category.\"org.apache.hadoop\".level", "ERROR");
-    config.put("quarkus.log.category.\"org.apache.parquet\".level", "WARN");
-    config.put("quarkus.log.category.\"org.eclipse.jetty\".level", "WARN");
 
     return config;
   }

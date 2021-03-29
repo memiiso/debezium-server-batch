@@ -21,7 +21,7 @@ import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class TestBatchUtil {
+class BatchUtilTest {
 
   final String serdeWithSchema = Testing.Files.readResourceAsString("json/serde-with-schema.json");
   final String unwrapWithSchema = Testing.Files.readResourceAsString("json/unwrap-with-schema.json");
@@ -51,15 +51,12 @@ class TestBatchUtil {
   }
 
   @Test
-  public void valuePayloadWithSchemaAsJsonNode() {
+  public void testValuePayloadWithSchemaAsJsonNode() {
     // testing Debezium deserializer
     final Serde<JsonNode> valueSerde = DebeziumSerdes.payloadJson(JsonNode.class);
     valueSerde.configure(Collections.emptyMap(), false);
     JsonNode deserializedData = valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
-    System.out.println(deserializedData.getClass().getSimpleName());
-    System.out.println(deserializedData.has("payload"));
     assertEquals(deserializedData.getClass().getSimpleName(), "ObjectNode");
-    System.out.println(deserializedData);
     assertTrue(deserializedData.has("after"));
     assertTrue(deserializedData.has("op"));
     assertTrue(deserializedData.has("before"));
@@ -67,7 +64,6 @@ class TestBatchUtil {
 
     valueSerde.configure(Collections.singletonMap("from.field", "schema"), false);
     JsonNode deserializedSchema = valueSerde.deserializer().deserialize("xx", serdeWithSchema.getBytes());
-    System.out.println(deserializedSchema);
     assertFalse(deserializedSchema.has("schema"));
   }
 
