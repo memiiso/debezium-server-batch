@@ -8,16 +8,19 @@
 
 package io.debezium.server.batch.cache.infinispan.cachetypes;
 
-import io.debezium.server.batch.ConfigSource;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
-import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
-import org.junit.jupiter.api.Disabled;
+import java.time.Duration;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.awaitility.Awaitility;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -28,20 +31,27 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(InfinispanCacheLocalITProfile.class)
-public class InfinispanCacheLocalIT extends BaseSparkTest {
+@TestProfile(InfinispanCacheSimpleTestProfile.class)
+public class InfinispanCacheSimpleTest extends BaseSparkTest {
 
-
-  static {
-    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
-  }
+  @ConfigProperty(name = "debezium.sink.batch.row-limit")
+  Integer maxBatchSize;
 
   @Test
-  @Disabled // @TODO fix
-  public void testPerformance() throws Exception {
-    createPGDummyPerformanceTable();
-    loadPGDataToDummyPerformanceTable(100000);
+  public void testSimpleUpload() throws Exception {
+
+    PGCreateTestDataTable();
+    PGLoadTestDataTable(maxBatchSize * 2);
+
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
+      try {
+        Dataset<Row> df = getTableData("testc.inventory.test_date_table");
+        return df.count() >= maxBatchSize * 2;
+      } catch (Exception e) {
+        return false;
+      }
+    });
+
   }
 
 }

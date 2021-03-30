@@ -21,11 +21,8 @@ public class InfinispanCacheSimpleTestProfile implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "sparkcachedbatch");
-    config.put("debezium.sink.batch.row-limit", "20000");
-    config.put("debezium.sink.batch.time-limit", "3000");
-    config.put("debezium.source.max.batch.size", "10000");
-    config.put("debezium.source.max.queue.size", "40000");
-    config.put("debezium.source.poll.interval.ms", "30000");
+    config.put("debezium.sink.batch.row-limit", "50");
+    config.put("debezium.sink.batch.time-limit", "1000");
 // ==================== SINK = CACHE ====================
     config.put("debezium.sink.batch.cache", "infinispan");
     config.put("debezium.sink.batch.cache.memory-maxcount", "1254");

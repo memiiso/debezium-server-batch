@@ -35,13 +35,6 @@ import org.junit.jupiter.api.Test;
 @TestProfile(BatchS3JsonChangeConsumerTestProfile.class)
 public class BatchS3JsonChangeConsumerTest extends BaseSparkTest {
 
-  static {
-    // Testing.Debug.enable();
-    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
-  }
-
-
   @ConfigProperty(name = "debezium.sink.type")
   String sinkType;
 
@@ -52,10 +45,10 @@ public class BatchS3JsonChangeConsumerTest extends BaseSparkTest {
     Assertions.assertThat(sinkType.equals("batch"));
 
     Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
-      S3Minio.listFiles();
+
       return S3Minio.getIcebergDataFiles(ConfigSource.S3_BUCKET).size() > 4;
     });
 
-    S3Minio.listFiles();
+
   }
 }

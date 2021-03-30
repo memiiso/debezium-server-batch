@@ -8,8 +8,11 @@
 
 package io.debezium.server.batch.common;
 
+import io.debezium.server.batch.BatchUtil;
 import io.debezium.server.batch.ConfigSource;
 import io.debezium.util.Testing;
+
+import java.util.Map;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
@@ -45,12 +48,8 @@ public class BaseSparkTest {
 
   @BeforeAll
   static void setup() {
-
-    for (String name : ConfigProvider.getConfig().getPropertyNames()) {
-      if (name.startsWith(SPARK_PROP_PREFIX)) {
-        BaseSparkTest.sparkconf.set(name.substring(SPARK_PROP_PREFIX.length()), ConfigProvider.getConfig().getValue(name, String.class));
-      }
-    }
+    Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
+    appSparkConf.forEach(BaseSparkTest.sparkconf::set);
     BaseSparkTest.sparkconf.set("spark.ui.enabled", "false");
 
     BaseSparkTest.spark = SparkSession
@@ -66,10 +65,10 @@ public class BaseSparkTest {
   }
 
 
-  public static void createPGDummyPerformanceTable() throws Exception {
+  public static void PGCreateTestDataTable() throws Exception {
     // create test table
     String sql = "" +
-        "        CREATE TABLE IF NOT EXISTS inventory.dummy_performance_table (\n" +
+        "        CREATE TABLE IF NOT EXISTS inventory.test_date_table (\n" +
         "            c_id INTEGER ,\n" +
         "            c_text TEXT,\n" +
         "            c_varchar VARCHAR" +
@@ -77,27 +76,35 @@ public class BaseSparkTest {
     SourcePostgresqlDB.runSQL(sql);
   }
 
-  public static int loadPGDataToDummyPerformanceTable(int numRows) throws Exception {
+  public static int PGLoadTestDataTable(int numRows) throws Exception {
     int numInsert = 0;
     do {
-      String sql = "INSERT INTO inventory.dummy_performance_table (c_id, c_text, c_varchar ) " +
-          "VALUES ";
-      StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
-      for (int i = 0; i < 100; i++) {
-        values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
-      }
-      SourcePostgresqlDB.runSQL(sql + values);
-      SourcePostgresqlDB.runSQL("COMMIT;");
+
+      new Thread(() -> {
+        try {
+          String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
+              "VALUES ";
+          StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
+          for (int i = 0; i < 100; i++) {
+            values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
+          }
+          SourcePostgresqlDB.runSQL(sql + values);
+          SourcePostgresqlDB.runSQL("COMMIT;");
+        } catch (Exception e) {
+          Thread.currentThread().interrupt();
+        }
+      }).start();
+
       numInsert += 100;
     } while (numInsert <= numRows);
     return numInsert;
   }
 
 
-  public static void createMysqlDummyPerformanceTable() throws Exception {
+  public static void mysqlCreateTestDataTable() throws Exception {
     // create test table
     String sql = "\n" +
-        "        CREATE TABLE IF NOT EXISTS inventory.dummy_performance_table (\n" +
+        "        CREATE TABLE IF NOT EXISTS inventory.test_date_table (\n" +
         "            c_id INTEGER ,\n" +
         "            c_text TEXT,\n" +
         "            c_varchar TEXT\n" +
@@ -105,10 +112,10 @@ public class BaseSparkTest {
     SourceMysqlDB.runSQL(sql);
   }
 
-  public static int loadMysqlDataToDummyPerformanceTable(int numRows) throws Exception {
+  public static int mysqlLoadTestDataTable(int numRows) throws Exception {
     int numInsert = 0;
     do {
-      String sql = "INSERT INTO inventory.dummy_performance_table (c_id, c_text, c_varchar ) " +
+      String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
           "VALUES ";
       StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
       for (int i = 0; i < 10; i++) {

@@ -56,7 +56,7 @@ public class SparkIcebergConsumerTest extends BaseSparkTest {
         return false;
       }
     });
-    S3Minio.listFiles();
+
   }
 
   @Test
