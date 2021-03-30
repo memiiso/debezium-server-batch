@@ -25,22 +25,33 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <release>8</release>
+        <skipITs>true</skipITs>
 
+        <version.groovy>3.0.7</version.groovy>
         <version.s3>2.15.45</version.s3>
-        <version.debezium>1.4.2.Final</version.debezium>
         <version.assembly.plugin>3.1.1</version.assembly.plugin>
         <version.jackson>2.12.2</version.jackson>
         <version.infinispan>12.0.2.Final</version.infinispan>
-        <skipITs>true</skipITs>
         <version.spark>3.0.2</version.spark>
         <version.hadoop>3.3.0</version.hadoop>
-        <version.groovy>3.0.7</version.groovy>
+        <!-- Debezium -->
+        <version.debezium>1.4.2.Final</version.debezium>
         <!-- Quarkus -->
         <quarkus.version>1.12.2.Final</quarkus.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- quarkus -->
+            <dependency>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-bom</artifactId>
+                <version>${quarkus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- debezium server -->
             <dependency>
                 <groupId>io.debezium</groupId>
                 <artifactId>debezium-server</artifactId>
@@ -48,18 +59,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
             <dependency>
                 <groupId>io.debezium</groupId>
                 <artifactId>debezium-server-batch</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <dependency>
-                <groupId>io.debezium</groupId>
-                <artifactId>debezium-server-iceberg</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <!-- Scripting -->
+            <!-- Debezium Scripting -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy</artifactId>
@@ -106,7 +112,7 @@
                 <optional>true</optional>
             </dependency>
 
-
+            <!-- infinispan -->
             <dependency>
                 <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-bom</artifactId>
