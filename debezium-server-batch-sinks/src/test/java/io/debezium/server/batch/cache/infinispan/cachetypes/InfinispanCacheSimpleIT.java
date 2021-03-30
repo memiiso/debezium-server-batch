@@ -8,11 +8,9 @@
 
 package io.debezium.server.batch.cache.infinispan.cachetypes;
 
-import io.debezium.server.batch.ConfigSource;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
-import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -30,12 +28,6 @@ import org.junit.jupiter.api.Test;
 @QuarkusTestResource(SourcePostgresqlDB.class)
 @TestProfile(InfinispanCacheSimpleITProfile.class)
 public class InfinispanCacheSimpleIT extends BaseSparkTest {
-
-
-  static {
-    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
-  }
 
   @Test
   @Disabled // @TODO fix

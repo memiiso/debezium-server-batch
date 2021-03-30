@@ -39,8 +39,8 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.database.history.kafka.bootstrap.servers", "kafka:9092");
     s3Test.put("debezium.source.database.history.kafka.topic", "dbhistory.fullfillment");
     s3Test.put("debezium.source.include.schema.changes", "false");
-    s3Test.put("debezium.source.database.history", "io.debezium.relational.history.FileDatabaseHistory");
-    s3Test.put("debezium.source.database.history.file.filename", "data/dbhistory.txt");
+    // s3Test.put("debezium.source.database.history", "io.debezium.relational.history.FileDatabaseHistory");
+    // s3Test.put("debezium.source.database.history.file.filename", "data/dbhistory.txt");
 
     // cache
     // sparkbatch sink conf

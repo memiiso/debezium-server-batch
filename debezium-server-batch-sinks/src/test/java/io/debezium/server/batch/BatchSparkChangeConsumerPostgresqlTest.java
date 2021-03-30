@@ -11,7 +11,6 @@ package io.debezium.server.batch;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
-import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -39,11 +38,6 @@ public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
 
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "1000")
   Integer maxBatchSize;
-
-  static {
-    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
-  }
 
   @Test
   @Disabled // @TODO fix

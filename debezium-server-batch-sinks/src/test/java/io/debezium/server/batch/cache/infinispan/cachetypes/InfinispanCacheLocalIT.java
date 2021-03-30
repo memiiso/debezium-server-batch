@@ -8,7 +8,6 @@
 
 package io.debezium.server.batch.cache.infinispan.cachetypes;
 
-import io.debezium.server.batch.ConfigSource;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
@@ -17,7 +16,11 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
-import org.junit.jupiter.api.Disabled;
+import java.time.Duration;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,17 +34,19 @@ import org.junit.jupiter.api.Test;
 @TestProfile(InfinispanCacheLocalITProfile.class)
 public class InfinispanCacheLocalIT extends BaseSparkTest {
 
-
-  static {
-    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
-  }
-
   @Test
-  @Disabled // @TODO fix
-  public void testPerformance() throws Exception {
-    createPGDummyPerformanceTable();
-    loadPGDataToDummyPerformanceTable(100000);
+  public void testSimpleUpload() {
+    Testing.Print.enable();
+
+    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+      try {
+        Dataset<Row> df = getTableData("testc.inventory.customers");
+        df.show(false);
+        return df.filter("id is not null").count() >= 4;
+      } catch (Exception e) {
+        return false;
+      }
+    });
   }
 
 }

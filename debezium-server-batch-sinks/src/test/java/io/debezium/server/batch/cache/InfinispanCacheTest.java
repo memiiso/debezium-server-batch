@@ -21,18 +21,20 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.fest.assertions.Assertions;
-import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.junit.jupiter.api.Test;
 import static io.debezium.server.batch.common.TestUtil.randomInt;
 import static io.debezium.server.batch.common.TestUtil.randomString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @QuarkusTest
 @TestProfile(InfinispanCacheTestProfile.class)
 class InfinispanCacheTest {
-  protected static final Integer maxBatchSize = ConfigProvider.getConfig().getOptionalValue("debezium.sink.batch.cache.max-batch-size", Integer.class).orElse(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue());
+
+  @ConfigProperty(name = "debezium.sink.batch.row-limit")
+  Integer maxBatchSize;
 
   @Inject
   InfinispanCache mycache;
@@ -75,23 +77,24 @@ class InfinispanCacheTest {
   }
 
   @Test
-  void testResetCacheSize() throws IOException {
+  void testEstimatedCacheSize() {
     mycache.initialize();
     String destination = "cachesizetest";
     Assertions.assertThat(0 == mycache.getEstimatedCacheSize(destination));
-    int rownumber = 1000;
+    int rownumber = 10 * maxBatchSize;
     for (int i = 0; i < rownumber; i++) {
       final TestChangeEvent<Object, Object> a = new TestChangeEvent<>("key",
           "{\"id\": 1, \"first_name\": \"" + randomString(randomInt(5300, 14300)) + "\"}",
           null);
       mycache.appendAll(destination, List.of(a));
     }
+    assertEquals(10 * maxBatchSize, mycache.getEstimatedCacheSize(destination));
+
     for (int i = 0; i < (rownumber / maxBatchSize); i++) {
       JsonlinesBatchFile jsonlines = mycache.getJsonLines(destination);
       jsonlines.getFile().delete();
     }
-    // @TODO assert
-    System.out.println("Final cache size is " + mycache.getEstimatedCacheSize(destination));
+    assertEquals(0, mycache.getEstimatedCacheSize(destination));
   }
 
 }
