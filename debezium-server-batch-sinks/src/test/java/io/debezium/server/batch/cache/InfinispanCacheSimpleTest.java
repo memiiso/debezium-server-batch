@@ -37,12 +37,12 @@ public class InfinispanCacheSimpleTest extends BaseSparkTest {
   public void testSimpleUpload() throws Exception {
 
     PGCreateTestDataTable();
-    PGLoadTestDataTable(1000);
+    PGLoadTestDataTable(100);
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.test_date_table");
-        return df.count() >= 1000;
+        return df.count() >= 100;
       } catch (Exception e) {
         return false;
       }
