@@ -65,10 +65,10 @@ public class BaseSparkTest {
   }
 
 
-  public static void PGCreateTestPerformanceTable() throws Exception {
+  public static void PGCreateTestDataTable() throws Exception {
     // create test table
     String sql = "" +
-        "        CREATE TABLE IF NOT EXISTS inventory.test_performance_table (\n" +
+        "        CREATE TABLE IF NOT EXISTS inventory.test_date_table (\n" +
         "            c_id INTEGER ,\n" +
         "            c_text TEXT,\n" +
         "            c_varchar VARCHAR" +
@@ -76,10 +76,10 @@ public class BaseSparkTest {
     SourcePostgresqlDB.runSQL(sql);
   }
 
-  public static int PGLoadPerformanceTable(int numRows) throws Exception {
+  public static int PGLoadTestDataTable(int numRows) throws Exception {
     int numInsert = 0;
     do {
-      String sql = "INSERT INTO inventory.test_performance_table (c_id, c_text, c_varchar ) " +
+      String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
           "VALUES ";
       StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
       for (int i = 0; i < 100; i++) {
@@ -93,10 +93,10 @@ public class BaseSparkTest {
   }
 
 
-  public static void mysqlCreateTestPerformanceTable() throws Exception {
+  public static void mysqlCreateTestDataTable() throws Exception {
     // create test table
     String sql = "\n" +
-        "        CREATE TABLE IF NOT EXISTS inventory.test_performance_table (\n" +
+        "        CREATE TABLE IF NOT EXISTS inventory.test_date_table (\n" +
         "            c_id INTEGER ,\n" +
         "            c_text TEXT,\n" +
         "            c_varchar TEXT\n" +
@@ -104,10 +104,10 @@ public class BaseSparkTest {
     SourceMysqlDB.runSQL(sql);
   }
 
-  public static int mysqlLoadPerformanceTable(int numRows) throws Exception {
+  public static int mysqlLoadTestDataTable(int numRows) throws Exception {
     int numInsert = 0;
     do {
-      String sql = "INSERT INTO inventory.test_performance_table (c_id, c_text, c_varchar ) " +
+      String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
           "VALUES ";
       StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
       for (int i = 0; i < 10; i++) {

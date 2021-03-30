@@ -32,8 +32,8 @@ public class MemoryCacheTest extends BaseSparkTest {
   @Test
   @Disabled // @TODO fix
   public void testPerformance() throws Exception {
-    PGCreateTestPerformanceTable();
-    PGLoadPerformanceTable(100000);
+    PGCreateTestDataTable();
+    PGLoadTestDataTable(100000);
   }
 
 }
