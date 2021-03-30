@@ -44,12 +44,12 @@ public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
   public void testPerformance() throws Exception {
 
     int iteration = 10;
-    createPGDummyPerformanceTable();
+    PGCreateTestPerformanceTable();
 
     new Thread(() -> {
       try {
         for (int i = 0; i <= iteration; i++) {
-          loadPGDataToDummyPerformanceTable(maxBatchSize);
+          PGLoadPerformanceTable(maxBatchSize);
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -58,7 +58,7 @@ public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
 
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
-        Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
+        Dataset<Row> df = getTableData("testc.inventory.test_performance_table");
         return df.count() >= (long) iteration * maxBatchSize;
       } catch (Exception e) {
         return false;

@@ -32,8 +32,8 @@ public class InfinispanCacheSimpleIT extends BaseSparkTest {
   @Test
   @Disabled // @TODO fix
   public void testPerformance() throws Exception {
-    createPGDummyPerformanceTable();
-    loadPGDataToDummyPerformanceTable(100000);
+    PGCreateTestPerformanceTable();
+    PGLoadPerformanceTable(100000);
   }
 
 }

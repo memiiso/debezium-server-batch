@@ -45,11 +45,11 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
 
     int iteration = 10;
 
-    createMysqlDummyPerformanceTable();
+    mysqlCreateTestPerformanceTable();
     new Thread(() -> {
       try {
         for (int i = 0; i <= iteration; i++) {
-          loadMysqlDataToDummyPerformanceTable(maxBatchSize);
+          mysqlLoadPerformanceTable(maxBatchSize);
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -58,7 +58,7 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
 
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
-        Dataset<Row> df = getTableData("testc.inventory.dummy_performance_table");
+        Dataset<Row> df = getTableData("testc.inventory.test_performance_table");
         return df.count() >= (long) iteration * maxBatchSize;
       } catch (Exception e) {
         return false;

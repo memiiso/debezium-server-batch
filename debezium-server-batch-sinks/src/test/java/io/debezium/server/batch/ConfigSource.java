@@ -82,7 +82,7 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.database.server.name", "testc");
     s3Test.put("debezium.source.schema.include.list", "inventory");
     s3Test.put("debezium.source.table.include.list", "inventory.customers,inventory.orders,inventory.products," +
-        "inventory.dummy_performance_table," +
+        "inventory.test_performance_table," +
         "inventory.geom,inventory.table_datatypes");
 
 //    However, when decimal.handling.mode configuration property is set to double, then the connector will represent
