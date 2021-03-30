@@ -20,7 +20,6 @@ import java.time.Duration;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,7 +34,6 @@ import org.junit.jupiter.api.Test;
 public class InfinispanCacheSimpleTest extends BaseSparkTest {
 
   @Test
-  @Disabled // @TODO fix
   public void testSimpleUpload() throws Exception {
 
     PGCreateTestDataTable();
@@ -44,13 +42,12 @@ public class InfinispanCacheSimpleTest extends BaseSparkTest {
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.test_date_table");
-        df.show(false);
         return df.count() >= 1000;
       } catch (Exception e) {
         return false;
       }
     });
-    S3Minio.listFiles();
+
   }
 
 }

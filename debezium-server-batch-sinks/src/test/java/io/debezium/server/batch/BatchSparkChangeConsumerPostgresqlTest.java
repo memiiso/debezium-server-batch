@@ -21,7 +21,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,12 +34,10 @@ import org.junit.jupiter.api.Test;
 @TestProfile(BatchSparkChangeConsumerPostgresqlTestProfile.class)
 public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
 
-
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "1000")
   Integer maxBatchSize;
 
   @Test
-  @Disabled // @TODO fix
   public void testPerformance() throws Exception {
 
     int iteration = 10;

@@ -15,7 +15,12 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
-import org.junit.jupiter.api.Disabled;
+import java.time.Duration;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.awaitility.Awaitility;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -29,11 +34,24 @@ import org.junit.jupiter.api.Test;
 @TestProfile(InfinispanCacheRocksdbITProfile.class)
 public class InfinispanCacheRocksdbIT extends BaseSparkTest {
 
+  @ConfigProperty(name = "debezium.sink.batch.row-limit")
+  Integer maxBatchSize;
+
   @Test
-  @Disabled // @TODO fix
-  public void testPerformance() throws Exception {
+  public void testSimpleUpload() throws Exception {
+
     PGCreateTestDataTable();
-    PGLoadTestDataTable(100000);
+    PGLoadTestDataTable(maxBatchSize * 10);
+
+    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+      try {
+        Dataset<Row> df = getTableData("testc.inventory.test_date_table");
+        return df.count() >= maxBatchSize * 10;
+      } catch (Exception e) {
+        return false;
+      }
+    });
+
   }
 
 }

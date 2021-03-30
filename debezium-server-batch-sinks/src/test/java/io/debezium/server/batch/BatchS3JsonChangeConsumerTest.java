@@ -45,10 +45,10 @@ public class BatchS3JsonChangeConsumerTest extends BaseSparkTest {
     Assertions.assertThat(sinkType.equals("batch"));
 
     Awaitility.await().atMost(Duration.ofSeconds(ConfigSource.waitForSeconds())).until(() -> {
-      S3Minio.listFiles();
+
       return S3Minio.getIcebergDataFiles(ConfigSource.S3_BUCKET).size() > 4;
     });
 
-    S3Minio.listFiles();
+
   }
 }
