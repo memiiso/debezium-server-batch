@@ -42,16 +42,9 @@ public class BatchSparkChangeConsumerPostgresqlTest extends BaseSparkTest {
 
     int iteration = 10;
     PGCreateTestDataTable();
-
-    new Thread(() -> {
-      try {
-        for (int i = 0; i <= iteration; i++) {
-          PGLoadTestDataTable(maxBatchSize);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }).start();
+    for (int i = 0; i <= iteration; i++) {
+      PGLoadTestDataTable(maxBatchSize);
+    }
 
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {

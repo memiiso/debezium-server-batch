@@ -42,17 +42,10 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
   public void testPerformance() throws Exception {
 
     int iteration = 10;
-
     mysqlCreateTestDataTable();
-    new Thread(() -> {
-      try {
-        for (int i = 0; i <= iteration; i++) {
-          mysqlLoadTestDataTable(maxBatchSize);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }).start();
+    for (int i = 0; i <= iteration; i++) {
+      mysqlLoadTestDataTable(maxBatchSize);
+    }
 
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {

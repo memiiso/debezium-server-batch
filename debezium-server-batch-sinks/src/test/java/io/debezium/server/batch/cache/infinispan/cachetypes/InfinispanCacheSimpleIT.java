@@ -43,7 +43,7 @@ public class InfinispanCacheSimpleIT extends BaseSparkTest {
     PGCreateTestDataTable();
     PGLoadTestDataTable(maxBatchSize * 10);
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.test_date_table");
         return df.count() >= maxBatchSize * 10;

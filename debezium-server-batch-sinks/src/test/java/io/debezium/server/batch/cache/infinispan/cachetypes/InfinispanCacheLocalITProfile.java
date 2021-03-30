@@ -23,8 +23,8 @@ public class InfinispanCacheLocalITProfile implements QuarkusTestProfile {
     config.put("debezium.sink.type", "batch");
     config.put("debezium.sink.batch.row-limit", "100");
     config.put("debezium.sink.batch.time-limit", "3000");
-    //config.put("debezium.source.max.batch.size", "500");
-    //config.put("debezium.source.poll.interval.ms", "10");
+    config.put("debezium.source.max.batch.size", "500");
+    config.put("debezium.source.poll.interval.ms", "10");
 // ==================== SINK = CACHE ====================
     config.put("debezium.sink.batch.cache.memory-maxcount", "1254");
     config.put("debezium.sink.batch.cache.store", "local");
