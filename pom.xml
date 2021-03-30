@@ -37,7 +37,7 @@
         <!-- Debezium -->
         <version.debezium>1.4.2.Final</version.debezium>
         <!-- Quarkus -->
-        <quarkus.version>1.12.2.Final</quarkus.version>
+        <version.quarkus>1.12.2.Final</version.quarkus>
     </properties>
 
     <dependencyManagement>
@@ -46,7 +46,7 @@
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-bom</artifactId>
-                <version>${quarkus.version}</version>
+                <version>${version.quarkus}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
