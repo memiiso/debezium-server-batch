@@ -13,7 +13,7 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InfinispanCacheRocksdbITProfile implements QuarkusTestProfile {
+public class InfinispanCacheSimpleTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
@@ -27,7 +27,7 @@ public class InfinispanCacheRocksdbITProfile implements QuarkusTestProfile {
     config.put("debezium.source.poll.interval.ms", "10");
 // ==================== SINK = CACHE ====================
     config.put("debezium.sink.batch.cache.memory-maxcount", "1254");
-    config.put("debezium.sink.batch.cache.store", "rocksdb");
+    config.put("debezium.sink.batch.cache.store", "simple");
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
     config.put("debezium.sink.batch.cache.max-batch-size", "1254");
 

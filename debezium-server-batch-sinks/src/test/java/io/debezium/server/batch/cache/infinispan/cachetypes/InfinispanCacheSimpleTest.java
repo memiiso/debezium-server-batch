@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(InfinispanCacheSimpleITProfile.class)
-public class InfinispanCacheSimpleIT extends BaseSparkTest {
+@TestProfile(InfinispanCacheSimpleTestProfile.class)
+public class InfinispanCacheSimpleTest extends BaseSparkTest {
 
   @ConfigProperty(name = "debezium.sink.batch.row-limit")
   Integer maxBatchSize;
