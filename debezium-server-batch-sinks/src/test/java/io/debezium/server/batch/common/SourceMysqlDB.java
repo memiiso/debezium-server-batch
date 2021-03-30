@@ -46,9 +46,10 @@ public class SourceMysqlDB implements QuarkusTestResourceLifecycleManager {
     }
   }
 
-  public static void runSQL(String query) throws SQLException {
+  public static void runSQL(String query) throws SQLException, ClassNotFoundException {
     try {
       String url = "jdbc:mysql://" + MYSQL_HOST + ":" + MYSQL_PORT_MAPPED + "/" + MYSQL_DATABASE + "?useSSL=false";
+      Class.forName("com.mysql.cj.jdbc.Driver");
       Connection con = DriverManager.getConnection(url, MYSQL_USER, MYSQL_PASSWORD);
       Statement st = con.createStatement();
       st.execute(query);

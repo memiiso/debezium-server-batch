@@ -65,10 +65,11 @@ public class SourcePostgresqlDB implements QuarkusTestResourceLifecycleManager {
     }
   }
 
-  public static void runSQL(String query) throws SQLException {
+  public static void runSQL(String query) throws SQLException, ClassNotFoundException {
     try {
 
       String url = "jdbc:postgresql://" + POSTGRES_HOST + ":" + POSTGRES_PORT_MAPPED + "/" + POSTGRES_DBNAME;
+      Class.forName("org.postgresql.Driver");
       Connection con = DriverManager.getConnection(url, POSTGRES_USER, POSTGRES_PASSWORD);
       Statement st = con.createStatement();
       st.execute(query);

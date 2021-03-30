@@ -40,7 +40,7 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
   Integer maxBatchSize;
 
   @Test
-  @Disabled // fix
+  @Disabled // @TODO fix
   public void testPerformance() throws Exception {
 
     int iteration = 10;
