@@ -41,12 +41,12 @@ public class InfinispanCacheRocksdbTest extends BaseSparkTest {
   public void testSimpleUpload() throws Exception {
 
     PGCreateTestDataTable();
-    PGLoadTestDataTable(maxBatchSize * 10);
+    PGLoadTestDataTable(maxBatchSize * 2);
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.test_date_table");
-        return df.count() >= maxBatchSize * 10;
+        return df.count() >= maxBatchSize * 2;
       } catch (Exception e) {
         return false;
       }
