@@ -11,7 +11,6 @@ package io.debezium.server.batch.cache;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
-import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -35,14 +34,16 @@ import org.junit.jupiter.api.Test;
 public class InfinispanCacheSimpleTest extends BaseSparkTest {
 
   @Test
-  public void testSimpleUpload() {
-    Testing.Print.enable();
+  public void testSimpleUpload() throws Exception {
+
+    PGCreateTestDataTable();
+    PGLoadTestDataTable(1000);
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> df = getTableData("testc.inventory.customers");
+        Dataset<Row> df = getTableData("testc.inventory.test_date_table");
         df.show(false);
-        return df.filter("id is not null").count() >= 4;
+        return df.count() >= 1000;
       } catch (Exception e) {
         return false;
       }
