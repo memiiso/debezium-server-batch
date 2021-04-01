@@ -58,8 +58,7 @@ public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
 
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {
-    super.connect();
-
+    super.initizalize();
 
     final AwsCredentialsProvider credProvider;
     if (useInstanceProfile) {

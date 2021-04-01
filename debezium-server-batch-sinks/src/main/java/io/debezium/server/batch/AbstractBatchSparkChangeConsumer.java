@@ -8,11 +8,8 @@
 
 package io.debezium.server.batch;
 
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import org.apache.spark.SparkConf;
@@ -55,14 +52,8 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
     }
   }
 
-  @PreDestroy
-  void close() {
-    this.stopSparkSession();
-  }
-
-  @PostConstruct
-  void connect() throws URISyntaxException, InterruptedException {
-    super.connect();
+  void initizalize() throws InterruptedException {
+    super.initizalize();
 
     Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
     appSparkConf.forEach(this.sparkconf::set);
