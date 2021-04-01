@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchChangeConsumer.class);
+  protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final ObjectMapper mapper = new ObjectMapper();
   protected Deserializer<JsonNode> valDeserializer;

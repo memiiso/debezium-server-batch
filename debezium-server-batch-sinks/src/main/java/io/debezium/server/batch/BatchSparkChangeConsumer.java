@@ -24,8 +24,6 @@ import javax.inject.Named;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -35,7 +33,6 @@ import org.slf4j.LoggerFactory;
 @Named("sparkbatch")
 @Dependent
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkChangeConsumer.class);
 
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {

@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 @Dependent
 public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer implements InterfaceCachedChangeConsumer {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkCachedChangeConsumer.class);
+  Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
   @Inject
   protected BatchCache cache;
