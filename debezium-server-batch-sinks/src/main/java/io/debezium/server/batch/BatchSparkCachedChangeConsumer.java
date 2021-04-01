@@ -11,7 +11,6 @@ package io.debezium.server.batch;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.cache.BatchCache;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -32,7 +31,7 @@ import org.slf4j.LoggerFactory;
 @Dependent
 public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer implements InterfaceCachedChangeConsumer {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkCachedChangeConsumer.class);
+  Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
   @Inject
   protected BatchCache cache;
@@ -49,7 +48,8 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer imp
       LOGGER.info("Closing batch writer!");
       this.stopTimerUpload();
       this.stopUploadQueue();
-      cache.close();
+      this.cache.close();
+      this.stopSparkSession();
     } catch (Exception e) {
       LOGGER.warn("Exception while closing writer:{} ", e.getMessage());
       e.printStackTrace();
@@ -57,8 +57,8 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer imp
   }
 
   @PostConstruct
-  void connect() throws URISyntaxException, InterruptedException {
-    super.connect();
+  void connect() throws InterruptedException {
+    super.initizalize();
     LOGGER.info("Batch row limit set to {}", batchUploadRowLimit);
     LOGGER.info("Using '{}' as cache", cache.getClass().getSimpleName());
     cache.initialize();

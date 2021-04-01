@@ -8,19 +8,14 @@
 
 package io.debezium.server.batch;
 
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -28,7 +23,6 @@ import org.slf4j.LoggerFactory;
  * @author Ismail Simsek
  */
 public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChangeConsumer {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchSparkChangeConsumer.class);
 
   protected static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
   protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
@@ -36,6 +30,7 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
       .setAppName("CDC-Batch-Spark-Sink")
       .setMaster("local[*]");
   protected SparkSession spark;
+
   @Inject
   protected ObjectStorageNameMapper objectStorageNameMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
@@ -57,14 +52,8 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
     }
   }
 
-  @PreDestroy
-  void close() {
-    this.stopSparkSession();
-  }
-
-  @PostConstruct
-  void connect() throws URISyntaxException, InterruptedException {
-    super.connect();
+  void initizalize() throws InterruptedException {
+    super.initizalize();
 
     Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
     appSparkConf.forEach(this.sparkconf::set);

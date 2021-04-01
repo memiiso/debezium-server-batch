@@ -18,13 +18,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
-  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchChangeConsumer.class);
+  protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final ObjectMapper mapper = new ObjectMapper();
   protected Deserializer<JsonNode> valDeserializer;
@@ -56,8 +54,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Inject
   BatchDynamicWait batchDynamicWait;
 
-  @PostConstruct
-  void connect() throws URISyntaxException, InterruptedException {
+  void initizalize() throws InterruptedException {
 
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();

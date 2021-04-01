@@ -18,14 +18,13 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -35,13 +34,21 @@ import org.slf4j.LoggerFactory;
 @Named("sparkbatch")
 @Dependent
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchSparkChangeConsumer.class);
+
+  public void initialize() throws InterruptedException {
+    super.initizalize();
+    LOGGER.info("Starting Spark Consumer({})", this.getClass().getSimpleName());
+    LOGGER.info("Spark save format is '{}'", saveFormat);
+  }
 
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {
-    super.connect();
-    LOGGER.info("Starting Spark Consumer({})", this.getClass().getName());
-    LOGGER.info("Spark save format is '{}'", saveFormat);
+    this.initizalize();
+  }
+
+  @PreDestroy
+  void close() {
+    this.stopSparkSession();
   }
 
   @Override

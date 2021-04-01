@@ -21,8 +21,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
@@ -40,7 +38,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @Named("s3jsonbatch")
 @Dependent
 public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchS3JsonChangeConsumer.class);
+
   @Inject
   protected ObjectStorageNameMapper objectStorageNameMapper;
   @ConfigProperty(name = "debezium.sink.batch.s3.bucket-name", defaultValue = "My-S3-Bucket")
@@ -60,8 +58,7 @@ public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
 
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {
-    super.connect();
-
+    super.initizalize();
 
     final AwsCredentialsProvider credProvider;
     if (useInstanceProfile) {
