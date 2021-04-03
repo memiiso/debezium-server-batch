@@ -51,6 +51,9 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
 
+  @ConfigProperty(name = "debezium.sink.batch.dynamic-wait", defaultValue = "false")
+  boolean batchDynamicWaitEnabled;
+
   @Inject
   BatchDynamicWait batchDynamicWait;
 
@@ -86,7 +89,10 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       committer.markProcessed(records.get(0));
     }
     committer.markBatchFinished();
-    batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
+
+    if (batchDynamicWaitEnabled) {
+      batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
+    }
   }
 
   public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
