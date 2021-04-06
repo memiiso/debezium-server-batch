@@ -21,6 +21,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -97,12 +98,14 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
 
   public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
 
+    Instant start = Instant.now();
     JsonNode schema = null;
     boolean isFirst = true;
     final File tempFile;
     try {
       tempFile = File.createTempFile(UUID.randomUUID() + "-", ".json");
       FileOutputStream fos = new FileOutputStream(tempFile, true);
+      LOGGER.debug("Creating jsonlines file: {}", tempFile);
 
       for (ChangeEvent<Object, Object> e : data) {
         Object val = e.value();
@@ -142,6 +145,9 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+
+    LOGGER.debug("Created jsonlines file, processing time:{}",
+        Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS));
 
     // if nothing processed return null
     if (isFirst) {

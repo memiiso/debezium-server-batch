@@ -39,8 +39,6 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
   String saveFormat;
   @ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
   String saveMode;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.dynamic-wait", defaultValue = "false")
-  boolean batchDynamicWaitEnabled;
 
   protected void stopSparkSession() {
     try {
