@@ -28,8 +28,8 @@ public class BatchDynamicWait {
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "2048")
   Integer maxBatchSize;
 
-  @ConfigProperty(name = "debezium.source.poll.interval.ms", defaultValue = "1000")
-  Integer pollIntervalMs;
+  @ConfigProperty(name = "debezium.sink.batch.dynamic-wait.max-wait-ms", defaultValue = "300000")
+  Integer maxWaitMs;
 
   LinkedList<Integer> batchSizeHistory = new LinkedList<Integer>();
   LinkedList<Integer> sleepMsHistory = new LinkedList<Integer>();
@@ -74,14 +74,12 @@ public class BatchDynamicWait {
       sleepMs = (sleepMsHistory.getLast() * maxBatchSize) / numRecords;
     }
 
-    sleepMsHistory.add(Math.min(Math.max(sleepMs, 100), pollIntervalMs));
+    sleepMsHistory.add(Math.min(Math.max(sleepMs, 100), maxWaitMs));
     sleepMsHistory.removeFirst();
 
-    LOGGER.debug("Calculating Wait delay\nmax.batch.size={}\npoll.interval.ms={}\nbatchSizeHistory{}\nsleepMsHistory" +
-            "{}\nval{}",
-        maxBatchSize,
-        pollIntervalMs,
-        batchSizeHistory, sleepMsHistory, sleepMsHistory.getLast());
+    LOGGER.debug("Calculating Wait delay\n" +
+            "max.batch.size={}\npoll.interval.ms={}\nbatchSizeHistory{}\nsleepMsHistory{}\nval{}",
+        maxBatchSize, maxWaitMs, batchSizeHistory, sleepMsHistory, sleepMsHistory.getLast());
 
     return sleepMsHistory.getLast();
   }
