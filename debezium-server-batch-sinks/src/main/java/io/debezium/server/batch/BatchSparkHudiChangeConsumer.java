@@ -13,12 +13,21 @@ import java.io.FileReader;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.UUID;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
+import org.apache.hudi.config.HoodieWriteConfig;
+import org.apache.hudi.keygen.constant.KeyGeneratorOptions;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.eclipse.microprofile.config.ConfigProvider;
+import static org.apache.spark.sql.functions.udf;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -28,6 +37,16 @@ import org.apache.spark.sql.types.StructType;
 @Named("sparkhudibatch")
 @Dependent
 public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
+
+  protected static final String SPARK_HUDI_PROP_PREFIX = "debezium.sink.sparkhudibatch.";
+  static final String appendPkFieldName = "hudi_uuidpk";
+  java.util.Map<String, String> hudioptions = new HashMap<>();
+  String saveFormat = "hudi";
+
+  public void initialize() throws InterruptedException {
+    super.initizalize();
+    hudioptions = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_HUDI_PROP_PREFIX);
+  }
 
   protected void uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
 
@@ -61,25 +80,34 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     String uploadFile = objectStorageNameMapper.map(destination);
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
-    // serialize same destination uploads
-    synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-      // @TODO remove synchronized block, since hudi is consistent
-      // @TODO add hudi append, set hudi_uuidpk as PK
-      // @TODO add partitioning hive style
-      // @TODO add tests
-      // @TODO use function to get append df to separate append and upsert
-      // @TODO upsert fallback to append if missing key
-      df.write()
-          .mode(saveMode)
-          .format("hudi")
-          .save(bucket + "/" + uploadFile);
-      LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
-          df.count(),
-          dfSchema != null,
-          jsonLinesFile.getFile().length(),
-          Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
-          uploadFile);
-    }
+
+    // ad PK field for append
+    UserDefinedFunction uuid = udf(() -> UUID.randomUUID().toString(), DataTypes.StringType);
+    df = df.withColumn(appendPkFieldName, uuid.apply());
+
+    // @TODO add tests
+    // @TODO V2 add upsert fallback to append if missing PK key
+    // @TODO V2 read table get PK? or extract it from event!??
+    String tableName = destination.replace(".", "_");
+    String basePath = bucket + "/" + uploadFile;
+
+    df.write()
+        .options(hudioptions)
+        .option(KeyGeneratorOptions.RECORDKEY_FIELD_OPT_KEY, appendPkFieldName)
+        .option(HoodieWriteConfig.PRECOMBINE_FIELD_PROP, "__source_ts_ms")
+        // @TODO V2 add partitioning hive style by consume time?? __source_ts_ms
+        //.option(PARTITIONPATH_FIELD_OPT_KEY, "partitionpath")
+        .option(HoodieWriteConfig.TABLE_NAME, tableName)
+        .mode(SaveMode.Append)
+        .format(saveFormat)
+        .save(basePath);
+
+    LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
+        df.count(),
+        dfSchema != null,
+        jsonLinesFile.getFile().length(),
+        Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
+        uploadFile);
 
     if (LOGGER.isTraceEnabled()) {
       df.toJavaRDD().foreach(x ->
