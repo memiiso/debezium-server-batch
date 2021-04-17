@@ -18,8 +18,8 @@ import java.util.UUID;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
+import org.apache.hudi.DataSourceWriteOptions;
 import org.apache.hudi.config.HoodieWriteConfig;
-import org.apache.hudi.keygen.constant.KeyGeneratorOptions;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
@@ -92,11 +92,11 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     String basePath = bucket + "/" + uploadFile;
 
     df.write()
-        .options(hudioptions)
-        .option(KeyGeneratorOptions.RECORDKEY_FIELD_OPT_KEY, appendPkFieldName)
-        .option(HoodieWriteConfig.PRECOMBINE_FIELD_PROP, "__source_ts_ms")
+        //.options(hudioptions)
+        .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), appendPkFieldName)
+        .option(DataSourceWriteOptions.PRECOMBINE_FIELD_OPT_KEY(), "__source_ts_ms")
         // @TODO V2 add partitioning hive style by consume time?? __source_ts_ms
-        //.option(PARTITIONPATH_FIELD_OPT_KEY, "partitionpath")
+        .option(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY(), "")
         .option(HoodieWriteConfig.TABLE_NAME, tableName)
         .mode(SaveMode.Append)
         .format(saveFormat)
