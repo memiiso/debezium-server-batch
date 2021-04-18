@@ -158,6 +158,11 @@
                 <version>3.3.4</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-http</artifactId>
+                <version>3.4.3</version>
+            </dependency>
+            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.7.30</version>
@@ -167,26 +172,21 @@
                 <artifactId>wildfly-common</artifactId>
                 <version>1.5.4.Final</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-http</artifactId>
-                <version>3.4.3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-http-shared</artifactId>
-                <version>3.4.3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-provider-api</artifactId>
-                <version>3.4.3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-file</artifactId>
-                <version>3.4.3</version>
-            </dependency>
+            <!--            <dependency>-->
+            <!--                <groupId>org.apache.maven.wagon</groupId>-->
+            <!--                <artifactId>wagon-http-shared</artifactId>-->
+            <!--                <version>3.4.3</version>-->
+            <!--            </dependency>-->
+            <!--            <dependency>-->
+            <!--                <groupId>org.apache.maven.wagon</groupId>-->
+            <!--                <artifactId>wagon-provider-api</artifactId>-->
+            <!--                <version>3.4.3</version>-->
+            <!--            </dependency>-->
+            <!--            <dependency>-->
+            <!--                <groupId>org.apache.maven.wagon</groupId>-->
+            <!--                <artifactId>wagon-file</artifactId>-->
+            <!--                <version>3.4.3</version>-->
+            <!--            </dependency>-->
 
         </dependencies>
     </dependencyManagement>
