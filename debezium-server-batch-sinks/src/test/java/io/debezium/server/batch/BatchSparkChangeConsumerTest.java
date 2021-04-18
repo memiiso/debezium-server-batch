@@ -133,6 +133,7 @@ public class BatchSparkChangeConsumerTest extends BaseSparkTest {
         ds.show();
         return ds.count() >= 2;
       } catch (Exception e) {
+        e.printStackTrace();
         return false;
       }
     });
