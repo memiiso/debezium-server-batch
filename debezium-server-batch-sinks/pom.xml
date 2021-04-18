@@ -73,12 +73,22 @@
         <dependency>
             <groupId>org.apache.hudi</groupId>
             <artifactId>hudi-spark3-bundle_2.12</artifactId>
-            <version>0.8.0</version>
+            <version>${version.hudi}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-hive-sync-bundle</artifactId>
+            <version>${version.hudi}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-hadoop-mr-bundle</artifactId>
+            <version>${version.hudi}</version>
         </dependency>
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo-shaded</artifactId>
-            <version>4.0.2</version>
+            <version>${version.kryo}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>

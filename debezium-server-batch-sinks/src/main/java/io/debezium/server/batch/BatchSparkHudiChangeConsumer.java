@@ -8,13 +8,19 @@
 
 package io.debezium.server.batch;
 
+import io.debezium.engine.ChangeEvent;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
@@ -22,6 +28,7 @@ import org.apache.hudi.DataSourceWriteOptions;
 import org.apache.hudi.common.model.WriteOperationType;
 import org.apache.hudi.config.HoodieWriteConfig;
 import org.apache.hudi.keygen.NonpartitionedKeyGenerator;
+import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
@@ -39,24 +46,26 @@ import static org.apache.spark.sql.functions.udf;
  */
 @Named("sparkhudibatch")
 @Dependent
-public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
+public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   protected static final String SPARK_HUDI_PROP_PREFIX = "debezium.sink.sparkhudibatch.";
-  java.util.Map<String, String> hudioptions = new HashMap<>();
-  String saveFormat = "hudi";
-
-  // @TODO table namespace ??
-  //@ConfigProperty(name = "debezium.sink.sparkhudibatch.table-namespace", defaultValue = "default")
-  //String namespace;
-  @ConfigProperty(name = "debezium.sink.sparkhudibatch.write-operation", defaultValue = "insert")
-  String writeOperation;
-  @ConfigProperty(name = "debezium.sink.sparkhudibatch.append-recordkey-field", defaultValue = "hudi_uuidpk")
-  String appendRecordKeyFieldName;
-  @ConfigProperty(name = "debezium.sink.sparkhudibatch.precombine-field", defaultValue = "__source_ts_ms")
-  String precombineFieldName;
-
   @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
   protected String objectKeyPrefix;
+  java.util.Map<String, String> hudioptions = new HashMap<>();
+  String saveFormat = "hudi";
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.table-database", defaultValue = "default")
+  String database;
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.datasource.write.operation", defaultValue = "insert")
+  String writeOperation;
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.datasource.write.recordkey.field", defaultValue = "hudi_uuidpk")
+  String appendRecordKeyFieldName;
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.datasource.write.precombine.field", defaultValue = "__source_ts_ms")
+  String precombineFieldName;
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.datasource.write.table.type", defaultValue = "MERGE_ON_READ")
+  String tableType;
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.embed.timeline.server", defaultValue = "false")
+  Boolean embedTimelineServer;
+
 
   public void initialize() throws InterruptedException {
     super.initizalize();
@@ -64,6 +73,16 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     LOGGER.info("Hudi write mode is:{} record key field(for appends):{}, precombine field: {}", writeOperation,
         appendRecordKeyFieldName,
         precombineFieldName);
+  }
+
+  @PostConstruct
+  void connect() throws URISyntaxException, InterruptedException {
+    this.initizalize();
+  }
+
+  @PreDestroy
+  void close() {
+    this.stopSparkSession();
   }
 
   protected void uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
@@ -95,12 +114,10 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       LOGGER.debug("Reading data without schema definition");
     }
 
-
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
 
-    // @TODO add onject key prefix
-    String tablePath = mapTablePath(destination);
-    String tableName = mapTableName(destination);
+    String tablePath = getTablePath(destination);
+    String tableName = getTableName(destination);
     final String tableWriteOperation;
     final String tableRecordKeyFieldName;
     final boolean filterDupes;
@@ -115,6 +132,7 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       tableWriteOperation = writeOperation;
       tableRecordKeyFieldName = dfKeySchema.fields()[0].name();
       filterDupes = true;
+      // @TODO use the key as sort order
       LOGGER.debug("Using field {} as record key, filtering duplicated using field {}", tableRecordKeyFieldName, precombineFieldName);
     } else {
       // fallback to append when table don't have PK
@@ -128,7 +146,12 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       filterDupes = false;
     }
 
-    df.write()
+    LOGGER.error("============================COMMITITNG======" + tableName + "=========================================");
+    LOGGER.error("=====DataSourceWriteOptions.TABLE_TYPE_OPT_KEY()====" + DataSourceWriteOptions.TABLE_TYPE_OPT_KEY());
+    LOGGER.error("=====DataSourceWriteOptions.MOR_TABLE_TYPE_OPT_VAL()====" + DataSourceWriteOptions.MOR_TABLE_TYPE_OPT_VAL());
+    // @TODO V2 add partitioning hive style, by consume time?? __source_ts_ms??
+    //.option(TABLE_TYPE_OPT_KEY, HoodieTableType.COPY_ON_WRITE)
+    DataFrameWriter<Row> dfhudi = df.write()
         .options(hudioptions)
         .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), tableRecordKeyFieldName)
         .option(DataSourceWriteOptions.PRECOMBINE_FIELD_OPT_KEY(), precombineFieldName)
@@ -137,11 +160,13 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
         // @TODO V2 add partitioning hive style, by consume time?? __source_ts_ms??
         .option(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY(), "")
         .option(DataSourceWriteOptions.KEYGENERATOR_CLASS_OPT_KEY(), NonpartitionedKeyGenerator.class.getCanonicalName())
-        //.option(TABLE_TYPE_OPT_KEY, HoodieTableType.COPY_ON_WRITE)
+        .option(DataSourceWriteOptions.TABLE_TYPE_OPT_KEY(), tableType)
         .option(HoodieWriteConfig.TABLE_NAME, tableName)
         .option(HoodieWriteConfig.BASE_PATH_PROP, tablePath)
-        .option("path", tablePath)
-        .mode(SaveMode.Append)
+        .option(HoodieWriteConfig.EMBEDDED_TIMELINE_SERVER_ENABLED, embedTimelineServer)
+        .option("path", tablePath);
+
+    dfhudi.mode(SaveMode.Append)
         .format(saveFormat)
         .save(tablePath);
 
@@ -164,12 +189,20 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     }
   }
 
-  public String mapTablePath(String destination) {
-    return bucket + "/" + mapTableName(destination);
+  public String getTableName(String destination) {
+    return (objectKeyPrefix + destination).replace(".", "_").replace("-", "_");
   }
 
-  public String mapTableName(String destination) {
-    return objectKeyPrefix + destination.replace(".", "_");
+  public String getBasePath() {
+    return bucket + "/" + database;
   }
 
+  public String getTablePath(String destination) {
+    return getBasePath() + "/" + getTableName(destination);
+  }
+
+  @Override
+  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
+    this.uploadDestination(destination, this.getJsonLines(destination, data));
+  }
 }
