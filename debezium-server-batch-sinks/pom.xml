@@ -75,19 +75,6 @@
             <artifactId>hudi-spark3-bundle_2.12</artifactId>
             <version>${version.hudi}</version>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>org.apache.hudi</groupId>
-            <artifactId>hudi-hive-sync-bundle</artifactId>
-            <version>${version.hudi}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hudi</groupId>
-            <artifactId>hudi-hadoop-mr-bundle</artifactId>
-            <version>${version.hudi}</version>
-        </dependency>
-        -->
         <dependency>
             <groupId>org.apache.parquet</groupId>
             <artifactId>parquet-hive-storage-handler</artifactId>
