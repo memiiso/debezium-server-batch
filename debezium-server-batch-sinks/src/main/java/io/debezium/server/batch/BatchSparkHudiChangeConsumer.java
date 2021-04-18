@@ -167,12 +167,17 @@ public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsum
         .format(saveFormat)
         .save(tablePath);
 
-    LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, save mode:{} saved to:'{}'",
+    LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, record key:{} save mode:{} drop " +
+            "duplicates: " +
+            "{} saved " +
+            "to:'{}'",
         df.count(),
         dfSchema != null,
         jsonLinesFile.getFile().length(),
         Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
+        tableRecordKeyFieldName,
         tableWriteOperation,
+        filterDupes,
         tablePath);
 
     if (LOGGER.isTraceEnabled()) {
