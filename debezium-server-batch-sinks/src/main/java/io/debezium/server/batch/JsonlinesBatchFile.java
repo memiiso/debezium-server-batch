@@ -19,23 +19,38 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public class JsonlinesBatchFile {
   private final File file;
-  private JsonNode schema;
+  private JsonNode valSchema;
+  private JsonNode keySchema;
 
-  public JsonlinesBatchFile(File file, JsonNode schema) {
+  public JsonlinesBatchFile(File file, JsonNode valSchema) {
+    this(file, valSchema, null);
+  }
+
+  public JsonlinesBatchFile(File file, JsonNode valSchema, JsonNode keySchema) {
     this.file = file;
-    this.schema = schema;
+    this.valSchema = valSchema;
+    this.keySchema = keySchema;
   }
 
   public File getFile() {
     return file;
   }
 
-  public JsonNode getSchema() {
-    return schema;
+  public JsonNode getValSchema() {
+    return valSchema;
   }
 
-  public void setSchema(JsonNode schema) {
-    this.schema = schema;
+  public void setValSchema(JsonNode valSchema) {
+    this.valSchema = valSchema;
   }
+
+  public JsonNode getKeySchema() {
+    return keySchema;
+  }
+
+  public void setKeySchema(JsonNode keySchema) {
+    this.keySchema = keySchema;
+  }
+
 }
 

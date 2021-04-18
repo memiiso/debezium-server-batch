@@ -45,9 +45,9 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
   java.util.Map<String, String> hudioptions = new HashMap<>();
   String saveFormat = "hudi";
 
-  // @TODO table schema
-  @ConfigProperty(name = "debezium.sink.sparkhudibatch.table-namespace", defaultValue = "default")
-  String namespace;
+  // @TODO table namespace ??
+  //@ConfigProperty(name = "debezium.sink.sparkhudibatch.table-namespace", defaultValue = "default")
+  //String namespace;
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.write-operation", defaultValue = "insert")
   String writeOperation;
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.append-recordkey-field", defaultValue = "hudi_uuidpk")
@@ -69,7 +69,7 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       return;
     }
     // Read DF with Schema if schema enabled and exists in the event message
-    StructType dfSchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getSchema());
+    StructType dfSchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getValSchema());
 
     if (LOGGER.isTraceEnabled()) {
       final String fileName = jsonLinesFile.getFile().getName();
@@ -96,33 +96,36 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     String tableName = destination.replace(".", "_");
     String basePath = bucket + "/" + uploadFile;
 
-    boolean hasRecordKey = false;
     final String tableWriteOperation;
-    final String tableAppendRecordKeyFieldName;
+    final String tableRecordKeyFieldName;
     final boolean filterDupes;
-    if (writeOperation.equals(WriteOperationType.UPSERT.name()) && hasRecordKey) {
+    StructType dfKeySchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getKeySchema());
+    if (writeOperation.equals(WriteOperationType.UPSERT.name())
+        // data has key with schema
+        && dfKeySchema != null
+        // number of key fields is 1, composite keys not supported by hudi
+        && dfKeySchema.fields().length == 1
+    ) {
       // upsert mode
-      // @TODO V2 read table meta to get PK? or extract it from event!?? use it as recordKey, upsert
-      // @TODO use table client to read table metadata - PK, and PRECOMBINE_FIELD_PROP
-      // HoodieTableMetaClient tclient = new HoodieTableMetaClient.Builder().setConf(null).setBasePath("path").build();
       tableWriteOperation = writeOperation;
-      tableAppendRecordKeyFieldName = "PK FIELD";
+      tableRecordKeyFieldName = dfKeySchema.fields()[0].name();
       filterDupes = true;
+      LOGGER.debug("Using field {} as record key, filtering duplicated using field {}", tableRecordKeyFieldName, precombineFieldName);
     } else {
       // fallback to append when table don't have PK
-      if (writeOperation.equals(WriteOperationType.INSERT.name()) && !hasRecordKey) {
-        LOGGER.info("Table {} don't have record key(PK), falling back to append mode", tableName);
+      if (writeOperation.equals(WriteOperationType.INSERT.name()) && !(dfKeySchema != null && dfKeySchema.fields().length == 1)) {
+        LOGGER.warn("Table {} don't have record key(PK), falling back to append mode", tableName);
       }
       UserDefinedFunction uuid = udf(() -> UUID.randomUUID().toString(), DataTypes.StringType);
       df = df.withColumn(appendRecordKeyFieldName, uuid.apply());
       tableWriteOperation = WriteOperationType.INSERT.name();
-      tableAppendRecordKeyFieldName = appendRecordKeyFieldName;
+      tableRecordKeyFieldName = appendRecordKeyFieldName;
       filterDupes = false;
     }
 
     df.write()
         .options(hudioptions)
-        .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), tableAppendRecordKeyFieldName)
+        .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), tableRecordKeyFieldName)
         .option(DataSourceWriteOptions.PRECOMBINE_FIELD_OPT_KEY(), precombineFieldName)
         .option(DataSourceWriteOptions.INSERT_DROP_DUPS_OPT_KEY(), filterDupes)
         .option(DataSourceWriteOptions.OPERATION_OPT_KEY(), tableWriteOperation)

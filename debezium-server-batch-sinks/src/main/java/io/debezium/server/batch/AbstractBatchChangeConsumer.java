@@ -99,7 +99,8 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
 
     Instant start = Instant.now();
-    JsonNode schema = null;
+    JsonNode valSchema = null;
+    JsonNode keySchema = null;
     boolean isFirst = true;
     final File tempFile;
     try {
@@ -109,6 +110,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
 
       for (ChangeEvent<Object, Object> e : data) {
         Object val = e.value();
+        Object key = e.key();
 
         // this could happen if multiple threads reading and removing data
         if (val == null) {
@@ -119,7 +121,8 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
         LOGGER.trace("Cache.getJsonLines val:{}", getString(val));
 
         if (isFirst) {
-          schema = BatchUtil.getJsonSchemaNode(getString(val));
+          valSchema = BatchUtil.getJsonSchemaNode(getString(val));
+          keySchema = BatchUtil.getJsonSchemaNode(getString(key));
           isFirst = false;
         }
 
@@ -155,7 +158,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       return null;
     }
 
-    return new JsonlinesBatchFile(tempFile, schema);
+    return new JsonlinesBatchFile(tempFile, valSchema, keySchema);
   }
 
   public abstract void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException;
