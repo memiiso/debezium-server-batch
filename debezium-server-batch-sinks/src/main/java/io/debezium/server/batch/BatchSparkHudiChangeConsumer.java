@@ -58,6 +58,9 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
   public void initialize() throws InterruptedException {
     super.initizalize();
     hudioptions = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_HUDI_PROP_PREFIX);
+    LOGGER.info("Hudi write mode is:{} record key field(for appends):{}, precombine field: {}", writeOperation,
+        appendRecordKeyFieldName,
+        precombineFieldName);
   }
 
   protected void uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
@@ -93,6 +96,7 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
 
+    // @TODO add onject key prefix
     String tableName = destination.replace(".", "_");
     String basePath = bucket + "/" + uploadFile;
 

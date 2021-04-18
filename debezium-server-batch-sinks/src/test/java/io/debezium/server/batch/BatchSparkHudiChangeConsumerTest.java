@@ -22,7 +22,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -45,7 +44,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
 
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
-        Dataset<Row> df = getTableData("testc.inventory.customers");
+        Dataset<Row> df = getHudiTableData("testc.inventory.customers");
         df.show(false);
         return df.filter("id is not null").count() >= 4;
       } catch (Exception e) {
@@ -56,7 +55,6 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
   }
 
   @Test
-  @Disabled // @TODO
   public void testDatatypes() throws Exception {
     String sql = "\n" +
         "        DROP TABLE IF EXISTS inventory.table_datatypes;\n" +
@@ -93,7 +91,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> df = getTableData("testc.inventory.table_datatypes");
+        Dataset<Row> df = getHudiTableData("testc.inventory.table_datatypes");
         df = df.withColumn("c_bytea", df.col("c_bytea").cast("string"));
         df = df.withColumn("c_numeric", df.col("c_numeric").cast("float"));
         df = df.withColumn("c_float", df.col("c_float").cast("float"));
@@ -115,7 +113,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
     // check null values
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> df = getTableData("testc.inventory.table_datatypes");
+        Dataset<Row> df = getHudiTableData("testc.inventory.table_datatypes");
         df.show();
         return df.where("c_text is null AND c_varchar is null AND c_int is null " +
             "AND c_date is null AND c_timestamp is null AND c_timestamptz is null " +
@@ -128,11 +126,10 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
   }
 
   @Test
-  @Disabled // @TODO
   public void testUpdateDeleteDrop() throws Exception {
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> ds = getTableData("testc.inventory.customers");
+        Dataset<Row> ds = getHudiTableData("testc.inventory.customers");
         ds.show();
         return ds.count() >= 2;
       } catch (Exception e) {
@@ -155,7 +152,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> ds = getTableData("testc.inventory.customers");
+        Dataset<Row> ds = getHudiTableData("testc.inventory.customers");
         ds.show(false);
         return ds.where("first_name == 'George__UPDATE1'").count() == 3
             && ds.where("first_name == 'SallyUSer2'").count() == 1
@@ -167,14 +164,14 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
       }
     });
 
-    getTableData("testc.inventory.customers").show();
+    getHudiTableData("testc.inventory.customers").show();
     SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers DROP COLUMN email;");
     SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
         "(default,'User3','lastname_value3','test_varchar_value3',true, '2020-01-01'::DATE);");
 
     Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
-        Dataset<Row> ds = getTableData("testc.inventory.customers");
+        Dataset<Row> ds = getHudiTableData("testc.inventory.customers");
         ds.show();
         return ds.where("first_name == 'User3'").count() == 1
             && ds.where("test_varchar_column == 'test_varchar_value3'").count() == 1;

@@ -60,8 +60,14 @@ public class BaseSparkTest {
 
   public Dataset<Row> getTableData(String table) {
     return spark.read().option("mergeSchema", "true")
-        .parquet(bucket + "/" + objectKeyPrefix + table + "/*")
+        .parquet(bucket + "/" + table)
         .withColumn("input_file", functions.input_file_name());
+  }
+
+  public Dataset<Row> getHudiTableData(String table) {
+    return spark.read()
+        .format("hudi")
+        .load(bucket + "/" + objectKeyPrefix + table);
   }
 
 
