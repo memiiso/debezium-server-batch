@@ -145,7 +145,14 @@
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
-                <version>4.5.13</version>
+                <version>4.4.14</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-http-shared</artifactId>
+                <version>3.3.4</version>
+                <scope>test</scope>
             </dependency>
 
         </dependencies>
