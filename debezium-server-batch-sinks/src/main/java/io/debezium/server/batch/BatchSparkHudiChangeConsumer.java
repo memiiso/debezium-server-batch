@@ -55,6 +55,9 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.precombine-field", defaultValue = "__source_ts_ms")
   String precombineFieldName;
 
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
+  protected String objectKeyPrefix;
+
   public void initialize() throws InterruptedException {
     super.initizalize();
     hudioptions = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_HUDI_PROP_PREFIX);
@@ -92,14 +95,12 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       LOGGER.debug("Reading data without schema definition");
     }
 
-    String uploadFile = objectStorageNameMapper.map(destination);
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
 
     // @TODO add onject key prefix
-    String tableName = destination.replace(".", "_");
-    String basePath = bucket + "/" + uploadFile;
-
+    String tablePath = mapTablePath(destination);
+    String tableName = mapTableName(destination);
     final String tableWriteOperation;
     final String tableRecordKeyFieldName;
     final boolean filterDupes;
@@ -141,14 +142,14 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
         //.option(TABLE_TYPE_OPT_KEY, HoodieTableType.COPY_ON_WRITE)
         .mode(SaveMode.Append)
         .format(saveFormat)
-        .save(basePath);
+        .save(tablePath);
 
     LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
         df.count(),
         dfSchema != null,
         jsonLinesFile.getFile().length(),
         Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
-        uploadFile);
+        tablePath);
 
     if (LOGGER.isTraceEnabled()) {
       df.toJavaRDD().foreach(x ->
@@ -160,6 +161,14 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     if (jsonLinesFile.getFile() != null && jsonLinesFile.getFile().exists()) {
       jsonLinesFile.getFile().delete();
     }
+  }
+
+  public String mapTablePath(String destination) {
+    return bucket + "/" + mapTableName(destination);
+  }
+
+  public String mapTableName(String destination) {
+    return objectKeyPrefix + destination.replace(".", "_");
   }
 
 }
