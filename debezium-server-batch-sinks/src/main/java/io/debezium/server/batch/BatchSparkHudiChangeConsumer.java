@@ -20,9 +20,7 @@ import javax.inject.Named;
 
 import org.apache.hudi.DataSourceWriteOptions;
 import org.apache.hudi.common.model.WriteOperationType;
-import org.apache.hudi.config.HoodieWriteConfig;
 import org.apache.hudi.keygen.NonpartitionedKeyGenerator;
-import org.apache.hudi.keygen.constant.KeyGeneratorOptions;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
@@ -52,7 +50,7 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.write-operation", defaultValue = "insert")
   String writeOperation;
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.append-recordkey-field", defaultValue = "hudi_uuidpk")
-  String appendPkFieldName;
+  String appendRecordKeyFieldName;
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.precombine-field", defaultValue = "__source_ts_ms")
   String precombineFieldName;
 
@@ -94,30 +92,42 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
 
-    // ad PK field for append
-    if (writeOperation.equals(WriteOperationType.INSERT.name())) {
-      UserDefinedFunction uuid = udf(() -> UUID.randomUUID().toString(), DataTypes.StringType);
-      df = df.withColumn(appendPkFieldName, uuid.apply());
-    }
-
     // @TODO add tests
     // @TODO V2 add upsert fallback to append if missing PK key
     // @TODO V2 read table get PK? or extract it from event!?? use it as PK
     String tableName = destination.replace(".", "_");
     String basePath = bucket + "/" + uploadFile;
 
+    boolean hasRecordKey = true;
+    final String tableWriteOperation;
+    final String tableAppendRecordKeyFieldName;
+    // ad PK field for append
+    if (writeOperation.equals(WriteOperationType.UPSERT.name()) && hasRecordKey) {
+      tableWriteOperation = writeOperation;
+      tableAppendRecordKeyFieldName = "PK FIELD";
+    } else {
+      // fallback to append
+      if (!hasRecordKey) {
+        LOGGER.info("Table {} don't have record key(PK), falling back to append mode", tableName);
+      }
+      UserDefinedFunction uuid = udf(() -> UUID.randomUUID().toString(), DataTypes.StringType);
+      df = df.withColumn(appendRecordKeyFieldName, uuid.apply());
+      tableWriteOperation = WriteOperationType.INSERT.name();
+      tableAppendRecordKeyFieldName = appendRecordKeyFieldName;
+    }
+
     // @TODO use table client to read table metadata - PK, and PRECOMBINE_FIELD_PROP
     // HoodieTableMetaClient tclient = new HoodieTableMetaClient.Builder().setConf(null).setBasePath("path").build();
 
     df.write()
         .options(hudioptions)
-        .option(KeyGeneratorOptions.RECORDKEY_FIELD_OPT_KEY, appendPkFieldName)
-        .option(HoodieWriteConfig.PRECOMBINE_FIELD_PROP, precombineFieldName)
-        .option(DataSourceWriteOptions.OPERATION_OPT_KEY(), writeOperation)
+        .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), tableAppendRecordKeyFieldName)
+        .option(DataSourceWriteOptions.PRECOMBINE_FIELD_OPT_KEY(), precombineFieldName)
+        .option(DataSourceWriteOptions.OPERATION_OPT_KEY(), tableWriteOperation)
         // @TODO V2 add partitioning hive style by consume time?? __source_ts_ms
-        .option(KeyGeneratorOptions.PARTITIONPATH_FIELD_OPT_KEY, "")
-        .option(HoodieWriteConfig.KEYGENERATOR_CLASS_PROP, NonpartitionedKeyGenerator.class.getCanonicalName())
-        .option(HoodieWriteConfig.TABLE_NAME, tableName)
+        .option(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY(), "")
+        .option(DataSourceWriteOptions.KEYGENERATOR_CLASS_OPT_KEY(), NonpartitionedKeyGenerator.class.getCanonicalName())
+        .option(DataSourceWriteOptions.TABLE_NAME_OPT_KEY(), tableName)
         //.option(TABLE_TYPE_OPT_KEY, HoodieTableType.COPY_ON_WRITE)
         .mode(SaveMode.Append)
         .format(saveFormat)

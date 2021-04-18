@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BatchUtil {
   protected static final Logger LOGGER = LoggerFactory.getLogger(BatchUtil.class);
+  public static final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
   public static StructType getSparkDfSchema(JsonNode eventSchema) {
 
@@ -105,7 +106,7 @@ public class BatchUtil {
   public static JsonNode getJsonSchemaNode(String eventVal) {
 
     try {
-      JsonNode jsonNode = new ObjectMapper().readTree(eventVal);
+      JsonNode jsonNode = BatchUtil.jsonObjectMapper.readTree(eventVal);
 
       if (BatchUtil.hasSchema(jsonNode)) {
         return jsonNode.get("schema");
