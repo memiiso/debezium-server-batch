@@ -93,9 +93,6 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
 
-    // @TODO add tests
-    // @TODO V2 add upsert fallback to append if missing PK key
-    // @TODO V2 read table get PK? or extract it from event!?? use it as PK
     String tableName = destination.replace(".", "_");
     String basePath = bucket + "/" + uploadFile;
 
@@ -104,14 +101,15 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     final String tableAppendRecordKeyFieldName;
     final boolean filterDupes;
     if (writeOperation.equals(WriteOperationType.UPSERT.name()) && hasRecordKey) {
-      // using upsert
+      // upsert mode
+      // @TODO V2 read table meta to get PK? or extract it from event!?? use it as recordKey, upsert
       // @TODO use table client to read table metadata - PK, and PRECOMBINE_FIELD_PROP
       // HoodieTableMetaClient tclient = new HoodieTableMetaClient.Builder().setConf(null).setBasePath("path").build();
       tableWriteOperation = writeOperation;
       tableAppendRecordKeyFieldName = "PK FIELD";
       filterDupes = true;
     } else {
-      // fallback to append
+      // fallback to append when table don't have PK
       if (writeOperation.equals(WriteOperationType.INSERT.name()) && !hasRecordKey) {
         LOGGER.info("Table {} don't have record key(PK), falling back to append mode", tableName);
       }
@@ -122,13 +120,11 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       filterDupes = false;
     }
 
-    LOGGER.error("RECORDKEY_FIELD_OPT_KEY= {}", DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY());
-    LOGGER.error("OPERATION_OPT_KEY= {}", DataSourceWriteOptions.OPERATION_OPT_KEY());
-    LOGGER.error("TABLE_NAME_OPT_KEY= {}", DataSourceWriteOptions.TABLE_NAME_OPT_KEY());
     df.write()
         .options(hudioptions)
         .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), tableAppendRecordKeyFieldName)
         .option(DataSourceWriteOptions.PRECOMBINE_FIELD_OPT_KEY(), precombineFieldName)
+        .option(DataSourceWriteOptions.INSERT_DROP_DUPS_OPT_KEY(), filterDupes)
         .option(DataSourceWriteOptions.OPERATION_OPT_KEY(), tableWriteOperation)
         // @TODO V2 add partitioning hive style, by consume time?? __source_ts_ms??
         .option(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY(), "")
