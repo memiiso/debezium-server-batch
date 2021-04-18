@@ -25,6 +25,7 @@ public class BatchSparkHudiChangeConsumerTestProfile implements QuarkusTestProfi
     //config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.access.key", S3Minio.MINIO_ACCESS_KEY);
     //config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.secret.key", S3Minio.MINIO_SECRET_KEY);
     config.put("quarkus.log.category.\"org.apache.hudi\".level", "WARN");
+    config.put("debezium.source.max.batch.size", "10");
 
     return config;
   }

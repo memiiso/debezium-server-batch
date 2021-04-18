@@ -122,7 +122,9 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
 
         if (isFirst) {
           valSchema = BatchUtil.getJsonSchemaNode(getString(val));
-          keySchema = BatchUtil.getJsonSchemaNode(getString(key));
+          if (key != null) {
+            keySchema = BatchUtil.getJsonSchemaNode(getString(key));
+          }
           isFirst = false;
         }
 

@@ -89,7 +89,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
         ")";
     SourcePostgresqlDB.runSQL(sql);
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getHudiTableData("testc.inventory.table_datatypes");
         df = df.withColumn("c_bytea", df.col("c_bytea").cast("string"));
@@ -111,7 +111,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
     });
 
     // check null values
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getHudiTableData("testc.inventory.table_datatypes");
         df.show();
@@ -150,7 +150,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
     SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET last_name = NULL  WHERE id = 1002 ;");
     SourcePostgresqlDB.runSQL("DELETE FROM inventory.customers WHERE id = 1004 ;");
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(180)).until(() -> {
       try {
         Dataset<Row> ds = getHudiTableData("testc.inventory.customers");
         ds.show(false);
@@ -169,7 +169,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
     SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
         "(default,'User3','lastname_value3','test_varchar_value3',true, '2020-01-01'::DATE);");
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> ds = getHudiTableData("testc.inventory.customers");
         ds.show();
