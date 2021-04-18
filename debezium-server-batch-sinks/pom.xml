@@ -62,6 +62,7 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
+            <version>${version.infinispan}</version>
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
