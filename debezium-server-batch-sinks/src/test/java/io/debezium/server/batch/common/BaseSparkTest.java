@@ -72,7 +72,6 @@ public class BaseSparkTest {
         .load(bucket + "/" + namespace + "/" + (objectKeyPrefix + table).replace(".", "_").replace("-", "_"));
   }
 
-
   public static void PGCreateTestDataTable() throws Exception {
     // create test table
     String sql = "" +
