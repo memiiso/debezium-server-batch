@@ -55,7 +55,7 @@ public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsum
   String saveFormat = "hudi";
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.table-database", defaultValue = "default")
   String database;
-  @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.datasource.write.operation", defaultValue = "insert")
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.datasource.write.operation", defaultValue = "bulk_insert")
   String writeOperation;
   @ConfigProperty(name = "debezium.sink.sparkhudibatch.hoodie.datasource.write.recordkey.field", defaultValue = "hudi_uuidpk")
   String appendRecordKeyFieldName;
@@ -122,7 +122,7 @@ public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsum
     final String tableRecordKeyFieldName;
     final boolean filterDupes;
     StructType dfKeySchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getKeySchema());
-    if (writeOperation.equals(WriteOperationType.UPSERT.name())
+    if (writeOperation.equals(WriteOperationType.UPSERT.value())
         // data has key with schema
         && dfKeySchema != null
         // number of key fields is 1, composite keys not supported by hudi
@@ -136,19 +136,16 @@ public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsum
       LOGGER.debug("Using field {} as record key, filtering duplicated using field {}", tableRecordKeyFieldName, precombineFieldName);
     } else {
       // fallback to append when table don't have PK
-      if (writeOperation.equals(WriteOperationType.INSERT.name()) && !(dfKeySchema != null && dfKeySchema.fields().length == 1)) {
+      if (writeOperation.equals(WriteOperationType.INSERT.value()) && !(dfKeySchema != null && dfKeySchema.fields().length == 1)) {
         LOGGER.warn("Table {} don't have record key(PK), falling back to append mode", tableName);
       }
       UserDefinedFunction uuid = udf(() -> UUID.randomUUID().toString(), DataTypes.StringType);
       df = df.withColumn(appendRecordKeyFieldName, uuid.apply());
-      tableWriteOperation = WriteOperationType.INSERT.name();
+      tableWriteOperation = WriteOperationType.INSERT.value();
       tableRecordKeyFieldName = appendRecordKeyFieldName;
       filterDupes = false;
     }
 
-    LOGGER.error("============================COMMITITNG======" + tableName + "=========================================");
-    LOGGER.error("=====DataSourceWriteOptions.TABLE_TYPE_OPT_KEY()====" + DataSourceWriteOptions.TABLE_TYPE_OPT_KEY());
-    LOGGER.error("=====DataSourceWriteOptions.MOR_TABLE_TYPE_OPT_VAL()====" + DataSourceWriteOptions.MOR_TABLE_TYPE_OPT_VAL());
     // @TODO V2 add partitioning hive style, by consume time?? __source_ts_ms??
     //.option(TABLE_TYPE_OPT_KEY, HoodieTableType.COPY_ON_WRITE)
     DataFrameWriter<Row> dfhudi = df.write()
@@ -170,11 +167,12 @@ public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsum
         .format(saveFormat)
         .save(tablePath);
 
-    LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
+    LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, save mode:{} saved to:'{}'",
         df.count(),
         dfSchema != null,
         jsonLinesFile.getFile().length(),
         Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
+        tableWriteOperation,
         tablePath);
 
     if (LOGGER.isTraceEnabled()) {

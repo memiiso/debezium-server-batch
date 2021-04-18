@@ -43,24 +43,24 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
 
     // test simple inserts
     List<ChangeEvent<Object, Object>> records = new ArrayList<>();
-    records.add(getCustomerRecord(1, "c"));
-    records.add(getCustomerRecord(2, "c"));
-    records.add(getCustomerRecord(3, "c"));
+    records.add(getCustomerRecord(1, "c", 1L));
+    records.add(getCustomerRecord(2, "c", 1L));
+    records.add(getCustomerRecord(3, "c", 1L));
     consumer.handleBatch(records, TestUtil.getCommitter());
 
-    Dataset<Row> ds = getTableData("testc.inventory.customers_upsert");
+    Dataset<Row> ds = getHudiTableData("testc.inventory.customers_upsert");
     Assertions.assertEquals(ds.count(), 3);
     Assertions.assertEquals(ds.where("id = 3").count(), 1);
 
     // 3 records should be updated 4th one should be inserted
     records.clear();
-    records.add(getCustomerRecord(1, "r"));
-    records.add(getCustomerRecord(2, "d"));
-    records.add(getCustomerRecord(3, "u", "UpdatednameV1"));
-    records.add(getCustomerRecord(4, "c"));
+    records.add(getCustomerRecord(1, "r", 2L));
+    records.add(getCustomerRecord(2, "d", 2L));
+    records.add(getCustomerRecord(3, "u", "UpdatednameV1", 2L));
+    records.add(getCustomerRecord(4, "c", 2L));
     consumer.handleBatch(records, TestUtil.getCommitter());
 
-    ds = getTableData("testc.inventory.customers_upsert");
+    ds = getHudiTableData("testc.inventory.customers_upsert");
     ds.show();
     Assertions.assertEquals(ds.count(), 4);
     Assertions.assertEquals(ds.where("id = 1 AND __op= 'r'").count(), 1);
@@ -83,26 +83,13 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.add(getCustomerRecord(6, "u", 10L));
     records.add(getCustomerRecord(6, "u", "Updatedname-6-V1", 11L));
     consumer.handleBatch(records, TestUtil.getCommitter());
-    ds = getTableData("testc.inventory.customers_upsert");
+    ds = getHudiTableData("testc.inventory.customers_upsert");
     ds.show();
     Assertions.assertEquals(ds.count(), 6);
     Assertions.assertEquals(ds.where("id = 3 AND __op= 'u' AND first_name= 'UpdatednameV4'").count(), 1);
     Assertions.assertEquals(ds.where("id = 4 AND __op= 'r' AND first_name= 'Updatedname-4-V3'").count(), 1);
     Assertions.assertEquals(ds.where("id = 5 AND __op= 'r' ").count(), 1);
     Assertions.assertEquals(ds.where("id = 6 AND __op= 'u' AND first_name= 'Updatedname-6-V1'").count(), 1);
-
-    // in case of duplicate records including epoch ts, its should keep latest one based on operation priority
-    // ("c", 1, "r", 2, "u", 3, "d", 4);
-    records.clear();
-    records.add(getCustomerRecord(3, "d", "UpdatednameV5", 1L));
-    records.add(getCustomerRecord(3, "u", "UpdatednameV6", 1L));
-    records.add(getCustomerRecord(6, "c", "Updatedname-6-V2", 1L));
-    records.add(getCustomerRecord(6, "r", "Updatedname-6-V3", 1L));
-    consumer.handleBatch(records, TestUtil.getCommitter());
-    ds = getTableData("testc.inventory.customers_upsert");
-    ds.show();
-    Assertions.assertEquals(ds.where("id = 3 AND __op= 'd' AND first_name= 'UpdatednameV5'").count(), 1);
-    Assertions.assertEquals(ds.where("id = 6 AND __op= 'r' AND first_name= 'Updatedname-6-V3'").count(), 1);
 
     // if its not standard insert followed by update! should keep latest one
     records.clear();
@@ -111,7 +98,7 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.add(getCustomerRecord(7, "r", 3L));
     records.add(getCustomerRecord(7, "u", "Updatedname-7-V1", 4L));
     consumer.handleBatch(records, TestUtil.getCommitter());
-    ds = getTableData("testc.inventory.customers_upsert");
+    ds = getHudiTableData("testc.inventory.customers_upsert");
     ds.show();
     Assertions.assertEquals(ds.where("id = 7 AND __op= 'u' AND first_name= 'Updatedname-7-V1'").count(), 1);
 
@@ -127,7 +114,7 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.add(getCustomerRecordCompositeKey(1, "r", "user1", 3L));
     consumer.handleBatch(records, TestUtil.getCommitter());
 
-    Dataset<Row> ds = getTableData("testc.inventory.customers_upsert_compositekey");
+    Dataset<Row> ds = getHudiTableData("testc.inventory.customers_upsert_compositekey");
     ds.show();
     Assertions.assertEquals(ds.count(), 2);
     Assertions.assertEquals(ds.where("id = 1").count(), 2);
@@ -135,7 +122,7 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.clear();
     records.add(getCustomerRecordCompositeKey(1, "u", "user2", 1L));
     consumer.handleBatch(records, TestUtil.getCommitter());
-    ds = getTableData("testc.inventory.customers_upsert_compositekey");
+    ds = getHudiTableData("testc.inventory.customers_upsert_compositekey");
     ds.show();
     Assertions.assertEquals(ds.count(), 2);
     Assertions.assertEquals(ds.where("id = 1 AND __op= 'u' AND first_name= 'user2'").count(), 1);
@@ -149,7 +136,7 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.add(getCustomerRecordNoKey(1, "c", "user2", 1L));
     records.add(getCustomerRecordNoKey(1, "u", "user1", 2L));
     consumer.handleBatch(records, TestUtil.getCommitter());
-    Dataset<Row> ds = getTableData("testc.inventory.customers_upsert_nokey");
+    Dataset<Row> ds = getHudiTableData("testc.inventory.customers_upsert_nokey");
     ds.show();
     Assertions.assertEquals(ds.count(), 3);
     Assertions.assertEquals(ds.where("id = 1").count(), 3);
@@ -159,7 +146,7 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.add(getCustomerRecordNoKey(1, "u", "user2", 1L));
     records.add(getCustomerRecordNoKey(1, "r", "user1", 3L));
     consumer.handleBatch(records, TestUtil.getCommitter());
-    ds = getTableData("testc.inventory.customers_upsert_nokey");
+    ds = getHudiTableData("testc.inventory.customers_upsert_nokey");
     ds.show();
     Assertions.assertEquals(ds.count(), 6);
     Assertions.assertEquals(ds.where("id = 1 AND __op= 'c' AND first_name= 'user2'").count(), 2);

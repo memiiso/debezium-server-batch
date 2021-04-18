@@ -164,6 +164,9 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
       }
     });
 
+    /* Drop is not supported by hudi!
+    // https://cwiki.apache.org/confluence/display/HUDI/Troubleshooting+Guide#TroubleshootingGuide-1.1Causedby:org.apache.parquet.io.InvalidRecordException:Parquet/Avroschemamismatch:Avrofield'col1'notfound
+    // One of the good approaches can be fetching schema from hive metastore and merging it with the current schema.
     getHudiTableData("testc.inventory.customers").show();
     SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers DROP COLUMN email;");
     SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
@@ -179,6 +182,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
         return false;
       }
     });
+     */
 
   }
 
