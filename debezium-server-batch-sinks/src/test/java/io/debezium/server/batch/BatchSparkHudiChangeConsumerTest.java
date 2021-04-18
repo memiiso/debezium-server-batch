@@ -43,7 +43,7 @@ public class BatchSparkHudiChangeConsumerTest extends BaseSparkTest {
   public void testSimpleUpload() {
     Testing.Print.enable();
 
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.customers");
         df.show(false);
