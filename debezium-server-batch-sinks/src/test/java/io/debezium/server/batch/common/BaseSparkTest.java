@@ -40,7 +40,7 @@ public class BaseSparkTest {
   String objectKeyPrefix;
   @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "")
   String bucket;
-  @ConfigProperty(name = "debezium.sink.sparkhudibatch.table-namespace", defaultValue = "default")
+  @ConfigProperty(name = "debezium.sink.sparkhudibatch.table-database", defaultValue = "default")
   String namespace;
 
   static {
