@@ -152,7 +152,7 @@ public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsum
         .options(hudioptions)
         .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), tableRecordKeyFieldName)
         .option(DataSourceWriteOptions.PRECOMBINE_FIELD_OPT_KEY(), precombineFieldName)
-        .option(DataSourceWriteOptions.INSERT_DROP_DUPS_OPT_KEY(), filterDupes)
+        //.option(HoodieWriteConfig.COMBINE_BEFORE_UPSERT_PROP, filterDupes)
         .option(DataSourceWriteOptions.OPERATION_OPT_KEY(), tableWriteOperation)
         // @TODO V2 add partitioning hive style, by consume time?? __source_ts_ms??
         .option(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY(), "")
@@ -167,10 +167,8 @@ public class BatchSparkHudiChangeConsumer extends AbstractBatchSparkChangeConsum
         .format(saveFormat)
         .save(tablePath);
 
-    LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, record key:{} save mode:{} drop " +
-            "duplicates: " +
-            "{} saved " +
-            "to:'{}'",
+    LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, record key:{} save mode:{} " +
+            "drop duplicates:{} saved to:'{}'",
         df.count(),
         dfSchema != null,
         jsonLinesFile.getFile().length(),

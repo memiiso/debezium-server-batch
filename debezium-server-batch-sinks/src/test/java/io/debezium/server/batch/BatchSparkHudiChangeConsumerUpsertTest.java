@@ -60,6 +60,7 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.add(getCustomerRecord(4, "c", 2L));
     consumer.handleBatch(records, TestUtil.getCommitter());
 
+    Thread.sleep(10000);
     ds = getHudiTableData("testc.inventory.customers_upsert");
     ds.show();
     Assertions.assertEquals(ds.count(), 4);
@@ -112,20 +113,14 @@ public class BatchSparkHudiChangeConsumerUpsertTest extends BaseSparkTest {
     records.add(getCustomerRecordCompositeKey(1, "c", "user2", 1L));
     records.add(getCustomerRecordCompositeKey(1, "u", "user1", 2L));
     records.add(getCustomerRecordCompositeKey(1, "r", "user1", 3L));
+    records.add(getCustomerRecordCompositeKey(5, "r", "user1", 3L));
     consumer.handleBatch(records, TestUtil.getCommitter());
 
+    // when its composite key it fallsback to append
     Dataset<Row> ds = getHudiTableData("testc.inventory.customers_upsert_compositekey");
     ds.show();
-    Assertions.assertEquals(ds.count(), 2);
-    Assertions.assertEquals(ds.where("id = 1").count(), 2);
-
-    records.clear();
-    records.add(getCustomerRecordCompositeKey(1, "u", "user2", 1L));
-    consumer.handleBatch(records, TestUtil.getCommitter());
-    ds = getHudiTableData("testc.inventory.customers_upsert_compositekey");
-    ds.show();
-    Assertions.assertEquals(ds.count(), 2);
-    Assertions.assertEquals(ds.where("id = 1 AND __op= 'u' AND first_name= 'user2'").count(), 1);
+    Assertions.assertEquals(ds.count(), 5);
+    Assertions.assertEquals(ds.where("id = 1").count(), 4);
   }
 
   @Test

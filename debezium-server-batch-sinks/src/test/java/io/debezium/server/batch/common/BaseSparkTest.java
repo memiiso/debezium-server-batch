@@ -67,7 +67,7 @@ public class BaseSparkTest {
   }
 
   public Dataset<Row> getHudiTableData(String table) {
-    return spark.read()
+    return spark.newSession().read()
         .format("hudi")
         .load(bucket + "/" + namespace + "/" + (objectKeyPrefix + table).replace(".", "_").replace("-", "_"));
   }

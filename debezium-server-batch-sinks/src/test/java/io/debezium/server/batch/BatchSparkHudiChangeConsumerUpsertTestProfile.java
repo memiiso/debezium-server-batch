@@ -22,6 +22,7 @@ public class BatchSparkHudiChangeConsumerUpsertTestProfile implements QuarkusTes
 
     config.put("debezium.sink.type", "sparkhudibatch");
     config.put("debezium.sink.sparkhudibatch.hoodie.datasource.write.operation", "upsert");
+    //config.put( "debezium.sink.sparkhudibatch.hoodie.datasource.write.table.type", "COPY_ON_WRITE");
     config.put("debezium.sink.sparkbatch.spark.serializer", "org.apache.spark.serializer.KryoSerializer");
     config.put("quarkus.log.category.\"org.apache.hudi\".level", "WARN");
     config.put("debezium.source.max.batch.size", "10");
