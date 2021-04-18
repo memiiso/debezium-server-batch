@@ -137,9 +137,10 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
         // @TODO V2 add partitioning hive style, by consume time?? __source_ts_ms??
         .option(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY(), "")
         .option(DataSourceWriteOptions.KEYGENERATOR_CLASS_OPT_KEY(), NonpartitionedKeyGenerator.class.getCanonicalName())
-        .option(HoodieWriteConfig.TABLE_NAME, tableName)
-        //.option("path", "path")
         //.option(TABLE_TYPE_OPT_KEY, HoodieTableType.COPY_ON_WRITE)
+        .option(HoodieWriteConfig.TABLE_NAME, tableName)
+        .option(HoodieWriteConfig.BASE_PATH_PROP, tablePath)
+        .option("path", tablePath)
         .mode(SaveMode.Append)
         .format(saveFormat)
         .save(tablePath);
