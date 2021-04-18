@@ -40,6 +40,14 @@
         <version.debezium>1.4.2.Final</version.debezium>
         <!-- Quarkus -->
         <version.quarkus>1.12.2.Final</version.quarkus>
+        <version.parquet>1.10.1</version.parquet>
+
+        <!-- Plugin versions -->
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
+        <maven-failsafe-plugin.version>3.0.0-M4</maven-failsafe-plugin.version>
+        <maven-surefire-plugin.version>3.0.0-M4</maven-surefire-plugin.version>
+        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -114,6 +122,12 @@
                 <optional>true</optional>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-client</artifactId>
+                <version>${version.hadoop}</version>
+            </dependency>
+
             <!-- infinispan -->
             <dependency>
                 <groupId>org.infinispan</groupId>
@@ -130,5 +144,46 @@
         <module>debezium-server-batch-sinks</module>
         <module>debezium-server-dist</module>
     </modules>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-versions</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>enforce-dependencyConvergence</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <DependencyConvergence/>
+                            </rules>
+                            <fail>false</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <rules>
+                        <requireJavaVersion>
+                            <message>You are running an incompatible version of Java. Debezium Quarkus supports JDK 8 or
+                                later.
+                            </message>
+                            <version>[1.8,)</version>
+                        </requireJavaVersion>
+                    </rules>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

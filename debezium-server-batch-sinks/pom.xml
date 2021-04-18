@@ -86,14 +86,14 @@
             <version>${version.hudi}</version>
         </dependency>
         <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-hive-storage-handler</artifactId>
+            <version>${version.parquet}</version>
+        </dependency>
+        <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo-shaded</artifactId>
             <version>${version.kryo}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.parquet</groupId>
-            <artifactId>parquet-hive-bundle</artifactId>
-            <version>1.10.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -263,7 +263,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <systemProperties>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
@@ -275,7 +275,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>${maven-failsafe-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>integration-test</id>
