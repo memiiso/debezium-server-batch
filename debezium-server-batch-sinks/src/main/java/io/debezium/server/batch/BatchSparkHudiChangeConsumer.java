@@ -98,16 +98,18 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     String tableName = destination.replace(".", "_");
     String basePath = bucket + "/" + uploadFile;
 
-    boolean hasRecordKey = true;
+    boolean hasRecordKey = false;
     final String tableWriteOperation;
     final String tableAppendRecordKeyFieldName;
-    // ad PK field for append
     if (writeOperation.equals(WriteOperationType.UPSERT.name()) && hasRecordKey) {
+      // using upsert
+      // @TODO use table client to read table metadata - PK, and PRECOMBINE_FIELD_PROP
+      // HoodieTableMetaClient tclient = new HoodieTableMetaClient.Builder().setConf(null).setBasePath("path").build();
       tableWriteOperation = writeOperation;
       tableAppendRecordKeyFieldName = "PK FIELD";
     } else {
       // fallback to append
-      if (!hasRecordKey) {
+      if (writeOperation.equals(WriteOperationType.INSERT.name()) && !hasRecordKey) {
         LOGGER.info("Table {} don't have record key(PK), falling back to append mode", tableName);
       }
       UserDefinedFunction uuid = udf(() -> UUID.randomUUID().toString(), DataTypes.StringType);
@@ -115,9 +117,6 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       tableWriteOperation = WriteOperationType.INSERT.name();
       tableAppendRecordKeyFieldName = appendRecordKeyFieldName;
     }
-
-    // @TODO use table client to read table metadata - PK, and PRECOMBINE_FIELD_PROP
-    // HoodieTableMetaClient tclient = new HoodieTableMetaClient.Builder().setConf(null).setBasePath("path").build();
 
     df.write()
         .options(hudioptions)
