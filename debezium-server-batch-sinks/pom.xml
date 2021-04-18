@@ -72,8 +72,8 @@
         <!-- using hudi sink -->
         <dependency>
             <groupId>org.apache.hudi</groupId>
-            <artifactId>hudi-spark3-bundle_2.12</artifactId>
-            <version>0.8.0</version>
+            <artifactId>hudi-spark-bundle_2.12</artifactId>
+            <version>0.6.0</version>
         </dependency>
         <dependency>
             <groupId>com.esotericsoftware</groupId>

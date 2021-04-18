@@ -20,6 +20,7 @@ import javax.inject.Named;
 
 import org.apache.hudi.DataSourceWriteOptions;
 import org.apache.hudi.common.model.WriteOperationType;
+import org.apache.hudi.config.HoodieWriteConfig;
 import org.apache.hudi.keygen.NonpartitionedKeyGenerator;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -101,12 +102,14 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
     boolean hasRecordKey = false;
     final String tableWriteOperation;
     final String tableAppendRecordKeyFieldName;
+    final boolean filterDupes;
     if (writeOperation.equals(WriteOperationType.UPSERT.name()) && hasRecordKey) {
       // using upsert
       // @TODO use table client to read table metadata - PK, and PRECOMBINE_FIELD_PROP
       // HoodieTableMetaClient tclient = new HoodieTableMetaClient.Builder().setConf(null).setBasePath("path").build();
       tableWriteOperation = writeOperation;
       tableAppendRecordKeyFieldName = "PK FIELD";
+      filterDupes = true;
     } else {
       // fallback to append
       if (writeOperation.equals(WriteOperationType.INSERT.name()) && !hasRecordKey) {
@@ -116,17 +119,22 @@ public class BatchSparkHudiChangeConsumer extends BatchSparkChangeConsumer {
       df = df.withColumn(appendRecordKeyFieldName, uuid.apply());
       tableWriteOperation = WriteOperationType.INSERT.name();
       tableAppendRecordKeyFieldName = appendRecordKeyFieldName;
+      filterDupes = false;
     }
 
+    LOGGER.error("RECORDKEY_FIELD_OPT_KEY= {}", DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY());
+    LOGGER.error("OPERATION_OPT_KEY= {}", DataSourceWriteOptions.OPERATION_OPT_KEY());
+    LOGGER.error("TABLE_NAME_OPT_KEY= {}", DataSourceWriteOptions.TABLE_NAME_OPT_KEY());
     df.write()
         .options(hudioptions)
         .option(DataSourceWriteOptions.RECORDKEY_FIELD_OPT_KEY(), tableAppendRecordKeyFieldName)
         .option(DataSourceWriteOptions.PRECOMBINE_FIELD_OPT_KEY(), precombineFieldName)
         .option(DataSourceWriteOptions.OPERATION_OPT_KEY(), tableWriteOperation)
-        // @TODO V2 add partitioning hive style by consume time?? __source_ts_ms
+        // @TODO V2 add partitioning hive style, by consume time?? __source_ts_ms??
         .option(DataSourceWriteOptions.PARTITIONPATH_FIELD_OPT_KEY(), "")
         .option(DataSourceWriteOptions.KEYGENERATOR_CLASS_OPT_KEY(), NonpartitionedKeyGenerator.class.getCanonicalName())
-        .option(DataSourceWriteOptions.TABLE_NAME_OPT_KEY(), tableName)
+        .option(HoodieWriteConfig.TABLE_NAME, tableName)
+        //.option("path", "path")
         //.option(TABLE_TYPE_OPT_KEY, HoodieTableType.COPY_ON_WRITE)
         .mode(SaveMode.Append)
         .format(saveFormat)
