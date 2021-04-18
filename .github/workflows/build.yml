@@ -29,6 +29,4 @@ jobs:
         with:
           java-version: 1.11
       - name: Build with Maven
-        run: |
-          SPARK_LOCAL_IP="127.0.0.1"
-          mvn -B package --file pom.xml
+        run: mvn -B package --file pom.xml
