@@ -62,7 +62,7 @@ public class BaseSparkTest {
 
   public Dataset<Row> getTableData(String table) {
     return spark.read().option("mergeSchema", "true")
-        .parquet(bucket + "/" + table)
+        .parquet(bucket + "/" + objectKeyPrefix + table + "/*")
         .withColumn("input_file", functions.input_file_name());
   }
 
