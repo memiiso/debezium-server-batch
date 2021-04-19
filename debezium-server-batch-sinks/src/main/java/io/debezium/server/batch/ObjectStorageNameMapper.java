@@ -13,6 +13,7 @@ import io.debezium.server.StreamNameMapper;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import javax.enterprise.context.Dependent;
 
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +29,13 @@ public class ObjectStorageNameMapper implements StreamNameMapper {
   protected String partitionDataZone;
 
   @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
-  protected String objectKeyPrefix;
+  protected Optional<String> objectKeyPrefix;
+
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-regexp", defaultValue = "")
+  protected Optional<String> objectKeyRegexp;
+
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-regexp-replace", defaultValue = "")
+  protected Optional<String> objectKeyRegexpReplace;
 
   protected String getPartition() {
     final ZonedDateTime batchTime = ZonedDateTime.now(ZoneId.of(partitionDataZone));
@@ -41,9 +48,10 @@ public class ObjectStorageNameMapper implements StreamNameMapper {
     Objects.requireNonNull(destination, "destination Cannot be Null");
     if (partitionData) {
       String partitioned = getPartition();
-      return objectKeyPrefix + destination + "/" + partitioned;
+      return objectKeyPrefix.orElse("") + destination.replaceAll(objectKeyRegexp.orElse(""),
+          objectKeyRegexpReplace.orElse("")) + "/" + partitioned;
     } else {
-      return objectKeyPrefix + destination;
+      return objectKeyPrefix + destination.replaceAll(objectKeyRegexp.orElse(""), objectKeyRegexpReplace.orElse(""));
     }
   }
 }
