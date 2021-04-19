@@ -43,11 +43,9 @@
         <version.parquet>1.10.1</version.parquet>
 
         <!-- Plugin versions -->
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-        <maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
-        <maven-failsafe-plugin.version>3.0.0-M4</maven-failsafe-plugin.version>
-        <maven-surefire-plugin.version>3.0.0-M4</maven-surefire-plugin.version>
-        <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
+        <version.maven-enforcer-plugin>3.0.0-M3</version.maven-enforcer-plugin>
+        <version.maven-failsafe-plugin>3.0.0-M4</version.maven-failsafe-plugin>
+        <version.maven-surefire-plugin>3.0.0-M4</version.maven-surefire-plugin>
     </properties>
 
     <dependencyManagement>
@@ -202,7 +200,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>${maven-enforcer-plugin.version}</version>
+                <version>${version.maven-enforcer-plugin}</version>
                 <executions>
                     <execution>
                         <id>enforce-versions</id>
