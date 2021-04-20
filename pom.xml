@@ -126,7 +126,7 @@
                 <artifactId>httpcore</artifactId>
                 <version>4.4.14</version>
             </dependency>
-
+            <!--
             <dependency>
                 <groupId>org.apache.maven.wagon</groupId>
                 <artifactId>wagon-http-shared</artifactId>
@@ -137,6 +137,8 @@
                 <artifactId>wagon-http</artifactId>
                 <version>3.4.3</version>
             </dependency>
+            -->
+            <!--            +-org.apache.maven.wagon:wagon-provider-api:3.4.3-->
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -172,17 +174,19 @@
                 <artifactId>commons-cli</artifactId>
                 <version>1.4</version>
             </dependency>
-            +-com.github.luben:zstd-jni:1.4.5-6
-            +-com.nimbusds:nimbus-jose-jwt:7.9
-            +-org.apache.commons:commons-math3:3.4.1
-            +-org.glassfish.jersey.inject:jersey-hk2:2.31
-            +-commons-net:commons-net:3.6
-            +-org.codehaus.jackson:jackson-core-asl:1.9.13
-            +-org.apache.maven.wagon:wagon-provider-api:3.4.3
-            +-org.glassfish.jersey.containers:jersey-container-servlet:2.31
-            +-com.google.code.findbugs:jsr305:3.0.2
-            +-org.codehaus.jackson:jackson-mapper-asl:1.9.13
-
+            <dependency>
+                <groupId>com.github.luben</groupId>
+                <artifactId>zstd-jni</artifactId>
+                <version>1.4.5-6</version>
+            </dependency>
+            <!--            +-com.nimbusds:nimbus-jose-jwt:7.9-->
+            <!--            +-org.apache.commons:commons-math3:3.4.1-->
+            <!--            +-org.glassfish.jersey.inject:jersey-hk2:2.31-->
+            <!--            +-commons-net:commons-net:3.6-->
+            <!--            +-org.codehaus.jackson:jackson-core-asl:1.9.13-->
+            <!--            +-org.glassfish.jersey.containers:jersey-container-servlet:2.31-->
+            <!--            +-com.google.code.findbugs:jsr305:3.0.2-->
+            <!--            +-org.codehaus.jackson:jackson-mapper-asl:1.9.13-->
         </dependencies>
     </dependencyManagement>
 
