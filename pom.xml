@@ -28,12 +28,12 @@
         <skipITs>true</skipITs>
 
         <version.groovy>3.0.7</version.groovy>
-        <version.s3>2.15.79</version.s3>
+        <version.awssdk>2.15.79</version.awssdk>
         <version.assembly.plugin>3.1.1</version.assembly.plugin>
         <version.jackson>2.12.2</version.jackson>
         <version.infinispan>12.1.1.Final</version.infinispan>
         <version.spark>3.0.2</version.spark>
-        <version.hadoop>3.3.0</version.hadoop>
+        <version.hadoop>3.2.2</version.hadoop>
         <version.hudi>0.8.0</version.hudi>
         <version.kryo>4.0.2</version.kryo>
         <!-- Debezium -->
@@ -44,8 +44,8 @@
 
         <!-- Plugin versions -->
         <version.maven-enforcer-plugin>3.0.0-M3</version.maven-enforcer-plugin>
-        <version.maven-failsafe-plugin>3.0.0-M4</version.maven-failsafe-plugin>
-        <version.maven-surefire-plugin>3.0.0-M4</version.maven-surefire-plugin>
+        <version.maven-failsafe-plugin>3.0.0-M5</version.maven-failsafe-plugin>
+        <version.maven-surefire-plugin>3.0.0-M5</version.maven-surefire-plugin>
     </properties>
 
     <dependencyManagement>
@@ -58,7 +58,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <!-- debezium server -->
             <dependency>
                 <groupId>io.debezium</groupId>
@@ -67,65 +66,20 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-            <dependency>
-                <groupId>io.debezium</groupId>
-                <artifactId>debezium-server-batch</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <!-- Debezium Scripting -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy</artifactId>
+                <artifactId>groovy-bom</artifactId>
                 <version>${version.groovy}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-json</artifactId>
-                <version>${version.groovy}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-jsr223</artifactId>
-                <version>${version.groovy}</version>
-            </dependency>
-
-            <!-- Upgrade jackson version for spark -->
             <!-- Major dependencies -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-joda</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-yaml</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${version.jackson}</version>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${version.jackson}</version>
-                <optional>true</optional>
-            </dependency>
-
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-client</artifactId>
                 <version>${version.hadoop}</version>
             </dependency>
-
             <!-- infinispan -->
             <dependency>
                 <groupId>org.infinispan</groupId>
@@ -135,10 +89,32 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-bom</artifactId>
+                <version>9.4.40.v20210413</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
                 <version>4.1.63.Final</version>
                 <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${version.jackson}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${version.awssdk}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -150,10 +126,11 @@
                 <artifactId>httpcore</artifactId>
                 <version>4.4.14</version>
             </dependency>
+
             <dependency>
                 <groupId>org.apache.maven.wagon</groupId>
                 <artifactId>wagon-http-shared</artifactId>
-                <version>3.3.4</version>
+                <version>3.4.3</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven.wagon</groupId>
@@ -170,21 +147,41 @@
                 <artifactId>wildfly-common</artifactId>
                 <version>1.5.4.Final</version>
             </dependency>
-            <!--            <dependency>-->
-            <!--                <groupId>org.apache.maven.wagon</groupId>-->
-            <!--                <artifactId>wagon-http-shared</artifactId>-->
-            <!--                <version>3.4.3</version>-->
-            <!--            </dependency>-->
-            <!--            <dependency>-->
-            <!--                <groupId>org.apache.maven.wagon</groupId>-->
-            <!--                <artifactId>wagon-provider-api</artifactId>-->
-            <!--                <version>3.4.3</version>-->
-            <!--            </dependency>-->
-            <!--            <dependency>-->
-            <!--                <groupId>org.apache.maven.wagon</groupId>-->
-            <!--                <artifactId>wagon-file</artifactId>-->
-            <!--                <version>3.4.3</version>-->
-            <!--            </dependency>-->
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>2.13.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>1.1.8.4</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>1.6</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>1.4</version>
+            </dependency>
+            +-com.github.luben:zstd-jni:1.4.5-6
+            +-com.nimbusds:nimbus-jose-jwt:7.9
+            +-org.apache.commons:commons-math3:3.4.1
+            +-org.glassfish.jersey.inject:jersey-hk2:2.31
+            +-commons-net:commons-net:3.6
+            +-org.codehaus.jackson:jackson-core-asl:1.9.13
+            +-org.apache.maven.wagon:wagon-provider-api:3.4.3
+            +-org.glassfish.jersey.containers:jersey-container-servlet:2.31
+            +-com.google.code.findbugs:jsr305:3.0.2
+            +-org.codehaus.jackson:jackson-mapper-asl:1.9.13
 
         </dependencies>
     </dependencyManagement>
