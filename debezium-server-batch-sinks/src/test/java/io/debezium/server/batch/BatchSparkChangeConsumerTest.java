@@ -127,7 +127,7 @@ public class BatchSparkChangeConsumerTest extends BaseSparkTest {
 
   @Test
   public void testUpdateDeleteDrop() throws Exception {
-    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> ds = getTableData("testc.inventory.customers");
         ds.show();

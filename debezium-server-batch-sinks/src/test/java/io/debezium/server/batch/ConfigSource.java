@@ -33,7 +33,7 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.sink.batch.row-limit", "2");
     s3Test.put("debezium.sink.batch.time-limit", "10"); // second
 
-    s3Test.put("debezium.source.max.batch.size", "1");
+    s3Test.put("debezium.source.max.batch.size", "100");
     s3Test.put("debezium.source.poll.interval.ms", "5000");
 
     s3Test.put("debezium.source.database.history.kafka.bootstrap.servers", "kafka:9092");
@@ -53,6 +53,8 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.sink.sparkbatch.user.timezone", "UTC");
     s3Test.put("debezium.sink.sparkbatch.spark.io.compression.codec", "snappy");
     // endpoint override or testing
+    s3Test.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.access.key", S3Minio.MINIO_ACCESS_KEY);
+    s3Test.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.secret.key", S3Minio.MINIO_SECRET_KEY);
     s3Test.put("debezium.sink.sparkbatch.fs.s3a.access.key", S3Minio.MINIO_ACCESS_KEY);
     s3Test.put("debezium.sink.sparkbatch.fs.s3a.secret.key", S3Minio.MINIO_SECRET_KEY);
     s3Test.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.path.style.access", "true");

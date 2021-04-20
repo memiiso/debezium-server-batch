@@ -65,6 +65,12 @@
             <artifactId>infinispan-cachestore-rocksdb</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-avro_2.12</artifactId>
+            <version>${version.spark}</version>
+        </dependency>
+
         <!-- using spark sink -->
         <!-- https://mvnrepository.com/artifact/org.apache.parquet/parquet-common -->
         <dependency>
