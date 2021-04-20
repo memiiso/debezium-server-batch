@@ -65,7 +65,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
       return;
     }
     // Read DF with Schema if schema enabled and exists in the event message
-    StructType dfSchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getSchema());
+    StructType dfSchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getValSchema());
 
     if (LOGGER.isTraceEnabled()) {
       final String fileName = jsonLinesFile.getFile().getName();
