@@ -8,7 +8,12 @@
 
 package io.debezium.server.batch.common;
 
+import io.debezium.engine.ChangeEvent;
+import io.debezium.engine.DebeziumEngine;
+
 import java.security.SecureRandom;
+
+import org.apache.kafka.connect.source.SourceRecord;
 
 public class TestUtil {
   static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -26,4 +31,20 @@ public class TestUtil {
     return sb.toString();
   }
 
+  public static DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> getCommitter() {
+    return new DebeziumEngine.RecordCommitter() {
+      public synchronized void markProcessed(SourceRecord record) throws InterruptedException {
+        return;
+      }
+
+      @Override
+      public void markProcessed(Object record) throws InterruptedException {
+        return;
+      }
+
+      public synchronized void markBatchFinished() throws InterruptedException {
+        return;
+      }
+    };
+  }
 }

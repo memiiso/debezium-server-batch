@@ -28,16 +28,22 @@
         <skipITs>true</skipITs>
 
         <version.groovy>3.0.7</version.groovy>
-        <version.s3>2.15.45</version.s3>
+        <version.awssdk>2.15.79</version.awssdk>
         <version.assembly.plugin>3.1.1</version.assembly.plugin>
         <version.jackson>2.12.2</version.jackson>
         <version.infinispan>12.1.1.Final</version.infinispan>
         <version.spark>3.0.2</version.spark>
-        <version.hadoop>3.3.0</version.hadoop>
+        <version.hadoop>3.2.2</version.hadoop>
         <!-- Debezium -->
         <version.debezium>1.4.2.Final</version.debezium>
         <!-- Quarkus -->
         <version.quarkus>1.13.2.Final</version.quarkus>
+        <version.parquet>1.10.1</version.parquet>
+
+        <!-- Plugin versions -->
+        <version.maven-enforcer-plugin>3.0.0-M3</version.maven-enforcer-plugin>
+        <version.maven-failsafe-plugin>3.0.0-M5</version.maven-failsafe-plugin>
+        <version.maven-surefire-plugin>3.0.0-M5</version.maven-surefire-plugin>
     </properties>
 
     <dependencyManagement>
@@ -50,7 +56,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <!-- debezium server -->
             <dependency>
                 <groupId>io.debezium</groupId>
@@ -59,59 +64,20 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-            <dependency>
-                <groupId>io.debezium</groupId>
-                <artifactId>debezium-server-batch</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <!-- Debezium Scripting -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy</artifactId>
+                <artifactId>groovy-bom</artifactId>
                 <version>${version.groovy}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-json</artifactId>
-                <version>${version.groovy}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-jsr223</artifactId>
-                <version>${version.groovy}</version>
-            </dependency>
-
-            <!-- Upgrade jackson version for spark -->
             <!-- Major dependencies -->
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${version.jackson}</version>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-client</artifactId>
+                <version>${version.hadoop}</version>
             </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-joda</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-yaml</artifactId>
-                <version>${version.jackson}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${version.jackson}</version>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${version.jackson}</version>
-                <optional>true</optional>
-            </dependency>
-
             <!-- infinispan -->
             <dependency>
                 <groupId>org.infinispan</groupId>
@@ -120,7 +86,22 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
+            <!-- Upgrade jackson version for spark -->
+            <!-- Major dependencies -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${version.jackson}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${version.awssdk}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -128,5 +109,46 @@
         <module>debezium-server-batch-sinks</module>
         <module>debezium-server-dist</module>
     </modules>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${version.maven-enforcer-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-versions</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>enforce-dependencyConvergence</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <DependencyConvergence/>
+                            </rules>
+                            <fail>false</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <rules>
+                        <requireJavaVersion>
+                            <message>You are running an incompatible version of Java. Debezium Quarkus supports JDK 8 or
+                                later.
+                            </message>
+                            <version>[1.8,)</version>
+                        </requireJavaVersion>
+                    </rules>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
