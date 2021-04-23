@@ -24,7 +24,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <release>8</release>
         <skipITs>true</skipITs>
 
         <version.groovy>3.0.7</version.groovy>
@@ -33,8 +32,8 @@
         <version.jackson>2.12.2</version.jackson>
         <version.infinispan>12.1.1.Final</version.infinispan>
         <version.spark>3.0.2</version.spark>
-        <version.hadoop>3.2.2</version.hadoop>
-        <version.hudi>0.8.0</version.hudi>
+        <version.hadoop>3.2.0</version.hadoop>
+        <version.hudi>0.7.0</version.hudi>
         <version.kryo>4.0.2</version.kryo>
         <!-- Debezium -->
         <version.debezium>1.4.2.Final</version.debezium>
@@ -104,6 +103,23 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!--
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.13</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpcore</artifactId>
+                <version>4.4.14</version>
+            </dependency>
+            -->
+            <!--            <dependency>-->
+            <!--                <groupId>com.esotericsoftware</groupId>-->
+            <!--                <artifactId>kryo-shaded</artifactId>-->
+            <!--                <version>${version.kryo}</version>-->
+            <!--            </dependency>-->
         </dependencies>
     </dependencyManagement>
 
