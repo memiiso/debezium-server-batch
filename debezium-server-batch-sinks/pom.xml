@@ -65,6 +65,26 @@
             <artifactId>infinispan-cachestore-rocksdb</artifactId>
         </dependency>
 
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.logging.log4j</groupId>-->
+        <!--            <artifactId>log4j-api</artifactId>-->
+        <!--            <version>2.14.1</version>-->
+        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.14.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>log4j-jboss-logmanager</artifactId>
+            <version>1.2.0.Final</version>
+        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.parquet</groupId>-->
+        <!--            <artifactId>parquet-hive-storage-handler</artifactId>-->
+        <!--            <version>${version.parquet}</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_2.12</artifactId>
