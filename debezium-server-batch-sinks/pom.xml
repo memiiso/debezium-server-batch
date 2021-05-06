@@ -66,6 +66,12 @@
         </dependency>
         <!-- using hudi sink -->
         <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-hive-bundle</artifactId>
+            <version>1.11.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hudi</groupId>
             <artifactId>hudi-spark3-bundle_2.12</artifactId>
             <version>${version.hudi}</version>
