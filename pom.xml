@@ -34,7 +34,7 @@
         <version.infinispan>12.1.1.Final</version.infinispan>
         <version.spark>3.0.2</version.spark>
         <version.hadoop>3.2.0</version.hadoop>
-        <version.hudi>0.7.0</version.hudi>
+        <version.hudi>0.8.0</version.hudi>
         <version.kryo>4.0.2</version.kryo>
         <!-- Debezium -->
         <version.debezium>1.5.0.Final</version.debezium>
