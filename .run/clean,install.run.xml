@@ -13,6 +13,7 @@
                         <list>
                             <option value="clean"/>
                             <option value="install"/>
+                            <option value="-Dmaven.test.skip=true"/>
                         </list>
                     </option>
                     <option name="pomFileName"/>
