@@ -31,7 +31,7 @@
         <version.awssdk>2.15.79</version.awssdk>
         <version.assembly.plugin>3.1.1</version.assembly.plugin>
         <version.jackson>2.12.2</version.jackson>
-        <version.infinispan>12.1.1.Final</version.infinispan>
+        <version.infinispan>12.1.2.Final</version.infinispan>
         <version.spark>3.0.2</version.spark>
         <version.hadoop>3.2.0</version.hadoop>
         <version.hudi>0.8.0</version.hudi>
