@@ -24,7 +24,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <release>11</release>
+        <release>8</release>
         <skipITs>true</skipITs>
 
         <version.groovy>3.0.7</version.groovy>
@@ -37,7 +37,7 @@
         <version.hudi>0.8.0</version.hudi>
         <version.log4j>2.14.1</version.log4j>
         <!-- Debezium -->
-        <version.debezium>1.4.2.Final</version.debezium>
+        <version.debezium>1.5.0.Final</version.debezium>
         <!-- Quarkus -->
         <version.quarkus>1.13.3.Final</version.quarkus>
         <version.parquet>1.10.1</version.parquet>
