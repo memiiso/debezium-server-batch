@@ -76,10 +76,15 @@
             <artifactId>hudi-spark3-bundle_2.12</artifactId>
             <version>${version.hudi}</version>
         </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.logging.log4j</groupId>-->
+        <!--            <artifactId>log4j-api</artifactId>-->
+        <!--            <version>${version.log4j}</version>-->
+        <!--        </dependency>-->
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${version.log4j}</version>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>jboss-logmanager-embedded</artifactId>
+            <version>1.0.9</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.logmanager</groupId>
