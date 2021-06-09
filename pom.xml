@@ -36,9 +36,9 @@
         <version.hadoop>3.2.0</version.hadoop>
         <version.log4j>2.14.1</version.log4j>
         <!-- Debezium -->
-        <version.debezium>1.5.0.Final</version.debezium>
+        <version.debezium>1.5.2.Final</version.debezium>
         <!-- Quarkus -->
-        <version.quarkus>1.13.3.Final</version.quarkus>
+        <version.quarkus>1.13.7.Final</version.quarkus>
         <version.parquet>1.10.1</version.parquet>
 
         <!-- Plugin versions -->
