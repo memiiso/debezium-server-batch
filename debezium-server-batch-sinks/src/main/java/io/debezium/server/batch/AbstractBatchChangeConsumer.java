@@ -74,6 +74,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
+    LOGGER.info("Received {} events", records.size());
     Instant start = Instant.now();
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
         .collect(Collectors.groupingBy(
@@ -81,19 +82,21 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
             Collectors.mapping(p -> p,
                 Collectors.toCollection(ArrayList::new))));
 
+    long numUploadedEvents = 0;
     for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destinationEvents : result.entrySet()) {
-      this.uploadDestination(destinationEvents.getKey(), destinationEvents.getValue());
+      numUploadedEvents += this.uploadDestination(destinationEvents.getKey(), destinationEvents.getValue());
     }
     // workaround! somehow offset is not saved to file unless we call committer.markProcessed
     // even its should be saved to file periodically
-    if (!records.isEmpty()) {
-      committer.markProcessed(records.get(0));
-    }
+//    if (!records.isEmpty()) {
+//      committer.markProcessed(records.get(0));
+//    }
     committer.markBatchFinished();
 
     if (batchDynamicWaitEnabled) {
       batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
     }
+    LOGGER.info("Processed {} events", numUploadedEvents);
   }
 
   public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
@@ -103,10 +106,11 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     JsonNode keySchema = null;
     boolean isFirst = true;
     final File tempFile;
+    long numLines = 0L;
     try {
       tempFile = File.createTempFile(UUID.randomUUID() + "-", ".json");
       FileOutputStream fos = new FileOutputStream(tempFile, true);
-      LOGGER.debug("Creating jsonlines file: {}", tempFile);
+      LOGGER.debug("Writing {} events as jsonlines file: {}", data.size(), tempFile);
 
       for (ChangeEvent<Object, Object> e : data) {
         Object val = e.value();
@@ -138,6 +142,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
           }
 
           fos.write(valData.getBytes(StandardCharsets.UTF_8));
+          numLines++;
         } catch (IOException ioe) {
           LOGGER.error("Failed writing record to file", ioe);
           fos.close();
@@ -151,7 +156,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       throw new RuntimeException(e);
     }
 
-    LOGGER.debug("Created jsonlines file, processing time:{}",
+    LOGGER.trace("Writing jsonlines file took:{}",
         Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS));
 
     // if nothing processed return null
@@ -160,9 +165,9 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       return null;
     }
 
-    return new JsonlinesBatchFile(tempFile, valSchema, keySchema);
+    return new JsonlinesBatchFile(tempFile, valSchema, keySchema, numLines);
   }
 
-  public abstract void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException;
+  public abstract long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException;
 
 }

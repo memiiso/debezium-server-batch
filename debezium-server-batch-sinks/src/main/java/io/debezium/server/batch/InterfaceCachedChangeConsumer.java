@@ -38,12 +38,13 @@ public interface InterfaceCachedChangeConsumer {
 
   Integer getBatchUploadRowLimit();
 
-  void uploadDestination(String destination, JsonlinesBatchFile jsonLines);
+  long uploadDestination(String destination, JsonlinesBatchFile jsonLines);
 
-  default void startUploadIfRowLimitReached(String destination) {
+  default long startUploadIfRowLimitReached(String destination) {
     // get count per destination
-    if (getCache().getEstimatedCacheSize(destination) < getBatchUploadRowLimit()) {
-      return;
+    long cnt = getCache().getEstimatedCacheSize(destination);
+    if (cnt < getBatchUploadRowLimit()) {
+      return 0L;
     }
 
     Thread uploadThread = new Thread(() -> {
@@ -60,6 +61,7 @@ public interface InterfaceCachedChangeConsumer {
       LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
     });
     getThreadPool().submit(destination, uploadThread);
+    return cnt;
   }
 
   private void startTimerUpload(String destination) {

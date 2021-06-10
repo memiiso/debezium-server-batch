@@ -87,13 +87,14 @@ public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
   }
 
   @Override
-  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
+  public long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
     JsonlinesBatchFile jsonLinesFile = this.getJsonLines(destination, data);
     String s3File = objectStorageNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
     if (jsonLinesFile == null) {
-      return;
+      return 0L;
     }
-    LOGGER.info("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket, jsonLinesFile.getFile().getAbsolutePath(),
+    LOGGER.debug("Uploading s3File bucket:{} file:{} destination:{} key:{}", bucket,
+        jsonLinesFile.getFile().getAbsolutePath(),
         destination, s3File);
     final PutObjectRequest putRecord = PutObjectRequest.builder()
         .bucket(bucket)
@@ -101,7 +102,8 @@ public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
         .build();
     s3Client.putObject(putRecord, RequestBody.fromFile(jsonLinesFile.getFile().toPath()));
     jsonLinesFile.getFile().delete();
-    LOGGER.info("Upload Succeeded! destination:{} key:{}", destination, s3File);
+    LOGGER.debug("Upload Succeeded! destination:{} key:{}", destination, s3File);
+    return jsonLinesFile.getNumLines();
   }
 
 }

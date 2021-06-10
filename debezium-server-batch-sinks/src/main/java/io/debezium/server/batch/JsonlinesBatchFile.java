@@ -21,15 +21,17 @@ public class JsonlinesBatchFile {
   private final File file;
   private JsonNode valSchema;
   private JsonNode keySchema;
+  private long numLines;
 
   public JsonlinesBatchFile(File file, JsonNode valSchema) {
-    this(file, valSchema, null);
+    this(file, valSchema, null, 0L);
   }
 
-  public JsonlinesBatchFile(File file, JsonNode valSchema, JsonNode keySchema) {
+  public JsonlinesBatchFile(File file, JsonNode valSchema, JsonNode keySchema, long numLines) {
     this.file = file;
     this.valSchema = valSchema;
     this.keySchema = keySchema;
+    this.numLines = numLines;
   }
 
   public File getFile() {
@@ -50,6 +52,14 @@ public class JsonlinesBatchFile {
 
   public void setKeySchema(JsonNode keySchema) {
     this.keySchema = keySchema;
+  }
+
+  public long getNumLines() {
+    return numLines;
+  }
+
+  public void setNumLines(long numLines) {
+    this.numLines = numLines;
   }
 
 }

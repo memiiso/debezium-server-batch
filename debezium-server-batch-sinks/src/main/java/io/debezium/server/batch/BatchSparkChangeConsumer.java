@@ -52,17 +52,18 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
   }
 
   @Override
-  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
-    this.uploadDestination(destination, this.getJsonLines(destination, data));
+  public long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
+    return this.uploadDestination(destination, this.getJsonLines(destination, data));
   }
 
-  protected void uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
+  protected long uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
 
     Instant start = Instant.now();
+    long numRecords = 0L;
     // upload different destinations parallel but same destination serial
     if (jsonLinesFile == null) {
       LOGGER.debug("No data to upload for destination: {}", destination);
-      return;
+      return numRecords;
     }
     // Read DF with Schema if schema enabled and exists in the event message
     StructType dfSchema = BatchUtil.getSparkDfSchema(jsonLinesFile.getValSchema());
@@ -80,7 +81,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     }
 
     if (dfSchema != null) {
-      LOGGER.debug("Reading data with schema definition. Schema:\n{}", dfSchema);
+      LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
     } else {
       LOGGER.debug("Reading data without schema definition");
     }
@@ -94,12 +95,16 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
           .mode(saveMode)
           .format(saveFormat)
           .save(bucket + "/" + uploadFile);
-      LOGGER.info("Uploaded {} rows, schema:{}, file size:{} upload time:{}, saved to:'{}'",
-          df.count(),
+
+      numRecords = df.count();
+      LOGGER.debug("Uploaded {} rows (read with schema:{}) to:'{}' file:{} file size:{} upload time:{}, ",
+          numRecords,
           dfSchema != null,
+          uploadFile,
+          jsonLinesFile.getFile().getName(),
           jsonLinesFile.getFile().length(),
-          Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
-          uploadFile);
+          Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS)
+      );
     }
 
     if (LOGGER.isTraceEnabled()) {
@@ -112,6 +117,8 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     if (jsonLinesFile.getFile() != null && jsonLinesFile.getFile().exists()) {
       jsonLinesFile.getFile().delete();
     }
+
+    return numRecords;
   }
 
 }

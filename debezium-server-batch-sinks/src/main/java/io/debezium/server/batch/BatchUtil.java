@@ -40,12 +40,12 @@ public class BatchUtil {
     if (eventSchema.has("field")) {
       schemaName = eventSchema.get("field").textValue();
     }
-    LOGGER.debug("Converting Schema of: {}::{}", schemaName, schemaType);
+    LOGGER.trace("Converting Schema of: {}::{}", schemaName, schemaType);
 
     for (JsonNode jsonSchemaFieldNode : eventSchema.get("fields")) {
       String fieldName = jsonSchemaFieldNode.get("field").textValue();
       String fieldType = jsonSchemaFieldNode.get("type").textValue();
-      LOGGER.debug("Processing Field: {}.{}::{}", schemaName, fieldName, fieldType);
+      LOGGER.trace("Processing Field: {}.{}::{}", schemaName, fieldName, fieldType);
       // for all the debezium data types please see org.apache.kafka.connect.data.Schema;
       switch (fieldType) {
         case "int8":

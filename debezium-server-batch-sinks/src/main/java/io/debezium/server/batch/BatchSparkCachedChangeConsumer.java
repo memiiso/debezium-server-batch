@@ -66,9 +66,9 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer imp
   }
 
   @Override
-  public void uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
+  public long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
     this.cache.appendAll(destination, data);
-    this.startUploadIfRowLimitReached(destination);
+    return this.startUploadIfRowLimitReached(destination);
   }
 
   @Override
@@ -92,7 +92,7 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer imp
   }
 
   @Override
-  public void uploadDestination(String destination, JsonlinesBatchFile jsonLines) {
-    super.uploadDestination(destination, jsonLines);
+  public long uploadDestination(String destination, JsonlinesBatchFile jsonLines) {
+    return super.uploadDestination(destination, jsonLines);
   }
 }
