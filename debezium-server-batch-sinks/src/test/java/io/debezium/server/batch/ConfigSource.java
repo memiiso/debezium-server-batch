@@ -11,7 +11,9 @@ package io.debezium.server.batch;
 import io.debezium.server.TestConfigSource;
 import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
+import io.debezium.util.Testing;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,9 +25,11 @@ public class ConfigSource extends TestConfigSource {
   public static final String S3_BUCKET = "test-bucket";
 
   final Map<String, String> s3Test = new HashMap<>();
+  public static final Path HISTORY_FILE = Testing.Files.createTestingPath("dbhistory.txt").toAbsolutePath();
 
   public ConfigSource() {
     // common sink conf
+    config.put("quarkus.profile", "postgresql");
     s3Test.put("debezium.sink.type", "sparkbatch");
     //s3Test.put("quarkus.arc.selected-alternatives", "SparkWriter,MemoryCache");
     s3Test.put("debezium.sink.batch.objectkey-prefix", "debezium-cdc-");
@@ -39,8 +43,8 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.database.history.kafka.bootstrap.servers", "kafka:9092");
     s3Test.put("debezium.source.database.history.kafka.topic", "dbhistory.fullfillment");
     s3Test.put("debezium.source.include.schema.changes", "false");
-    // s3Test.put("debezium.source.database.history", "io.debezium.relational.history.FileDatabaseHistory");
-    // s3Test.put("debezium.source.database.history.file.filename", "data/dbhistory.txt");
+    s3Test.put("debezium.source.database.history", "io.debezium.relational.history.FileDatabaseHistory");
+    s3Test.put("debezium.source.database.history.file.filename", HISTORY_FILE.toAbsolutePath().toString());
 
     // cache
     // sparkbatch sink conf
@@ -67,8 +71,8 @@ public class ConfigSource extends TestConfigSource {
     // debezium unwrap message
     s3Test.put("debezium.transforms", "unwrap");
     s3Test.put("debezium.transforms.unwrap.type", "io.debezium.transforms.ExtractNewRecordState");
-    s3Test.put("debezium.transforms.unwrap.add.fields", "op,table,source.ts_ms");
-    s3Test.put("debezium.transforms.unwrap.add.headers", "db");
+    s3Test.put("debezium.transforms.unwrap.add.fields", "op,table,source.ts_ms,db");
+    //s3Test.put("debezium.transforms.unwrap.add.headers", "db");
     s3Test.put("debezium.transforms.unwrap.delete.handling.mode", "rewrite");
 
     // DEBEZIUM SOURCE conf
@@ -82,7 +86,8 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.database.password", SourcePostgresqlDB.POSTGRES_PASSWORD);
     s3Test.put("debezium.source.database.dbname", SourcePostgresqlDB.POSTGRES_DBNAME);
     s3Test.put("debezium.source.database.server.name", "testc");
-    s3Test.put("debezium.source.schema.include.list", "inventory");
+    s3Test.put("%mysql.debezium.source.database.include.list", "inventory");
+    s3Test.put("%postgresql.debezium.source.schema.include.list", "inventory");
     s3Test.put("debezium.source.table.include.list", "inventory.customers,inventory.orders,inventory.products," +
         "inventory.test_date_table," +
         "inventory.geom,inventory.table_datatypes");

@@ -19,9 +19,8 @@ public class BatchSparkChangeConsumerMysqlTestProfile implements QuarkusTestProf
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
-
+    config.put("quarkus.profile", "mysql");
     config.put("%mysql.debezium.source.connector.class", "io.debezium.connector.mysql.MySqlConnector");
-    config.put("debezium.sink.type", "batch");
     config.put("debezium.source.max.batch.size", "500");
     config.put("debezium.source.max.queue.size", "70000");
     // 30000 30-second
