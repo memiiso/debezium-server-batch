@@ -44,6 +44,8 @@ public class BaseSparkTest {
   static {
     Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
     Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
+    Testing.Files.delete(ConfigSource.HISTORY_FILE);
+    Testing.Files.createTestingFile(ConfigSource.HISTORY_FILE);
   }
 
   @BeforeAll
@@ -113,6 +115,7 @@ public class BaseSparkTest {
   }
 
   public static int mysqlLoadTestDataTable(int numRows) throws Exception {
+
     int numInsert = 0;
     do {
       String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
