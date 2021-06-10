@@ -39,24 +39,24 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "1000")
   Integer maxBatchSize;
 
-  @Test
-  public void testPerformance() throws Exception {
-
-    int iteration = 10;
-    mysqlCreateTestDataTable();
-    for (int i = 0; i <= iteration; i++) {
-      mysqlLoadTestDataTable(maxBatchSize);
-    }
-
-    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
-      try {
-        Dataset<Row> df = getTableData("testc.inventory.test_date_table");
-        return df.count() >= (long) iteration * maxBatchSize;
-      } catch (Exception e) {
-        return false;
-      }
-    });
-  }
+//  @Test
+//  public void testPerformance() throws Exception {
+//
+//    int iteration = 10;
+//    mysqlCreateTestDataTable();
+//    for (int i = 0; i <= iteration; i++) {
+//      mysqlLoadTestDataTable(maxBatchSize);
+//    }
+//
+//    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
+//      try {
+//        Dataset<Row> df = getTableData("testc.inventory.test_date_table");
+//        return df.count() >= (long) iteration * maxBatchSize;
+//      } catch (Exception e) {
+//        return false;
+//      }
+//    });
+//  }
 
   @Test
   public void testSimpleUpload() {
