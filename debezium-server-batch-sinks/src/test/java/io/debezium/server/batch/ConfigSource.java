@@ -86,7 +86,7 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.database.password", SourcePostgresqlDB.POSTGRES_PASSWORD);
     s3Test.put("debezium.source.database.dbname", SourcePostgresqlDB.POSTGRES_DBNAME);
     s3Test.put("debezium.source.database.server.name", "testc");
-    s3Test.put("debezium.source.database.include.list", "inventory");
+    s3Test.put("%mysql.debezium.source.database.include.list", "inventory");
     s3Test.put("%postgresql.debezium.source.schema.include.list", "inventory");
     s3Test.put("debezium.source.table.include.list", "inventory.customers,inventory.orders,inventory.products," +
         "inventory.test_date_table," +
