@@ -88,15 +88,16 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     }
     // workaround! somehow offset is not saved to file unless we call committer.markProcessed
     // even its should be saved to file periodically
-//    if (!records.isEmpty()) {
-//      committer.markProcessed(records.get(0));
-//    }
+    for (ChangeEvent<Object, Object> record : records) {
+      LOGGER.trace("Processed event '{}'", record);
+      committer.markProcessed(record);
+    }
     committer.markBatchFinished();
+    LOGGER.info("Processed {} events", numUploadedEvents);
 
     if (batchDynamicWaitEnabled) {
       batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
     }
-    LOGGER.info("Processed {} events", numUploadedEvents);
   }
 
   public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
