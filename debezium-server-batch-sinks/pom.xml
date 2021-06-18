@@ -122,6 +122,13 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.12</artifactId>
             <version>${version.spark}</version>
+            <exclusions>
+                <!--                NOTE its included by debezium (debezium-ddl-parser) -->
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-runtime</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- needed for quarkus jboss logging -->
         <dependency>

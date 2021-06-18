@@ -60,6 +60,12 @@
             <!-- debezium server -->
             <dependency>
                 <groupId>io.debezium</groupId>
+                <artifactId>debezium-bom</artifactId>
+                <version>${version.debezium}</version>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>io.debezium</groupId>
                 <artifactId>debezium-server</artifactId>
                 <version>${version.debezium}</version>
                 <type>pom</type>
