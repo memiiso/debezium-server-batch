@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.cache;
+package io.debezium.server.cachedbatch.cache;
 
 import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.BatchUtil;

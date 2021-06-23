@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.cache.infinispan.cachetypes;
+package io.debezium.server.cachedbatch.cache.infinispan.cachetypes;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 

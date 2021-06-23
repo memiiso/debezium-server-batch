@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.cache.infinispan.cachetypes;
+package io.debezium.server.cachedbatch.cache;
 
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
@@ -20,7 +20,6 @@ import java.time.Duration;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.awaitility.Awaitility;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -34,19 +33,16 @@ import org.junit.jupiter.api.Test;
 @TestProfile(InfinispanCacheSimpleTestProfile.class)
 public class InfinispanCacheSimpleTest extends BaseSparkTest {
 
-  @ConfigProperty(name = "debezium.sink.batch.row-limit")
-  Integer maxBatchSize;
-
   @Test
   public void testSimpleUpload() throws Exception {
 
     PGCreateTestDataTable();
-    PGLoadTestDataTable(maxBatchSize * 2);
+    PGLoadTestDataTable(100);
 
-    Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
+    Awaitility.await().atMost(Duration.ofSeconds(60)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.test_date_table");
-        return df.count() >= maxBatchSize * 2;
+        return df.count() >= 100;
       } catch (Exception e) {
         return false;
       }

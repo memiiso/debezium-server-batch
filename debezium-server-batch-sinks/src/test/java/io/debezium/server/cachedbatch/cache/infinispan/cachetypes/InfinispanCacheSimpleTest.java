@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.cache.infinispan.cachetypes;
+package io.debezium.server.cachedbatch.cache.infinispan.cachetypes;
 
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;
@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(InfinispanCacheLocalTestProfile.class)
-public class InfinispanCacheLocalTest extends BaseSparkTest {
+@TestProfile(InfinispanCacheSimpleTestProfile.class)
+public class InfinispanCacheSimpleTest extends BaseSparkTest {
 
   @ConfigProperty(name = "debezium.sink.batch.row-limit")
   Integer maxBatchSize;

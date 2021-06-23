@@ -6,9 +6,10 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.cachedbatch;
 
-import io.debezium.server.batch.cache.BatchCache;
+import io.debezium.server.batch.JsonlinesBatchFile;
+import io.debezium.server.cachedbatch.cache.BatchCache;
 
 import java.util.List;
 import java.util.concurrent.Executors;

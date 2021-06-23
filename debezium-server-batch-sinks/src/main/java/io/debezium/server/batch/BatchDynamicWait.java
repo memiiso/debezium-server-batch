@@ -15,6 +15,7 @@ import javax.enterprise.context.Dependent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import static io.debezium.config.CommonConnectorConfig.DEFAULT_MAX_BATCH_SIZE;
 
 /**
  * Optimizes batch size around 85%-90% of max,batch.size using dynamically calculated sleep(ms)
@@ -25,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public class BatchDynamicWait {
   protected static final Logger LOGGER = LoggerFactory.getLogger(BatchDynamicWait.class);
 
-  @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "2048")
+  @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = DEFAULT_MAX_BATCH_SIZE + "")
   Integer maxBatchSize;
 
   @ConfigProperty(name = "debezium.sink.batch.dynamic-wait.max-wait-ms", defaultValue = "300000")

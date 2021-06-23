@@ -6,10 +6,12 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.cachedbatch;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.cache.BatchCache;
+import io.debezium.server.batch.BatchSparkChangeConsumer;
+import io.debezium.server.batch.JsonlinesBatchFile;
+import io.debezium.server.cachedbatch.cache.BatchCache;
 
 import java.util.ArrayList;
 import javax.annotation.PostConstruct;

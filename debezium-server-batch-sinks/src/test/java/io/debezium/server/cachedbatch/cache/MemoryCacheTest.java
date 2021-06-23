@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.cache;
+package io.debezium.server.cachedbatch.cache;
 
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.S3Minio;

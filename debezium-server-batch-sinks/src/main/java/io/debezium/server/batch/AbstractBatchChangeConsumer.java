@@ -8,6 +8,8 @@
 
 package io.debezium.server.batch;
 
+import io.debezium.DebeziumException;
+import io.debezium.config.CommonConnectorConfig;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
@@ -18,13 +20,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,7 +65,14 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Inject
   BatchDynamicWait batchDynamicWait;
 
-  void initizalize() throws InterruptedException {
+  @Inject
+  BeanManager beanManager;
+
+  public static ObjectName getStreamingMetricsObjectName(String connector, String server, String context) throws MalformedObjectNameException {
+    return new ObjectName("debezium." + connector + ":type=connector-metrics,context=" + context + ",server=" + server);
+  }
+
+  public void initizalize() throws InterruptedException {
 
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();
@@ -71,10 +85,30 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     }
   }
 
+  private void getNumberOfEventsFiltered() {
+    LOGGER.error("FAILLL METRIC  MBeanServer {}", 123);
+    final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+    try {
+      ObjectName t = new ObjectName("debezium.postgres:type=connector-metrics,context=snapshot,server=testc");
+      Object mv = (long) mbeanServer.getAttribute(t, "TotalNumberOfEventsSeen");
+      System.out.println(mv);
+      int mv2 = (int) mbeanServer.getAttribute(t, "QueueTotalCapacity");
+      System.out.println(mv2);
+      mv2 = (int) mbeanServer.getAttribute(t, "QueueRemainingCapacity");
+      System.out.println(mv2);
+    } catch (Exception e) {
+      System.out.println("failed to get metric" + CommonConnectorConfig.DEFAULT_MAX_QUEUE_SIZE);
+      throw new DebeziumException(e);
+    }
+  }
+
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
     LOGGER.info("Received {} events", records.size());
+    getNumberOfEventsFiltered();
+
+
     Instant start = Instant.now();
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
         .collect(Collectors.groupingBy(
