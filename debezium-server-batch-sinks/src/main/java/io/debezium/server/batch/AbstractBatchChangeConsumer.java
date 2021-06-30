@@ -8,8 +8,6 @@
 
 package io.debezium.server.batch;
 
-import io.debezium.DebeziumException;
-import io.debezium.config.CommonConnectorConfig;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
@@ -20,7 +18,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -29,7 +26,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
-import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
@@ -63,7 +59,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   boolean batchDynamicWaitEnabled;
 
   @Inject
-  BatchDynamicWait batchDynamicWait;
+  InterfaceDynamicWait batchDynamicWait;
 
   @Inject
   BeanManager beanManager;
@@ -80,34 +76,20 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     if (!valueFormat.equalsIgnoreCase(Json.class.getSimpleName().toLowerCase())) {
       throw new InterruptedException("debezium.format.value={" + valueFormat + "} not supported! Supported (debezium.format.value=*) formats are {json,}!");
     }
+
     if (!keyFormat.equalsIgnoreCase(Json.class.getSimpleName().toLowerCase())) {
       throw new InterruptedException("debezium.format.key={" + valueFormat + "} not supported! Supported (debezium.format.key=*) formats are {json,}!");
     }
-  }
 
-  private void getNumberOfEventsFiltered() {
-    LOGGER.error("FAILLL METRIC  MBeanServer {}", 123);
-    final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-    try {
-      ObjectName t = new ObjectName("debezium.postgres:type=connector-metrics,context=snapshot,server=testc");
-      Object mv = (long) mbeanServer.getAttribute(t, "TotalNumberOfEventsSeen");
-      System.out.println(mv);
-      int mv2 = (int) mbeanServer.getAttribute(t, "QueueTotalCapacity");
-      System.out.println(mv2);
-      mv2 = (int) mbeanServer.getAttribute(t, "QueueRemainingCapacity");
-      System.out.println(mv2);
-    } catch (Exception e) {
-      System.out.println("failed to get metric" + CommonConnectorConfig.DEFAULT_MAX_QUEUE_SIZE);
-      throw new DebeziumException(e);
+    if (batchDynamicWaitEnabled) {
+      batchDynamicWait.initizalize();
     }
   }
 
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
-    LOGGER.info("Received {} events", records.size());
-    getNumberOfEventsFiltered();
-
+    LOGGER.debug("Received {} events", records.size());
 
     Instant start = Instant.now();
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
@@ -127,7 +109,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       committer.markProcessed(record);
     }
     committer.markBatchFinished();
-    LOGGER.info("Processed {} events", numUploadedEvents);
+    LOGGER.debug("Processed {} events", numUploadedEvents);
 
     if (batchDynamicWaitEnabled) {
       batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());

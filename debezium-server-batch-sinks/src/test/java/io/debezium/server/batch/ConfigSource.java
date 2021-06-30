@@ -28,8 +28,10 @@ public class ConfigSource extends TestConfigSource {
   public static final Path HISTORY_FILE = Testing.Files.createTestingPath("dbhistory.txt").toAbsolutePath();
 
   public ConfigSource() {
+
+    // quarkus.arc.selected-alternatives=org.acme.Foo,org.acme.*,Bar
     // common sink conf
-    config.put("quarkus.profile", "postgresql");
+    s3Test.put("quarkus.profile", "postgresql");
     s3Test.put("debezium.sink.type", "sparkbatch");
     //s3Test.put("quarkus.arc.selected-alternatives", "SparkWriter,MemoryCache");
     s3Test.put("debezium.sink.batch.objectkey-prefix", "debezium-cdc-");
@@ -96,7 +98,7 @@ public class ConfigSource extends TestConfigSource {
 //    all DECIMAL and NUMERIC values as Java double values and encodes them as follows:
     s3Test.put("debezium.source.decimal.handling.mode", "double");
 
-    config.put("quarkus.log.level", "WARN");
+    s3Test.put("quarkus.log.level", "INFO");
     s3Test.put("quarkus.log.category.\"org.apache.spark\".level", "WARN");
     s3Test.put("quarkus.log.category.\"org.apache.hadoop\".level", "ERROR");
     s3Test.put("quarkus.log.category.\"org.apache.parquet\".level", "WARN");

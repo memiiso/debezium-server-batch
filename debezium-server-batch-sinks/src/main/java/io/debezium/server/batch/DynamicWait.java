@@ -11,6 +11,7 @@ package io.debezium.server.batch;
 import java.util.IntSummaryStatistics;
 import java.util.LinkedList;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -23,8 +24,9 @@ import static io.debezium.config.CommonConnectorConfig.DEFAULT_MAX_BATCH_SIZE;
  * @author Ismail Simsek
  */
 @Dependent
-public class BatchDynamicWait {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchDynamicWait.class);
+@Default
+public class DynamicWait implements InterfaceDynamicWait {
+  protected static final Logger LOGGER = LoggerFactory.getLogger(DynamicWait.class);
 
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = DEFAULT_MAX_BATCH_SIZE + "")
   Integer maxBatchSize;
@@ -35,7 +37,7 @@ public class BatchDynamicWait {
   LinkedList<Integer> batchSizeHistory = new LinkedList<Integer>();
   LinkedList<Integer> sleepMsHistory = new LinkedList<Integer>();
 
-  public BatchDynamicWait() {
+  public DynamicWait() {
     batchSizeHistory.add(1);
     batchSizeHistory.add(1);
     batchSizeHistory.add(1);
@@ -85,10 +87,10 @@ public class BatchDynamicWait {
     return sleepMsHistory.getLast();
   }
 
-  public void waitMs(Integer numRecords, Integer processingTimeMs) throws InterruptedException {
-    int sleepMs = Math.max(getWaitMs(numRecords) - processingTimeMs, 0);
+  public void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) throws InterruptedException {
+    int sleepMs = Math.max(getWaitMs(numRecordsProcessed) - processingTimeMs, 0);
     if (sleepMs > 2000) {
-      LOGGER.info("Waiting {} ms", sleepMs);
+      LOGGER.debug("Waiting {} ms", sleepMs);
       Thread.sleep(sleepMs);
     }
   }
