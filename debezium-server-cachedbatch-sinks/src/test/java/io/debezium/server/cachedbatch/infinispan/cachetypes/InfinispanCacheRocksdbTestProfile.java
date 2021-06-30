@@ -20,7 +20,6 @@ public class InfinispanCacheRocksdbTestProfile implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "batch");
     config.put("debezium.sink.batch.row-limit", "100");
     config.put("debezium.sink.batch.time-limit", "3000");
     config.put("debezium.source.max.batch.size", "500");
