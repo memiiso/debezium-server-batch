@@ -131,6 +131,7 @@
 
     <modules>
         <module>debezium-server-batch-sinks</module>
+        <module>debezium-server-cachedbatch-sinks</module>
         <module>debezium-server-dist</module>
     </modules>
 

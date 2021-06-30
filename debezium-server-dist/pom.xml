@@ -110,6 +110,11 @@
                     <artifactId>debezium-server-batch-sinks</artifactId>
                     <version>${revision}</version>
                 </dependency>
+                <dependency>
+                    <groupId>io.debezium</groupId>
+                    <artifactId>debezium-server-cachedbatch-sinks</artifactId>
+                    <version>${revision}</version>
+                </dependency>
             </dependencies>
             <build>
                 <plugins>
