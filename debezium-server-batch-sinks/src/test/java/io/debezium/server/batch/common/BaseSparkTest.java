@@ -36,10 +36,6 @@ public class BaseSparkTest {
       .setMaster("local");
   private static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
   protected static SparkSession spark;
-  @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
-  String objectKeyPrefix;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "")
-  String bucket;
 
   static {
     Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
@@ -47,6 +43,11 @@ public class BaseSparkTest {
     Testing.Files.delete(ConfigSource.HISTORY_FILE);
     Testing.Files.createTestingFile(ConfigSource.HISTORY_FILE);
   }
+
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
+  String objectKeyPrefix;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "")
+  String bucket;
 
   @BeforeAll
   static void setup() {
@@ -60,13 +61,6 @@ public class BaseSparkTest {
         .getOrCreate();
   }
 
-  public Dataset<Row> getTableData(String table) {
-    return spark.read().option("mergeSchema", "true")
-        .parquet(bucket + "/" + objectKeyPrefix + table + "/*")
-        .withColumn("input_file", functions.input_file_name());
-  }
-
-
   public static void PGCreateTestDataTable() throws Exception {
     // create test table
     String sql = "" +
@@ -79,11 +73,18 @@ public class BaseSparkTest {
   }
 
   public static int PGLoadTestDataTable(int numRows) throws Exception {
+    return PGLoadTestDataTable(numRows, false);
+  }
+
+  public static int PGLoadTestDataTable(int numRows, boolean addRandomDelay) throws Exception {
     int numInsert = 0;
     do {
 
       new Thread(() -> {
         try {
+          if (addRandomDelay) {
+            Thread.sleep(randomInt(20000, 100000));
+          }
           String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
               "VALUES ";
           StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
@@ -101,7 +102,6 @@ public class BaseSparkTest {
     } while (numInsert <= numRows);
     return numInsert;
   }
-
 
   public static void mysqlCreateTestDataTable() throws Exception {
     // create test table
@@ -128,6 +128,12 @@ public class BaseSparkTest {
       numInsert += 10;
     } while (numInsert <= numRows);
     return numInsert;
+  }
+
+  public Dataset<Row> getTableData(String table) {
+    return spark.read().option("mergeSchema", "true")
+        .parquet(bucket + "/" + objectKeyPrefix + table + "/*")
+        .withColumn("input_file", functions.input_file_name());
   }
 
 }

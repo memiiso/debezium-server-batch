@@ -42,7 +42,8 @@ public class MaxBatchSizeWait implements InterfaceDynamicWait {
   int maxBatchSize;
   @ConfigProperty(name = "debezium.sink.batch.dynamic-wait.max-wait-ms", defaultValue = "300000")
   int maxWaitMs;
-  int numberOfChecks = 20;
+  @ConfigProperty(name = "debezium.sink.batch.dynamic-wait.wait-interval-ms", defaultValue = "10000")
+  int waitIntervalMs;
 
   ObjectName snapshotMetricsObjectName;
   ObjectName streamingMetricsObjectName;
@@ -53,6 +54,7 @@ public class MaxBatchSizeWait implements InterfaceDynamicWait {
         "Snapshot metrics Mbean(`debezium.sink.batch.dynamic-wait.snapshot-metrics-mbean`) is not not set";
     assert streamingMbean.isPresent() :
         "Streaming metrics Mbean(`debezium.sink.batch.dynamic-wait.streaming-metrics-mbean`) is not set";
+    assert waitIntervalMs < maxWaitMs : "`wait-interval-ms` cannot be bigger than `max-wait-ms`";
 
     try {
       snapshotMetricsObjectName = new ObjectName(snapshotMbean.get());
@@ -62,25 +64,40 @@ public class MaxBatchSizeWait implements InterfaceDynamicWait {
     }
   }
 
+//  log warning!
+//  if (streamingSecondsBehindSource > 30 * 60) { // behind 30 minutes
+//    LOGGER.warn("Streaming {} is behind by {} seconds, QueueCurrentSize:{}, QueueTotalCapacity:{}, " +
+//            "SnapshotCompleted:{}",
+//        numRecordsProcessed, streamingQueueCurrentSize, maxQueueSize, streamingSecondsBehindSource, snapshotCompleted
+//    );
+//  }
+
   @Override
   public void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) throws InterruptedException {
-    printMetrics();
 
     if (snapshotRunning()) {
       return;
     }
 
-    LOGGER.info("Processed {}, " +
-            "QueueCurrentSize:{}, QueueTotalCapacity:{}, SecondsBehindSource:{}, SnapshotCompleted:{}",
-        numRecordsProcessed, streamingQueueCurrentSize(), maxQueueSize, streamingMilliSecondsBehindSource() / 1000,
-        snapshotCompleted()
+    final int streamingQueueCurrentSize = streamingQueueCurrentSize();
+    final int streamingSecondsBehindSource = (int) (streamingMilliSecondsBehindSource() / 1000);
+    final boolean snapshotCompleted = snapshotCompleted();
+
+    LOGGER.debug("Processed {}, QueueCurrentSize:{}, QueueTotalCapacity:{}, SecondsBehindSource:{}, SnapshotCompleted:{}",
+        numRecordsProcessed, streamingQueueCurrentSize, maxQueueSize, streamingSecondsBehindSource, snapshotCompleted
     );
-    // @TODO use check interval and sum  total instead of numberOfChecks
-    for (int i = 0; i < numberOfChecks && streamingQueueCurrentSize() < maxBatchSize; i++) {
+
+    int totalWaitMs = 0;
+    while (totalWaitMs < maxWaitMs && streamingQueueCurrentSize() < maxBatchSize) {
+
+      totalWaitMs += waitIntervalMs;
+
       LOGGER.debug("QueueCurrentSize:{} < maxBatchSize:{} Sleeping {} Milliseconds",
-          streamingQueueCurrentSize(), maxBatchSize, maxWaitMs / numberOfChecks);
-      Thread.sleep(maxWaitMs / numberOfChecks);
+          streamingQueueCurrentSize(), maxBatchSize, waitIntervalMs);
+
+      Thread.sleep(waitIntervalMs);
     }
+
   }
 
   public boolean snapshotRunning() {
@@ -94,14 +111,6 @@ public class MaxBatchSizeWait implements InterfaceDynamicWait {
   public boolean snapshotCompleted() {
     try {
       return (boolean) mbeanServer.getAttribute(snapshotMetricsObjectName, "SnapshotCompleted");
-    } catch (Exception e) {
-      throw new DebeziumException(e);
-    }
-  }
-
-  public int streamingQueueTotalCapacity() {
-    try {
-      return (int) mbeanServer.getAttribute(streamingMetricsObjectName, "QueueTotalCapacity");
     } catch (Exception e) {
       throw new DebeziumException(e);
     }
@@ -124,20 +133,6 @@ public class MaxBatchSizeWait implements InterfaceDynamicWait {
       return (long) mbeanServer.getAttribute(streamingMetricsObjectName, "MilliSecondsBehindSource");
     } catch (Exception e) {
       throw new DebeziumException(e);
-    }
-  }
-
-  public void printMetrics() {
-    try {
-      LOGGER.info("snapshotRunning {}", snapshotRunning());
-      LOGGER.info("snapshotCompleted {}", snapshotCompleted());
-      LOGGER.info("streamingQueueCurrentCapacity {}", streamingQueueCurrentSize());
-      LOGGER.info("streamingQueueTotalCapacity {}", streamingQueueTotalCapacity());
-      LOGGER.info("maxQueueSize {}", maxQueueSize);
-      LOGGER.info("streamingQueueRemainingCapacity {}", streamingQueueRemainingCapacity());
-      LOGGER.info("streamingMilliSecondsBehindSource {}", streamingMilliSecondsBehindSource());
-    } catch (Exception e) {
-      throw new DebeziumException("Failed to read metrics", e);
     }
   }
 
