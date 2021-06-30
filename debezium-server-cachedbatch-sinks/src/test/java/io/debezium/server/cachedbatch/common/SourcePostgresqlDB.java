@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.common;
+package io.debezium.server.cachedbatch.common;
 
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
@@ -35,6 +35,24 @@ public class SourcePostgresqlDB implements QuarkusTestResourceLifecycleManager {
 
   private static GenericContainer<?> container;
 
+  public static void runSQL(String query) throws SQLException, ClassNotFoundException {
+    try {
+
+      String url = "jdbc:postgresql://" + POSTGRES_HOST + ":" + getMappedPort() + "/" + POSTGRES_DBNAME;
+      Class.forName("org.postgresql.Driver");
+      Connection con = DriverManager.getConnection(url, POSTGRES_USER, POSTGRES_PASSWORD);
+      Statement st = con.createStatement();
+      st.execute(query);
+      con.close();
+    } catch (Exception e) {
+      throw e;
+    }
+  }
+
+  public static Integer getMappedPort() {
+    return container.getMappedPort(POSTGRES_PORT_DEFAULT);
+  }
+
   @Override
   public Map<String, String> start() {
     container = new GenericContainer<>(POSTGRES_IMAGE)
@@ -61,24 +79,6 @@ public class SourcePostgresqlDB implements QuarkusTestResourceLifecycleManager {
     if (container != null) {
       container.stop();
     }
-  }
-
-  public static void runSQL(String query) throws SQLException, ClassNotFoundException {
-    try {
-
-      String url = "jdbc:postgresql://" + POSTGRES_HOST + ":" + getMappedPort() + "/" + POSTGRES_DBNAME;
-      Class.forName("org.postgresql.Driver");
-      Connection con = DriverManager.getConnection(url, POSTGRES_USER, POSTGRES_PASSWORD);
-      Statement st = con.createStatement();
-      st.execute(query);
-      con.close();
-    } catch (Exception e) {
-      throw e;
-    }
-  }
-
-  public static Integer getMappedPort() {
-    return container.getMappedPort(POSTGRES_PORT_DEFAULT);
   }
 
 }

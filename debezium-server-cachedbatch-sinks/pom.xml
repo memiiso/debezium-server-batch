@@ -16,11 +16,16 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>debezium-server-batch-sinks</artifactId>
-    <name>Debezium Server Batch Consumers</name>
+    <artifactId>debezium-server-cachedbatch-sinks</artifactId>
+    <name>Debezium Server Cached Batch Consumers</name>
     <packaging>jar</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>io.debezium</groupId>
+            <artifactId>debezium-server-batch-sinks</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Debezium  -->
         <dependency>
             <groupId>io.debezium</groupId>
@@ -56,6 +61,15 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cachestore-rocksdb</artifactId>
+        </dependency>
+
         <!--        <dependency>-->
         <!--            <groupId>org.apache.logging.log4j</groupId>-->
         <!--            <artifactId>log4j-api</artifactId>-->

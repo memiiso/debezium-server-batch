@@ -24,7 +24,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,9 +59,16 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   boolean batchDynamicWaitEnabled;
 
   @Inject
-  BatchDynamicWait batchDynamicWait;
+  InterfaceDynamicWait batchDynamicWait;
 
-  void initizalize() throws InterruptedException {
+  @Inject
+  BeanManager beanManager;
+
+  public static ObjectName getStreamingMetricsObjectName(String connector, String server, String context) throws MalformedObjectNameException {
+    return new ObjectName("debezium." + connector + ":type=connector-metrics,context=" + context + ",server=" + server);
+  }
+
+  public void initizalize() throws InterruptedException {
 
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();
@@ -66,15 +76,21 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     if (!valueFormat.equalsIgnoreCase(Json.class.getSimpleName().toLowerCase())) {
       throw new InterruptedException("debezium.format.value={" + valueFormat + "} not supported! Supported (debezium.format.value=*) formats are {json,}!");
     }
+
     if (!keyFormat.equalsIgnoreCase(Json.class.getSimpleName().toLowerCase())) {
       throw new InterruptedException("debezium.format.key={" + valueFormat + "} not supported! Supported (debezium.format.key=*) formats are {json,}!");
+    }
+
+    if (batchDynamicWaitEnabled) {
+      batchDynamicWait.initizalize();
     }
   }
 
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
-    LOGGER.info("Received {} events", records.size());
+    LOGGER.debug("Received {} events", records.size());
+
     Instant start = Instant.now();
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
         .collect(Collectors.groupingBy(
@@ -93,7 +109,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       committer.markProcessed(record);
     }
     committer.markBatchFinished();
-    LOGGER.info("Processed {} events", numUploadedEvents);
+    LOGGER.debug("Processed {} events", numUploadedEvents);
 
     if (batchDynamicWaitEnabled) {
       batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());

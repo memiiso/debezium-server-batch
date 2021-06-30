@@ -6,11 +6,11 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.cachedbatch;
 
 import io.debezium.server.TestConfigSource;
-import io.debezium.server.batch.common.S3Minio;
-import io.debezium.server.batch.common.SourcePostgresqlDB;
+import io.debezium.server.cachedbatch.common.S3Minio;
+import io.debezium.server.cachedbatch.common.SourcePostgresqlDB;
 import io.debezium.util.Testing;
 
 import java.nio.file.Path;
@@ -23,9 +23,8 @@ public class ConfigSource extends TestConfigSource {
 
   public static final String S3_REGION = "us-east-1";
   public static final String S3_BUCKET = "test-bucket";
-
-  final Map<String, String> s3Test = new HashMap<>();
   public static final Path HISTORY_FILE = Testing.Files.createTestingPath("dbhistory.txt").toAbsolutePath();
+  final Map<String, String> s3Test = new HashMap<>();
 
   public ConfigSource() {
 

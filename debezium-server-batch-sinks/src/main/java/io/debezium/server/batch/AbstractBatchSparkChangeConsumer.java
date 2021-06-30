@@ -52,7 +52,7 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
     }
   }
 
-  void initizalize() throws InterruptedException {
+  public void initizalize() throws InterruptedException {
     super.initizalize();
 
     Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
