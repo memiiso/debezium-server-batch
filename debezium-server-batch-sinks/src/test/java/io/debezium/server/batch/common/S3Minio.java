@@ -70,7 +70,6 @@ public class S3Minio implements QuarkusTestResourceLifecycleManager {
     }
     LOGGER.info("Minio Started!");
     Map<String, String> params = new ConcurrentHashMap<>();
-    params.put("debezium.sink.s3.endpoint-override", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
     params.put("debezium.sink.batch.s3.endpoint-override", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
     params.put("debezium.sink.iceberg.fs.s3a.endpoint", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());
     params.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.endpoint", "http://localhost:" + container.getMappedPort(MINIO_DEFAULT_PORT).toString());

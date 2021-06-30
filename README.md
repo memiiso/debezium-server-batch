@@ -143,19 +143,6 @@ Available Infinispan configurations are
 
 MemoryCache uses ConcurrentHashMap and keeps data in memory.
 
-## `s3` Consumer
-
-This is not a batch consumer, When used it writes each single event to s3 to an individual json file.
-
-```
-
-debezium.sink.type=s3 debezium.sink.s3.region = S3_REGION debezium.sink.s3.bucket-name = s3a://S3_BUCKET
-debezium.sink.s3.endpoint-override = http://localhost:9000, default:'false' debezium.sink.s3.credentials.profile =
-default:'default' debezium.sink.s3.credentials-use-instance-cred = false debezium.sink.s3.objectkey-prefix =
-debezium/cdc-
-
-```
-
 ## Configuring log levels
 
 ```properties
