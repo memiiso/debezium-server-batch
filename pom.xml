@@ -36,12 +36,9 @@
         <version.hadoop>3.2.0</version.hadoop>
         <version.log4j>2.14.1</version.log4j>
         <!-- Debezium -->
-        <version.debezium>1.5.3.Final</version.debezium>
-        <!-- ANTLR -->
-        <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
-        <antlr.version>4.7.2</antlr.version>
+        <version.debezium>1.6.0.Final</version.debezium>
         <!-- Quarkus -->
-        <version.quarkus>1.13.7.Final</version.quarkus>
+        <version.quarkus>2.0.0.Final</version.quarkus>
         <version.parquet>1.10.1</version.parquet>
 
         <!-- Plugin versions -->
@@ -73,13 +70,6 @@
                 <version>${version.debezium}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <!-- ANTLR -->
-            <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
-            <dependency>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-runtime</artifactId>
-                <version>${antlr.version}</version>
             </dependency>
             <!-- Debezium Scripting -->
             <dependency>
