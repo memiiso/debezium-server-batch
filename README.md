@@ -22,7 +22,7 @@ Debezium `max.batch.size` and `poll.interval.ms`
 an example `batch` consumer confuquration:
 
 ```properties
-debezium.sink.type=batch
+debezium.sink.type=sparkbatch
 quarkus.arc.selected-alternatives=SparkWriter
 debezium.source.max.batch.size=5000
 debezium.source.poll.interval.ms=600000
@@ -44,7 +44,7 @@ this writer is using spark to process/upload batch data to destination. If event
 read data with schema definition
 
 ```
-debezium.sink.type=batch
+debezium.sink.type=sparkbatch
 quarkus.arc.selected-alternatives=SparkWriter
 debezium.source.max.batch.size=5000
 debezium.source.poll.interval.ms=600000
@@ -71,7 +71,7 @@ Uploads events as jsonlines to s3
 Custom parameters are
 
 ```
-debezium.sink.type=batch
+debezium.sink.type=sparkbatch
 quarkus.arc.selected-alternatives=S3JsonWriter
 debezium.sink.batch.s3.region = eu-central-1
 debezium.sink.batch.s3.endpoint-override = http://localhost:9000, default:'false'

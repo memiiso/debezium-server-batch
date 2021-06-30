@@ -20,7 +20,7 @@ public class BatchDynamicWaitTestProfile implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
     config.put("debezium.source.max.batch.size", "100");
     config.put("debezium.sink.batch.dynamic-wait.max-wait-ms", "5000");
-    config.put("debezium.sink.type", "batch");
+    config.put("debezium.sink.type", "sparkbatch");
     return config;
   }
 }
