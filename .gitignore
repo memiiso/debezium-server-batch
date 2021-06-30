@@ -2,7 +2,7 @@
 
 /cache/**
 /debezium-server-batch-sinks/cache/
-/debezium-server-batch-sinks/cache/
+/debezium-server-cachedbatch-sinks/cache/
 /rocksdb/**
 deploy.sh
 
