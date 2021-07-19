@@ -96,9 +96,9 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("%mysql.debezium.source.database.include.list", "inventory");
     s3Test.put("%postgresql.debezium.source.schema.include.list", "inventory");
     s3Test.put("debezium.source.table.include.list", "inventory.customers,inventory.orders,inventory.products," +
-        "inventory.test_date_table," +
-        "inventory.geom,inventory.table_datatypes");
+        "inventory.test_date_table,inventory.products_on_hand,inventory.geom,inventory.table_datatypes");
 
+    s3Test.put("debezium.source.snapshot.select.statement.overrides.inventory.products_on_hand", "SELECT * FROM products_on_hand WHERE 1>2");
 //    However, when decimal.handling.mode configuration property is set to double, then the connector will represent
 //    all DECIMAL and NUMERIC values as Java double values and encodes them as follows:
     s3Test.put("debezium.source.decimal.handling.mode", "double");
