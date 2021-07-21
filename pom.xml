@@ -38,7 +38,7 @@
         <!-- Debezium -->
         <version.debezium>1.5.4.Final</version.debezium>
         <!-- Quarkus -->
-        <version.quarkus>1.13.7.Final</version.quarkus>
+        <version.quarkus>2.0.2.Final</version.quarkus>
         <version.parquet>1.10.1</version.parquet>
 
         <!-- Plugin versions -->
