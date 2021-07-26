@@ -130,6 +130,10 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hadoop-cloud_2.12</artifactId>
+        </dependency>
         <!-- needed for quarkus jboss logging -->
         <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -174,6 +178,11 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
+            <version>${version.hadoop}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-cloud-storage</artifactId>
             <version>${version.hadoop}</version>
         </dependency>
         <!-- END using spark sink -->

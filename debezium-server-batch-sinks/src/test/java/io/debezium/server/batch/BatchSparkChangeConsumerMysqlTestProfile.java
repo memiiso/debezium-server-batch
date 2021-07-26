@@ -25,6 +25,11 @@ public class BatchSparkChangeConsumerMysqlTestProfile implements QuarkusTestProf
     config.put("debezium.source.max.queue.size", "70000");
     // 30000 30-second
     config.put("debezium.source.poll.interval.ms", "1000");
+    config.put("debezium.sink.sparkbatch.spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a", "org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory");
+    config.put("debezium.sink.sparkbatch.spark.sql.sources.commitProtocolClass", "org.apache.spark.internal.io.cloud.PathOutputCommitProtocol");
+    config.put("debezium.sink.sparkbatch.spark.sql.parquet.output.committer.class", "org.apache.spark.internal.io.cloud.BindingParquetOutputCommitter");
+    config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.committer.name", "magic");
+    config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.committer.magic.enabled", "true");
 
     return config;
   }
