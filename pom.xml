@@ -102,6 +102,12 @@
                 <artifactId>hadoop-client</artifactId>
                 <version>${version.hadoop}</version>
             </dependency>
+            <!-- spark-hadoop-cloud -->
+            <dependency>
+                <groupId>org.apache.spark</groupId>
+                <artifactId>spark-hadoop-cloud_2.12</artifactId>
+                <version>${version.spark.hadoopcloud}</version>
+            </dependency>
             <!-- infinispan -->
             <dependency>
                 <groupId>org.infinispan</groupId>

@@ -133,7 +133,6 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hadoop-cloud_2.12</artifactId>
-            <version>${version.spark.hadoopcloud}</version>
         </dependency>
         <!-- needed for quarkus jboss logging -->
         <dependency>
