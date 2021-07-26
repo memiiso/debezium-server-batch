@@ -37,9 +37,11 @@
         <version.log4j>2.14.1</version.log4j>
         <!-- Debezium -->
         <version.debezium>1.5.4.Final</version.debezium>
+        <!-- ANTLR -->
+        <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
+        <antlr.version>4.7.2</antlr.version>
         <!-- Quarkus -->
-        <version.quarkus>2.0.2.Final</version.quarkus>
-        <version.parquet>1.10.1</version.parquet>
+        <version.quarkus>1.13.7.Final</version.quarkus>
 
         <!-- Plugin versions -->
         <version.maven-enforcer-plugin>3.0.0-M3</version.maven-enforcer-plugin>
@@ -70,6 +72,13 @@
                 <version>${version.debezium}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- ANTLR -->
+            <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${antlr.version}</version>
             </dependency>
             <!-- Debezium Scripting -->
             <dependency>
