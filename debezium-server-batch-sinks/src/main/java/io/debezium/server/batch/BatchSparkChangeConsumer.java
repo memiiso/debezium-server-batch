@@ -14,13 +14,11 @@ import io.debezium.server.batch.uploadlock.UploadLockException;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -40,11 +38,10 @@ import org.apache.spark.sql.types.StructType;
 @Dependent
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
-  protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
   @Inject
   InterfaceUploadLock concurrentUploadLock;
 
-  public void initialize() throws InterruptedException, IOException {
+  public void initialize() throws InterruptedException {
     super.initizalize();
     LOGGER.info("Starting Spark Consumer({})", this.getClass().getSimpleName());
     LOGGER.info("Spark save format is '{}'", saveFormat);

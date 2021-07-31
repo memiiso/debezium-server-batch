@@ -9,6 +9,7 @@
 package io.debezium.server.batch;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
 import org.apache.spark.SparkConf;
@@ -24,6 +25,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChangeConsumer {
 
   protected static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
+  protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
   protected final SparkConf sparkconf = new SparkConf()
       .setAppName("CDC-Batch-Spark-Sink")
       .setMaster("local[*]");
