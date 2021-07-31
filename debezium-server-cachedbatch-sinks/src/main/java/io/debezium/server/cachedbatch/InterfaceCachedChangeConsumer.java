@@ -61,6 +61,7 @@ public interface InterfaceCachedChangeConsumer {
       } catch (InterruptedException e) {
         e.printStackTrace();
         Thread.currentThread().interrupt();
+        throw new RuntimeException("Max row limit based data upload failed!", e);
       }
       getThreadPool().logThredPoolStatus(destination);
       LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
@@ -80,6 +81,7 @@ public interface InterfaceCachedChangeConsumer {
         } catch (InterruptedException e) {
           e.printStackTrace();
           Thread.currentThread().interrupt();
+          throw new RuntimeException("Timer based data upload failed!", e);
         }
         getThreadPool().logThredPoolStatus(destination);
         LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
