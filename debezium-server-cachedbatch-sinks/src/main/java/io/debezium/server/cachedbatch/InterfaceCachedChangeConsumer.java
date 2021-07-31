@@ -38,7 +38,7 @@ public interface InterfaceCachedChangeConsumer {
 
   Integer getBatchUploadRowLimit();
 
-  long uploadDestination(String destination, JsonlinesBatchFile jsonLines);
+  long uploadDestination(String destination, JsonlinesBatchFile jsonLines) throws InterruptedException;
 
   default long startUploadIfRowLimitReached(String destination) {
     // get count per destination
@@ -56,7 +56,13 @@ public interface InterfaceCachedChangeConsumer {
       LOGGER.debug("Batch row limit reached, cache.size > batchLimit {}>={}, starting upload destination:{}",
           getCache().getEstimatedCacheSize(destination), getBatchUploadRowLimit(), destination);
 
-      this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+      try {
+        this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Max row limit based data upload failed!", e);
+      }
       getThreadPool().logThredPoolStatus(destination);
       LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
     });
@@ -70,7 +76,13 @@ public interface InterfaceCachedChangeConsumer {
 
       Thread uploadThread = new Thread(() -> {
         Thread.currentThread().setName("spark-timer-upload-" + Thread.currentThread().getId());
-        this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+        try {
+          this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+          Thread.currentThread().interrupt();
+          throw new RuntimeException("Timer based data upload failed!", e);
+        }
         getThreadPool().logThredPoolStatus(destination);
         LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
       });

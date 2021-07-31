@@ -92,7 +92,7 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer imp
   }
 
   @Override
-  public long uploadDestination(String destination, JsonlinesBatchFile jsonLines) {
+  public long uploadDestination(String destination, JsonlinesBatchFile jsonLines) throws InterruptedException {
     return super.uploadDestination(destination, jsonLines);
   }
 }

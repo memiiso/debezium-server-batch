@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.dynamicwait;
 
 import javax.enterprise.context.Dependent;
 
@@ -19,7 +19,6 @@ import javax.enterprise.context.Dependent;
 public interface InterfaceDynamicWait {
 
   default void initizalize() {
-    System.out.println("default");
   }
 
   void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) throws InterruptedException;

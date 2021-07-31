@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.dynamicwait;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
