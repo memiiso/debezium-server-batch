@@ -4,6 +4,8 @@ import io.debezium.server.batch.dynamicwait.MaxBatchSizeWait;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -17,10 +19,11 @@ import org.slf4j.LoggerFactory;
 
 @Dependent
 @Alternative
-public class FileLock implements InterfaceLock {
+public class LocalFileLock implements InterfaceLock {
   protected static final Logger LOGGER = LoggerFactory.getLogger(MaxBatchSizeWait.class);
   Path pathLockFile;
-  @ConfigProperty(name = "debezium.sink.batch.upload-lock.file", defaultValue = "/tmp/debezium-sparkbatchFileLock.txt")
+  @ConfigProperty(name = "debezium.sink.batch.upload-lock.file",
+      defaultValue = "/tmp/debezium-batch-upload-lock.lock")
   String lockFile;
   @ConfigProperty(name = "debezium.sink.batch.upload-lock.max-wait-ms", defaultValue = "1800000")
   int maxWaitMs;
@@ -28,31 +31,36 @@ public class FileLock implements InterfaceLock {
   int waitIntervalMs;
   FileChannel channel;
 
-  public static void main(String[] args) throws IOException, InterruptedException, TimeoutException {
-    new FileLock().lock();
-  }
-
   @Override
   public void initizalize() throws IOException {
-    Path pathLockFile = Paths.get(lockFile);
+    pathLockFile = Paths.get(lockFile);
     pathLockFile.toFile().createNewFile();
   }
 
   @Override
-  public void lock() throws IOException, TimeoutException, InterruptedException {
+  public AutoCloseable lock() throws TimeoutException, InterruptedException, IOException {
     channel = FileChannel.open(pathLockFile, StandardOpenOption.APPEND);
-    java.nio.channels.FileLock lock = null;
+    FileLock lock = null;
     int totalWaitMs = 0;
     LOGGER.debug("Locking file {}", lockFile);
-    while (lock == null) {
-      lock = channel.tryLock();
-      if (totalWaitMs > maxWaitMs) {
-        throw new TimeoutException("Timeout waiting for the lock!");
+    while (true) {
+      try {
+        lock = channel.tryLock();
+        if (lock != null) {
+          break;
+        }
+      } catch (OverlappingFileLockException e) {
+        //
       }
+      if (totalWaitMs > maxWaitMs) {
+        throw new TimeoutException("Timeout waiting to take lock on file " + lockFile);
+      }
+      LOGGER.debug("Waiting to take lock on file {}, file locked by another process", lockFile);
       totalWaitMs += waitIntervalMs;
       Thread.sleep(waitIntervalMs);
     }
     LOGGER.debug("Locked file {}", lockFile);
+    return lock;
   }
 
   @Override

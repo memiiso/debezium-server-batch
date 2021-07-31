@@ -8,7 +8,8 @@ import javax.enterprise.inject.Default;
 @Default
 public class NoLock implements InterfaceLock {
   @Override
-  public void lock() throws IOException {
+  public AutoCloseable lock() throws IOException {
+    return null;
   }
 
   @Override

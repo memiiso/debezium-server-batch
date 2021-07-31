@@ -9,5 +9,5 @@ public interface InterfaceLock extends AutoCloseable {
   default void initizalize() throws IOException {
   }
 
-  void lock() throws IOException, TimeoutException, InterruptedException;
+  AutoCloseable lock() throws IOException, TimeoutException, InterruptedException;
 }
