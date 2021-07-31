@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.dynamicwait;
 
 import io.debezium.DebeziumException;
 import io.debezium.config.CommonConnectorConfig;

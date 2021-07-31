@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.dynamicwait;
 
 import java.util.IntSummaryStatistics;
 import java.util.LinkedList;
