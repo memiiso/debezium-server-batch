@@ -19,12 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
-@TestProfile(LocalFileLockTestProfile.class)
-class LocalFileLockTest {
+@TestProfile(LocalFileUploadLockTestProfile.class)
+class LocalFileUploadLockTest {
   @Inject
-  InterfaceLock fileLock;
+  InterfaceUploadLock fileLock;
   @Inject
-  InterfaceLock fileLock2;
+  InterfaceUploadLock fileLock2;
 
   @Test
   void shouldWaitForLock() throws Exception {

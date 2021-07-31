@@ -38,7 +38,7 @@ public interface InterfaceCachedChangeConsumer {
 
   Integer getBatchUploadRowLimit();
 
-  long uploadDestination(String destination, JsonlinesBatchFile jsonLines);
+  long uploadDestination(String destination, JsonlinesBatchFile jsonLines) throws InterruptedException;
 
   default long startUploadIfRowLimitReached(String destination) {
     // get count per destination

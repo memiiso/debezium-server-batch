@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 @Dependent
 @Alternative
-public class LocalFileLock implements InterfaceLock {
+public class LocalFileUploadLock implements InterfaceUploadLock {
   protected static final Logger LOGGER = LoggerFactory.getLogger(MaxBatchSizeWait.class);
   Path pathLockFile;
   @ConfigProperty(name = "debezium.sink.batch.upload-lock.file",

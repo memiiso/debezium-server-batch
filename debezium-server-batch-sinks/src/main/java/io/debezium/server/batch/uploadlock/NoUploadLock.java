@@ -6,7 +6,7 @@ import javax.enterprise.inject.Default;
 
 @Dependent
 @Default
-public class NoLock implements InterfaceLock {
+public class NoUploadLock implements InterfaceUploadLock {
   @Override
   public AutoCloseable lock() throws IOException {
     return null;

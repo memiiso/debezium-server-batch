@@ -15,11 +15,11 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-class NoLockTest {
+class NoUploadLockTest {
   @Inject
-  InterfaceLock noLock;
+  InterfaceUploadLock noLock;
   @Inject
-  InterfaceLock noLock2;
+  InterfaceUploadLock noLock2;
 
   @Test
   void shouldNotWaitForLock() throws Exception {

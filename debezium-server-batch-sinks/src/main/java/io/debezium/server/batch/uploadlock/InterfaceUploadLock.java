@@ -5,7 +5,7 @@ import java.util.concurrent.TimeoutException;
 import javax.enterprise.context.Dependent;
 
 @Dependent
-public interface InterfaceLock extends AutoCloseable {
+public interface InterfaceUploadLock extends AutoCloseable {
   default void initizalize() throws IOException {
   }
 

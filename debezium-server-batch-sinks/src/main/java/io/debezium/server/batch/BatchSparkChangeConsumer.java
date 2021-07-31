@@ -9,17 +9,22 @@
 package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.uploadlock.InterfaceUploadLock;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.spark.sql.Dataset;
@@ -35,8 +40,13 @@ import org.apache.spark.sql.types.StructType;
 @Dependent
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
-  public void initialize() throws InterruptedException {
+  protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
+  @Inject
+  InterfaceUploadLock concurrentUploadLock;
+
+  public void initialize() throws InterruptedException, IOException {
     super.initizalize();
+    concurrentUploadLock.initizalize();
     LOGGER.info("Starting Spark Consumer({})", this.getClass().getSimpleName());
     LOGGER.info("Spark save format is '{}'", saveFormat);
   }
@@ -56,7 +66,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     return this.uploadDestination(destination, this.getJsonLines(destination, data));
   }
 
-  protected long uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
+  protected long uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) throws InterruptedException {
 
     Instant start = Instant.now();
     long numRecords = 0L;
@@ -91,10 +101,20 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-      df.write()
-          .mode(saveMode)
-          .format(saveFormat)
-          .save(bucket + "/" + uploadFile);
+      try (AutoCloseable l = concurrentUploadLock.lock()) {
+        df.write()
+            .mode(saveMode)
+            .format(saveFormat)
+            .save(bucket + "/" + uploadFile);
+      } catch (IOException e) {
+        throw new InterruptedException(e.getMessage());
+      } catch (InterruptedException e) {
+        throw new InterruptedException(e.getMessage());
+      } catch (TimeoutException e) {
+        throw new InterruptedException(e.getMessage());
+      } catch (Exception e) {
+        throw new InterruptedException(e.getMessage());
+      }
 
       numRecords = df.count();
       LOGGER.debug("Uploaded {} rows (read with schema:{}) to:'{}' file:{} file size:{} upload time:{}, ",

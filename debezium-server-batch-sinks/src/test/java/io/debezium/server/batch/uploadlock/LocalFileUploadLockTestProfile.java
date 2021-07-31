@@ -13,12 +13,12 @@ import io.quarkus.test.junit.QuarkusTestProfile;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LocalFileLockTestProfile implements QuarkusTestProfile {
+public class LocalFileUploadLockTestProfile implements QuarkusTestProfile {
 
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
-    config.put("quarkus.arc.selected-alternatives", "LocalFileLock");
+    config.put("quarkus.arc.selected-alternatives", "LocalFileUploadLock");
     config.put("debezium.sink.batch.upload-lock.max-wait-ms", "5000");
     config.put("debezium.sink.batch.upload-lock.wait-interval-ms", "2000");
     return config;
