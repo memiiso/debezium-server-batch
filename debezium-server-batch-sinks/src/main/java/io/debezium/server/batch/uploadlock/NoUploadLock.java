@@ -1,6 +1,5 @@
 package io.debezium.server.batch.uploadlock;
 
-import java.io.IOException;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;
 
@@ -8,11 +7,8 @@ import javax.enterprise.inject.Default;
 @Default
 public class NoUploadLock implements InterfaceUploadLock {
   @Override
-  public AutoCloseable lock() throws IOException {
+  public AutoCloseable lock(String destination) {
     return null;
   }
 
-  @Override
-  public void close() throws Exception {
-  }
 }

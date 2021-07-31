@@ -11,7 +11,6 @@ package io.debezium.server.batch.uploadlock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
-import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
@@ -28,11 +27,9 @@ class LocalFileUploadLockTest {
 
   @Test
   void shouldWaitForLock() throws Exception {
-    fileLock.initizalize();
-    fileLock2.initizalize();
-    try (AutoCloseable l = fileLock.lock()) {
-      Exception exception = assertThrows(TimeoutException.class, () -> {
-        fileLock2.lock();
+    try (AutoCloseable l = fileLock.lock("test.table_filelock")) {
+      Exception exception = assertThrows(UploadLockException.class, () -> {
+        fileLock2.lock("test.table_filelock");
       });
       assertTrue(exception.getMessage().contains("Timeout waiting to take lock on file"));
     }

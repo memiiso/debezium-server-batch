@@ -10,6 +10,7 @@ package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.uploadlock.InterfaceUploadLock;
+import io.debezium.server.batch.uploadlock.UploadLockException;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -20,7 +21,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeoutException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -46,7 +46,6 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   public void initialize() throws InterruptedException, IOException {
     super.initizalize();
-    concurrentUploadLock.initizalize();
     LOGGER.info("Starting Spark Consumer({})", this.getClass().getSimpleName());
     LOGGER.info("Spark save format is '{}'", saveFormat);
   }
@@ -101,19 +100,13 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-      try (AutoCloseable l = concurrentUploadLock.lock()) {
+      try (AutoCloseable l = concurrentUploadLock.lock(destination)) {
         df.write()
             .mode(saveMode)
             .format(saveFormat)
             .save(bucket + "/" + uploadFile);
-      } catch (IOException e) {
-        throw new InterruptedException(e.getMessage());
-      } catch (InterruptedException e) {
-        throw new InterruptedException(e.getMessage());
-      } catch (TimeoutException e) {
-        throw new InterruptedException(e.getMessage());
       } catch (Exception e) {
-        throw new InterruptedException(e.getMessage());
+        throw new UploadLockException("Failed to lock! " + e.getMessage());
       }
 
       numRecords = df.count();

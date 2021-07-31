@@ -23,10 +23,9 @@ class NoUploadLockTest {
 
   @Test
   void shouldNotWaitForLock() throws Exception {
-    noLock.initizalize();
-    noLock2.initizalize();
-    try (AutoCloseable l = noLock.lock()) {
-      noLock2.lock();
+    try (AutoCloseable l = noLock.lock("test.table")) {
+      try (AutoCloseable l2 = noLock2.lock("test.table")) {
+      }
     }
   }
 

@@ -56,7 +56,12 @@ public interface InterfaceCachedChangeConsumer {
       LOGGER.debug("Batch row limit reached, cache.size > batchLimit {}>={}, starting upload destination:{}",
           getCache().getEstimatedCacheSize(destination), getBatchUploadRowLimit(), destination);
 
-      this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+      try {
+        this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        Thread.currentThread().interrupt();
+      }
       getThreadPool().logThredPoolStatus(destination);
       LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
     });
@@ -70,7 +75,12 @@ public interface InterfaceCachedChangeConsumer {
 
       Thread uploadThread = new Thread(() -> {
         Thread.currentThread().setName("spark-timer-upload-" + Thread.currentThread().getId());
-        this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+        try {
+          this.uploadDestination(destination, this.getCache().getJsonLines(destination));
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+          Thread.currentThread().interrupt();
+        }
         getThreadPool().logThredPoolStatus(destination);
         LOGGER.debug("Finished Upload Thread:{}", Thread.currentThread().getName());
       });
