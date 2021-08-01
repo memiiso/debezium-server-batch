@@ -9,18 +9,18 @@
 package io.debezium.server.batch.dynamicwait;
 
 import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Default;
 
 /**
- * Implementation of the consumer that delivers the messages into Amazon S3 destination.
+ * Optimizes batch size around 85%-90% of max,batch.size using dynamically calculated sleep(ms)
  *
  * @author Ismail Simsek
  */
 @Dependent
-public interface InterfaceDynamicWait {
+@Default
+public class NoBatchSizeWait implements InterfaceBatchSizeWait {
 
-  default void initizalize() {
+  public void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) {
   }
-
-  void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) throws InterruptedException;
 
 }

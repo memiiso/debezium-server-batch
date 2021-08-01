@@ -25,8 +25,8 @@ import static io.debezium.config.CommonConnectorConfig.DEFAULT_MAX_BATCH_SIZE;
  */
 @Dependent
 @Default
-public class DynamicWait implements InterfaceDynamicWait {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(DynamicWait.class);
+public class DynamicBatchSizeWait implements InterfaceBatchSizeWait {
+  protected static final Logger LOGGER = LoggerFactory.getLogger(DynamicBatchSizeWait.class);
 
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = DEFAULT_MAX_BATCH_SIZE + "")
   Integer maxBatchSize;
@@ -37,7 +37,7 @@ public class DynamicWait implements InterfaceDynamicWait {
   LinkedList<Integer> batchSizeHistory = new LinkedList<Integer>();
   LinkedList<Integer> sleepMsHistory = new LinkedList<Integer>();
 
-  public DynamicWait() {
+  public DynamicBatchSizeWait() {
     batchSizeHistory.add(1);
     batchSizeHistory.add(1);
     batchSizeHistory.add(1);

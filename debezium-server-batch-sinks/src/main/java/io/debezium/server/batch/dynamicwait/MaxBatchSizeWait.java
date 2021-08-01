@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 @Dependent
 @Alternative
-public class MaxBatchSizeWait implements InterfaceDynamicWait {
+public class MaxBatchSizeWait implements InterfaceBatchSizeWait {
   protected static final Logger LOGGER = LoggerFactory.getLogger(MaxBatchSizeWait.class);
   final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
   @ConfigProperty(name = "debezium.sink.batch.dynamic-wait.snapshot-metrics-mbean", defaultValue = "")
