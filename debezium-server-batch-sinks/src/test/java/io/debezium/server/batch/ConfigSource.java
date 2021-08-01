@@ -14,8 +14,6 @@ import io.debezium.server.batch.common.SourcePostgresqlDB;
 import io.debezium.util.Testing;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.kafka.connect.runtime.standalone.StandaloneConfig;
 
@@ -23,8 +21,6 @@ public class ConfigSource extends TestConfigSource {
 
   public static final String S3_REGION = "us-east-1";
   public static final String S3_BUCKET = "test-bucket";
-
-  final Map<String, String> config = new HashMap<>();
   public static final Path HISTORY_FILE = Testing.Files.createTestingPath("dbhistory.txt").toAbsolutePath();
 
   public ConfigSource() {
