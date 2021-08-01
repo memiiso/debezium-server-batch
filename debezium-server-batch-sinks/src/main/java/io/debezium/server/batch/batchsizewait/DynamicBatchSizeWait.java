@@ -6,12 +6,12 @@
  *
  */
 
-package io.debezium.server.batch.dynamicwait;
+package io.debezium.server.batch.batchsizewait;
 
 import java.util.IntSummaryStatistics;
 import java.util.LinkedList;
 import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -24,14 +24,14 @@ import static io.debezium.config.CommonConnectorConfig.DEFAULT_MAX_BATCH_SIZE;
  * @author Ismail Simsek
  */
 @Dependent
-@Default
+@Alternative
 public class DynamicBatchSizeWait implements InterfaceBatchSizeWait {
   protected static final Logger LOGGER = LoggerFactory.getLogger(DynamicBatchSizeWait.class);
 
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = DEFAULT_MAX_BATCH_SIZE + "")
   Integer maxBatchSize;
 
-  @ConfigProperty(name = "debezium.sink.batch.dynamic-wait.max-wait-ms", defaultValue = "300000")
+  @ConfigProperty(name = "debezium.sink.batch.batch-size-wait.max-wait-ms", defaultValue = "300000")
   Integer maxWaitMs;
 
   LinkedList<Integer> batchSizeHistory = new LinkedList<Integer>();

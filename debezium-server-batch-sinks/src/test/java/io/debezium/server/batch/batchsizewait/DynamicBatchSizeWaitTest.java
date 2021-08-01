@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.dynamicwait;
+package io.debezium.server.batch.batchsizewait;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(BatchBatchDynamicWaitTestProfile.class)
-class BatchBatchDynamicWaitTest {
+@TestProfile(DynamicBatchSizeWaitTestProfile.class)
+class DynamicBatchSizeWaitTest {
 
   @Inject
   InterfaceBatchSizeWait waitBatchSize;

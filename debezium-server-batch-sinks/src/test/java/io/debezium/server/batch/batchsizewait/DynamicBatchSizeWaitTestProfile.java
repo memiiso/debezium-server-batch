@@ -6,21 +6,21 @@
  *
  */
 
-package io.debezium.server.batch.dynamicwait;
+package io.debezium.server.batch.batchsizewait;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class BatchBatchDynamicWaitTestProfile implements QuarkusTestProfile {
+public class DynamicBatchSizeWaitTestProfile implements QuarkusTestProfile {
 
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
     config.put("quarkus.arc.selected-alternatives", "DynamicBatchSizeWait");
     config.put("debezium.source.max.batch.size", "100");
-    config.put("debezium.sink.batch.dynamic-wait.max-wait-ms", "5000");
+    config.put("debezium.sink.batch.batch-size-wait.max-wait-ms", "5000");
     config.put("debezium.sink.type", "sparkbatch");
     return config;
   }

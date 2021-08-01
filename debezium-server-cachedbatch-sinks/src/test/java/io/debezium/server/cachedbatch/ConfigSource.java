@@ -46,12 +46,6 @@ public class ConfigSource extends TestConfigSource {
     s3Test.put("debezium.source.database.history", "io.debezium.relational.history.FileDatabaseHistory");
     s3Test.put("debezium.source.database.history.file.filename", HISTORY_FILE.toAbsolutePath().toString());
 
-    // wait
-    s3Test.put("quarkus.arc.selected-alternatives", "MaxBatchSizeWait");
-    s3Test.put("debezium.sink.batch.dynamic-wait", "false");
-    s3Test.put("debezium.sink.batch.dynamic-wait.snapshot-metrics-mbean", "debezium.postgres:type=connector-metrics,context=snapshot,server=testc");
-    s3Test.put("debezium.sink.batch.dynamic-wait.streaming-metrics-mbean", "debezium.postgres:type=connector-metrics,context=streaming,server=testc");
-
     // cache
     // sparkbatch sink conf
     s3Test.put("debezium.sink.sparkbatch.save-format", "parquet");

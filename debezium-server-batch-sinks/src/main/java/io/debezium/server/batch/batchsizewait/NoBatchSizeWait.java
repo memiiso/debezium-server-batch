@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.dynamicwait;
+package io.debezium.server.batch.batchsizewait;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Default;

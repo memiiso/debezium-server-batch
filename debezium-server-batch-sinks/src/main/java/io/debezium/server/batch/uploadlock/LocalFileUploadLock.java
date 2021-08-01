@@ -1,6 +1,6 @@
 package io.debezium.server.batch.uploadlock;
 
-import io.debezium.server.batch.dynamicwait.MaxBatchSizeWait;
+import io.debezium.server.batch.batchsizewait.MaxBatchSizeWait;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
