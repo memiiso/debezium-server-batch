@@ -1,7 +1,5 @@
 package io.debezium.server.batch.uploadlock;
 
-import io.debezium.server.batch.batchsizewait.MaxBatchSizeWait;
-
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -19,7 +17,7 @@ import org.slf4j.LoggerFactory;
 @Dependent
 @Alternative
 public class LocalFileUploadLock implements InterfaceUploadLock {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(MaxBatchSizeWait.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(LocalFileUploadLock.class);
   @ConfigProperty(name = "debezium.sink.batch.upload-lock.dir", defaultValue = "/tmp")
   String lockFileDir;
   @ConfigProperty(name = "debezium.sink.batch.upload-lock.max-wait-ms", defaultValue = "1800000")
