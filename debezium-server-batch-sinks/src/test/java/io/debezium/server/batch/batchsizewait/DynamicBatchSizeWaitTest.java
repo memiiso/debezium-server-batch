@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.dynamicwait;
+package io.debezium.server.batch.batchsizewait;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -18,17 +18,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(BatchDynamicWaitTestProfile.class)
-class BatchDynamicWaitTest {
+@TestProfile(DynamicBatchSizeWaitTestProfile.class)
+class DynamicBatchSizeWaitTest {
 
   @Inject
-  DynamicWait dynamicSleep;
+  InterfaceBatchSizeWait waitBatchSize;
 
   @ConfigProperty(name = "debezium.source.poll.interval.ms", defaultValue = "1000")
   Integer pollIntervalMs;
 
   @Test
   void shouldIncreaseSleepMs() {
+    DynamicBatchSizeWait dynamicSleep = (DynamicBatchSizeWait) waitBatchSize;
     // if its consuming small batch sizes, the sleep delay should increase to adjust batch size
     // sleep size should increase and stay at max (pollIntervalMs)
     int sleep = 0;
@@ -46,6 +47,7 @@ class BatchDynamicWaitTest {
 
   @Test
   void shouldDecreaseSleepMs() {
+    DynamicBatchSizeWait dynamicSleep = (DynamicBatchSizeWait) waitBatchSize;
     // if its consuming large batch sizes, the sleep delay should decrease
     dynamicSleep.getWaitMs(3);
     dynamicSleep.getWaitMs(2);

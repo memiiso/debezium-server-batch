@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch.dynamicwait;
+package io.debezium.server.batch.batchsizewait;
 
 import javax.enterprise.context.Dependent;
 
@@ -16,7 +16,7 @@ import javax.enterprise.context.Dependent;
  * @author Ismail Simsek
  */
 @Dependent
-public interface InterfaceDynamicWait {
+public interface InterfaceBatchSizeWait {
 
   default void initizalize() {
   }

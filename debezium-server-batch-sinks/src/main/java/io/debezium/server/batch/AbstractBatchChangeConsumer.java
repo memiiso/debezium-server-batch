@@ -13,7 +13,7 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.dynamicwait.InterfaceDynamicWait;
+import io.debezium.server.batch.batchsizewait.InterfaceBatchSizeWait;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -56,11 +56,8 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
 
-  @ConfigProperty(name = "debezium.sink.batch.dynamic-wait", defaultValue = "false")
-  boolean batchDynamicWaitEnabled;
-
   @Inject
-  InterfaceDynamicWait batchDynamicWait;
+  InterfaceBatchSizeWait batchSizeWait;
 
   @Inject
   BeanManager beanManager;
@@ -82,9 +79,8 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       throw new InterruptedException("debezium.format.key={" + valueFormat + "} not supported! Supported (debezium.format.key=*) formats are {json,}!");
     }
 
-    if (batchDynamicWaitEnabled) {
-      batchDynamicWait.initizalize();
-    }
+    batchSizeWait.initizalize();
+
   }
 
   @Override
@@ -112,9 +108,8 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     committer.markBatchFinished();
     LOGGER.debug("Processed {} events", numUploadedEvents);
 
-    if (batchDynamicWaitEnabled) {
-      batchDynamicWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
-    }
+    batchSizeWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
+
   }
 
   public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
