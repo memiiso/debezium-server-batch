@@ -55,11 +55,11 @@ public class ConfigSource extends TestConfigSource {
     // endpoint override or testing
     config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.access.key", S3Minio.MINIO_ACCESS_KEY);
     config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.secret.key", S3Minio.MINIO_SECRET_KEY);
-    config.put("debezium.sink.sparkbatch.fs.s3a.access.key", S3Minio.MINIO_ACCESS_KEY);
-    config.put("debezium.sink.sparkbatch.fs.s3a.secret.key", S3Minio.MINIO_SECRET_KEY);
     config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.path.style.access", "true");
     config.put("debezium.sink.sparkbatch.spark.hadoop.fs.s3a.endpoint", "http://localhost:9000"); // minio specific setting
-
+    config.put("debezium.sink.sparkbatch.spark.sql.parquet.output.committer.class",
+        "io.debezium.server.batch.spark.ParquetOutputCommitterV2");
+    config.put("debezium.sink.sparkbatch.mapreduce.fileoutputcommitter.pending.dir", "_tmptest");
     // DEBEZIUM PROP
     // enable disable schema
     config.put("debezium.format.value.schemas.enable", "true");
