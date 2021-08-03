@@ -9,7 +9,6 @@
 package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.uploadlock.InterfaceUploadLock;
 import io.debezium.server.batch.uploadlock.UploadLockException;
 
 import java.io.BufferedReader;
@@ -22,7 +21,6 @@ import java.util.ArrayList;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.spark.sql.Dataset;
@@ -37,15 +35,6 @@ import org.apache.spark.sql.types.StructType;
 @Named("sparkbatch")
 @Dependent
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
-
-  @Inject
-  InterfaceUploadLock concurrentUploadLock;
-
-  public void initialize() throws InterruptedException {
-    super.initizalize();
-    LOGGER.info("Starting Spark Consumer({})", this.getClass().getSimpleName());
-    LOGGER.info("Spark save format is '{}'", saveFormat);
-  }
 
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {
@@ -103,6 +92,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
             .format(saveFormat)
             .save(bucket + "/" + uploadFile);
       } catch (Exception e) {
+        e.printStackTrace();
         throw new UploadLockException("Failed to lock! " + e.getMessage());
       }
 

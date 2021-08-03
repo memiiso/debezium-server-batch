@@ -8,14 +8,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Alternative;
+import javax.inject.Named;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Dependent
-@Alternative
+@Named("LocalFileUploadLock")
 public class LocalFileUploadLock implements InterfaceUploadLock {
   protected static final Logger LOGGER = LoggerFactory.getLogger(LocalFileUploadLock.class);
   @ConfigProperty(name = "debezium.sink.batch.upload-lock.dir", defaultValue = "/tmp")

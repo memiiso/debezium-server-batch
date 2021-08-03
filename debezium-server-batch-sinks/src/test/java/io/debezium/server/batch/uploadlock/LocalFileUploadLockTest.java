@@ -21,9 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestProfile(LocalFileUploadLockTestProfile.class)
 class LocalFileUploadLockTest {
   @Inject
-  InterfaceUploadLock fileLock;
+  LocalFileUploadLock fileLock;
   @Inject
-  InterfaceUploadLock fileLock2;
+  LocalFileUploadLock fileLock2;
 
   @Test
   void shouldWaitForLock() throws Exception {

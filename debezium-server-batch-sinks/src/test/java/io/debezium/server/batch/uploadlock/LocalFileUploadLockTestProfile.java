@@ -18,9 +18,10 @@ public class LocalFileUploadLockTestProfile implements QuarkusTestProfile {
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
-    config.put("quarkus.arc.selected-alternatives", "LocalFileUploadLock");
+    config.put("debezium.sink.batch.upload-lock", "LocalFileUploadLock");
     config.put("debezium.sink.batch.upload-lock.max-wait-ms", "5000");
     config.put("debezium.sink.batch.upload-lock.wait-interval-ms", "2000");
+    config.put("io.debezium.server.batch.uploadlock", "DEBUG");
     return config;
   }
 }

@@ -21,7 +21,7 @@ debezium.source.decimal.handling.mode=double
 
 # ==================== SINK ====================
 
-debezium.sink.type=batch
+debezium.sink.type=sparkbatch
 debezium.sink.sparkbatch.bucket-name=s3a://my-Bucket
 debezium.sink.sparkbatch.save-format=parquet
 debezium.sink.batch.objectkey-prefix=rawdata/cdc/
@@ -30,32 +30,6 @@ debezium.sink.batch.objectkey-partition=true
 debezium.sink.batch.row-limit=10000
 # max time limit per batch. 1800 second = 30 min
 debezium.sink.batch.time-limit=1800
-
-# ==================== SINK = CACHE ====================
-# false uses infinispan local cache
-debezium.sink.batch.cache.simple=false
-debezium.sink.batch.cache.location=data/cache
-debezium.sink.batch.cache.memory-maxcount=128
-debezium.sink.batch.cache.purge-on-startup=false
-
-# ==================== SINK == SPARK CONF ====================
-debezium.sink.sparkbatch.spark.ui.enabled=false
-
-# ==================== FORMAT ====================
-
-# enable schema
-debezium.format.value.schemas.enable=true
-
-# ==================== TRANSFORM ====================
-# debezium unwrap message
-debezium.transforms=unwrap
-debezium.transforms.unwrap.type=io.debezium.transforms.ExtractNewRecordState
-debezium.transforms.unwrap.add.fields=op,table,source.ts_ms
-debezium.transforms.unwrap.add.headers=db
-# rewrite => The value field directly contains the key/value pairs that were in the before field. The SMT adds __deleted and sets it to true, for example:
-debezium.transforms.unwrap.delete.handling.mode=rewrite
-debezium.transforms.unwrap.drop.tombstones=false
-
 
 # ==================== Misc ====================
 

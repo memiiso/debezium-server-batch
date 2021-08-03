@@ -28,7 +28,6 @@ public class ConfigSource extends TestConfigSource {
     // common sink conf
     config.put("quarkus.profile", "postgresql");
     config.put("debezium.sink.type", "sparkcachedbatch");
-    //s3Test.put("quarkus.arc.selected-alternatives", "SparkWriter,MemoryCache");
     config.put("debezium.sink.batch.objectkey-prefix", "debezium-cdc-");
     config.put("debezium.sink.batch.objectkey-partition", "true");
     config.put("debezium.sink.batch.row-limit", "2");

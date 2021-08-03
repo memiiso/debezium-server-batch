@@ -8,8 +8,14 @@
 
 package io.debezium.server.batch;
 
+import io.debezium.DebeziumException;
+import io.debezium.server.batch.uploadlock.InterfaceUploadLock;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.literal.NamedLiteral;
 import javax.inject.Inject;
 
 import org.apache.spark.SparkConf;
@@ -40,6 +46,14 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
   @ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
   String saveMode;
 
+  @ConfigProperty(name = "debezium.sink.batch.upload-lock", defaultValue = "NoUploadLock")
+  String concurrentUploadLockName;
+
+  @Inject
+  @Any
+  Instance<InterfaceUploadLock> concurrentUploadLockInstances;
+  InterfaceUploadLock concurrentUploadLock;
+
   protected void stopSparkSession() {
     try {
       LOGGER.info("Closing Spark");
@@ -65,8 +79,19 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
         .config(this.sparkconf)
         .getOrCreate();
 
+    Instance<InterfaceUploadLock> instance = concurrentUploadLockInstances.select(NamedLiteral.of(concurrentUploadLockName));
+    if (instance.isAmbiguous()) {
+      throw new DebeziumException("Multiple upload lock class named '" + concurrentUploadLockName + "' were found");
+    } else if (instance.isUnsatisfied()) {
+      throw new DebeziumException("No batch upload lock class named '" + concurrentUploadLockName + "' is available");
+    }
+    concurrentUploadLock = instance.get();
+
+    LOGGER.info("Starting Spark Consumer({})", this.getClass().getSimpleName());
+    LOGGER.info("Spark save format is '{}'", saveFormat);
     LOGGER.info("Spark Version {}", this.spark.version());
     LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
+    LOGGER.info("Using {}", concurrentUploadLock.getClass().getName());
   }
 
 }

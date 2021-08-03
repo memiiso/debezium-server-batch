@@ -1,10 +1,10 @@
 package io.debezium.server.batch.uploadlock;
 
 import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Default;
+import javax.inject.Named;
 
 @Dependent
-@Default
+@Named("NoUploadLock")
 public class NoUploadLock implements InterfaceUploadLock {
   @Override
   public AutoCloseable lock(String destination) {

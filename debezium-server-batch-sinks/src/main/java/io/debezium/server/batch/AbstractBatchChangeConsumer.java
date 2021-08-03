@@ -8,6 +8,7 @@
 
 package io.debezium.server.batch;
 
+import io.debezium.DebeziumException;
 import io.debezium.engine.ChangeEvent;
 import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
@@ -25,10 +26,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.literal.NamedLiteral;
 import javax.inject.Inject;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,15 +57,13 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
 
+  @ConfigProperty(name = "debezium.sink.batch.batch-size-wait", defaultValue = "NoBatchSizeWait")
+  String batchSizeWaitName;
+
   @Inject
+  @Any
+  Instance<InterfaceBatchSizeWait> batchSizeWaitInstances;
   InterfaceBatchSizeWait batchSizeWait;
-
-  @Inject
-  BeanManager beanManager;
-
-  public static ObjectName getStreamingMetricsObjectName(String connector, String server, String context) throws MalformedObjectNameException {
-    return new ObjectName("debezium." + connector + ":type=connector-metrics,context=" + context + ",server=" + server);
-  }
 
   public void initizalize() throws InterruptedException {
 
@@ -79,8 +78,15 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       throw new InterruptedException("debezium.format.key={" + valueFormat + "} not supported! Supported (debezium.format.key=*) formats are {json,}!");
     }
 
+    Instance<InterfaceBatchSizeWait> instance = batchSizeWaitInstances.select(NamedLiteral.of(batchSizeWaitName));
+    if (instance.isAmbiguous()) {
+      throw new DebeziumException("Multiple batch size wait class named '" + batchSizeWaitName + "' were found");
+    } else if (instance.isUnsatisfied()) {
+      throw new DebeziumException("No batch size wait class named '" + batchSizeWaitName + "' is available");
+    }
+    batchSizeWait = instance.get();
     batchSizeWait.initizalize();
-
+    LOGGER.info("Using {}", batchSizeWait.getClass().getName());
   }
 
   @Override

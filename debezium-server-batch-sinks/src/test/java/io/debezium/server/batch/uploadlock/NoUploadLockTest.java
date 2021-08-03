@@ -17,9 +17,9 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class NoUploadLockTest {
   @Inject
-  InterfaceUploadLock noLock;
+  NoUploadLock noLock;
   @Inject
-  InterfaceUploadLock noLock2;
+  NoUploadLock noLock2;
 
   @Test
   void shouldNotWaitForLock() throws Exception {
