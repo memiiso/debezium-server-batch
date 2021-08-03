@@ -9,7 +9,6 @@
 package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.uploadlock.UploadLockException;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -86,15 +85,10 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-      try (AutoCloseable l = concurrentUploadLock.lock(destination)) {
-        df.write()
-            .mode(saveMode)
-            .format(saveFormat)
-            .save(bucket + "/" + uploadFile);
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new UploadLockException("Failed to lock! " + e.getMessage());
-      }
+      df.write()
+          .mode(saveMode)
+          .format(saveFormat)
+          .save(bucket + "/" + uploadFile);
 
       numRecords = df.count();
       LOGGER.debug("Uploaded {} rows (read with schema:{}) to:'{}' file:{} file size:{} upload time:{}, ",
