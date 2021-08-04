@@ -140,7 +140,7 @@ public class FileOutputCommitterV2 extends FileOutputCommitter {
         FILEOUTPUTCOMMITTER_CLEANUP_FAILURES_IGNORED,
         FILEOUTPUTCOMMITTER_CLEANUP_FAILURES_IGNORED_DEFAULT);
 
-    LOG.info("FileOutputCommitter skip cleanup _temporary folders under " +
+    LOG.info("FileOutputCommitter skip cleanup " + PENDING_DIR_NAME + " folders under " +
         "output directory:" + skipCleanup + ", ignore cleanup failures: " +
         ignoreCleanupFailures);
 
