@@ -45,7 +45,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
     this.stopSparkSession();
   }
 
-  public Dataset<Row> eventToSparkRowList(String destination, List<ChangeEvent<Object, Object>> data) {
+  public Dataset<Row> dataToSparkDf(String destination, List<ChangeEvent<Object, Object>> data) {
     boolean isFirst = true;
     JsonNode valSchema = null;
     StructType dfSchema = null;
@@ -89,7 +89,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
   public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
 
     Instant start = Instant.now();
-    Dataset<Row> df = eventToSparkRowList(destination, data);
+    Dataset<Row> df = dataToSparkDf(destination, data);
     long numRecords = df.count();
 
     String uploadFile = objectStorageNameMapper.map(destination);

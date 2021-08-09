@@ -20,7 +20,6 @@ public class InfinispanCacheSimpleTestProfile implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "sparkcachedbatch");
     config.put("debezium.sink.batch.row-limit", "50");
     config.put("debezium.sink.batch.time-limit", "1000");
 // ==================== SINK = CACHE ====================
