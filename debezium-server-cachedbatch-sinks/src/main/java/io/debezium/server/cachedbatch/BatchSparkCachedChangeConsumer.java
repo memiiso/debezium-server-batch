@@ -9,7 +9,7 @@
 package io.debezium.server.cachedbatch;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.BatchSparkChangeConsumer;
+import io.debezium.server.batch.BatchSparkChangeConsumerV1;
 import io.debezium.server.batch.JsonlinesBatchFile;
 
 import java.util.List;
@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 @Named("sparkcachedbatch")
 @Dependent
-public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer implements InterfaceCachedChangeConsumer {
+public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumerV1 implements InterfaceCachedChangeConsumer {
 
   @Inject
   protected BatchCache cache;
