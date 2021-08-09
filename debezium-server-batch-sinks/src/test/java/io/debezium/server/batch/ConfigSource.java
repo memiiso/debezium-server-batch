@@ -44,7 +44,7 @@ public class ConfigSource extends TestConfigSource {
 
     // cache
     // sparkbatch sink conf
-    config.put("debezium.sink.sparkbatch.save-format", "parquet");
+    // config.put("debezium.sink.sparkbatch.save-format", "parquet");
     config.put("debezium.sink.sparkbatch.bucket-name", "s3a://" + S3_BUCKET);
     config.put("debezium.sink.batch.cache.purge-on-startup", "true");
     // spark conf
