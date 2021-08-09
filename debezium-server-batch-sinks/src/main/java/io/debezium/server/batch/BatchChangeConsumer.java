@@ -19,5 +19,5 @@ import javax.inject.Named;
 @Named("batch")
 @Dependent
 @Deprecated
-public class BatchChangeConsumer extends BatchSparkChangeConsumer {
+public class BatchChangeConsumer extends BatchSparkChangeConsumerV2 {
 }

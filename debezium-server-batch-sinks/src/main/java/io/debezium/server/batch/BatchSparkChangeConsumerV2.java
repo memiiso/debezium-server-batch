@@ -77,10 +77,10 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
     Dataset<Row> df;
     if (dfSchema != null) {
       LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
-      df = spark.read().schema(dfSchema).json(ds).toDF();
+      df = spark.read().schema(dfSchema).json(ds);
     } else {
       LOGGER.debug("Reading data without schema definition");
-      df = spark.read().json(ds).toDF();
+      df = spark.read().json(ds);
     }
     return df;
   }
