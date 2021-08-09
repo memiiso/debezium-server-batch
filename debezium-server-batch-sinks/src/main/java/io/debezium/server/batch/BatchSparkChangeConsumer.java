@@ -33,6 +33,7 @@ import org.apache.spark.sql.types.StructType;
  */
 @Named("sparkbatch")
 @Dependent
+@Deprecated
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   @PostConstruct
