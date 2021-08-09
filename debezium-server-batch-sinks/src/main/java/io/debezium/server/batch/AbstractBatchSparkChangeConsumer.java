@@ -35,7 +35,7 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
   protected ObjectStorageNameMapper objectStorageNameMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
   String bucket;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "json")
+  @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "parquet")
   String saveFormat;
   @ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
   String saveMode;

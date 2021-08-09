@@ -57,7 +57,7 @@ configurations are
 
 | Property | Default | Description  |
 |---|---|---|
-|`debezium.sink.sparkbatch.save-format` | `json` |  Spark dataframe save format  |
+|`debezium.sink.sparkbatch.save-format` | `parquet` |  Spark dataframe save format  |
 |`debezium.sink.sparkbatch.save-mode` | `append` | Spark dataframe save mode  |
 |`debezium.sink.sparkbatch.bucket-name` | `s3a://My-S3-Bucket` | Destination bucket |
 |`debezium.sink.sparkbatch.{spark.prop.param}` | `xyz` | Spark Configuration parameter, Passed to spark conf |
