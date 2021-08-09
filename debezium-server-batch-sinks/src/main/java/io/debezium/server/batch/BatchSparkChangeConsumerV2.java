@@ -31,7 +31,7 @@ import org.apache.spark.sql.types.StructType;
  *
  * @author Ismail Simsek
  */
-@Named("sparkbatchv2")
+@Named("sparkbatch")
 @Dependent
 public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer {
 
