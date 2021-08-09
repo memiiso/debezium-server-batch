@@ -33,9 +33,9 @@ import org.apache.spark.sql.types.StructType;
  *
  * @author Ismail Simsek
  */
-@Named("sparkbatchv1")
+@Named("sparkbatch")
 @Dependent
-public class BatchSparkChangeConsumerV1 extends AbstractBatchSparkChangeConsumer {
+public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   @PostConstruct
   void connect() throws URISyntaxException, InterruptedException {

@@ -6,26 +6,26 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.performance;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class BatchSparkChangeConsumerPostgresqlTestProfile implements QuarkusTestProfile {
+public class BatchSparkChangeConsumerTestProfile implements QuarkusTestProfile {
 
   //This method allows us to override configuration properties.
   @Override
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector");
-    config.put("debezium.source.max.batch.size", "500");
-    config.put("debezium.source.max.queue.size", "70000");
+    config.put("debezium.sink.type", "sparkbatch");
+    config.put("debezium.source.max.batch.size", "24000");
+    config.put("debezium.source.max.queue.size", "700000");
+    config.put("debezium.source.table.include.list", "inventory.test_date_table");
     // 30000 30-second
-    config.put("debezium.source.poll.interval.ms", "1000");
-
+    // config.put("debezium.source.poll.interval.ms", "30000");
     return config;
   }
 }

@@ -10,6 +10,8 @@ package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -31,7 +33,7 @@ import org.apache.spark.sql.types.StructType;
  *
  * @author Ismail Simsek
  */
-@Named("sparkbatch")
+@Named("sparkbatchv2")
 @Dependent
 public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer {
 
@@ -45,13 +47,18 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
     this.stopSparkSession();
   }
 
+  public StructType getSparkSchema(ChangeEvent<Object, Object> event) {
+    return BatchUtil.getSparkDfSchema(BatchUtil.getJsonSchemaNode(getString(event.value())));
+  }
+
   public Dataset<Row> dataToSparkDf(String destination, List<ChangeEvent<Object, Object>> data) {
-    boolean isFirst = true;
-    JsonNode valSchema;
-    StructType dfSchema = null;
+
+    // get spark schema using one event
+    StructType dfSchema = getSparkSchema(data.get(0));
+
     List<String> rowData = new ArrayList<>();
     for (ChangeEvent<Object, Object> event : data) {
-      Object val = event.value();
+      final Object val = event.value();
 
       if (val == null) {
         LOGGER.warn("Null Event Value found for destination:'{}'! skipping the entry!", destination);
@@ -60,17 +67,11 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
 
       final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
 
-      if (LOGGER.isTraceEnabled()) {
-        LOGGER.trace("val Json Node:{}", valNode.toString());
+      try {
+        rowData.add(mapper.writeValueAsString(valNode));
+      } catch (IOException ioe) {
+        throw new UncheckedIOException("Failed reading event value", ioe);
       }
-
-      if (isFirst) {
-        valSchema = BatchUtil.getJsonSchemaNode(getString(val));
-        dfSchema = BatchUtil.getSparkDfSchema(valSchema);
-        isFirst = false;
-      }
-
-      rowData.add(valNode.toString());
     }
 
     Dataset<String> ds = this.spark.createDataset(rowData, Encoders.STRING());
@@ -82,6 +83,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
       LOGGER.debug("Reading data without schema definition");
       df = spark.read().json(ds);
     }
+    ds.unpersist();
     return df;
   }
 
@@ -90,7 +92,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
 
     Instant start = Instant.now();
     Dataset<Row> df = dataToSparkDf(destination, data);
-    long numRecords = df.count();
+    long numRecords;
 
     String uploadFile = objectStorageNameMapper.map(destination);
     // serialize same destination uploads
@@ -100,6 +102,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
           .format(saveFormat)
           .save(bucket + "/" + uploadFile);
 
+      numRecords = df.count();
       LOGGER.debug("Uploaded {} rows to:'{}' upload time:{}, ",
           numRecords,
           uploadFile,

@@ -34,6 +34,27 @@ public class SourcePostgresqlDB implements QuarkusTestResourceLifecycleManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(SourcePostgresqlDB.class);
 
   private static GenericContainer<?> container;
+  private static Connection con = null;
+
+  public static void runSQL(String query) throws SQLException, ClassNotFoundException {
+    try {
+
+      if (con == null) {
+        String url = "jdbc:postgresql://" + POSTGRES_HOST + ":" + getMappedPort() + "/" + POSTGRES_DBNAME;
+        Class.forName("org.postgresql.Driver");
+        con = DriverManager.getConnection(url, POSTGRES_USER, POSTGRES_PASSWORD);
+      }
+
+      Statement st = con.createStatement();
+      st.execute(query);
+    } catch (Exception e) {
+      throw e;
+    }
+  }
+
+  public static Integer getMappedPort() {
+    return container.getMappedPort(POSTGRES_PORT_DEFAULT);
+  }
 
   @Override
   public Map<String, String> start() {
@@ -61,24 +82,14 @@ public class SourcePostgresqlDB implements QuarkusTestResourceLifecycleManager {
     if (container != null) {
       container.stop();
     }
-  }
 
-  public static void runSQL(String query) throws SQLException, ClassNotFoundException {
     try {
-
-      String url = "jdbc:postgresql://" + POSTGRES_HOST + ":" + getMappedPort() + "/" + POSTGRES_DBNAME;
-      Class.forName("org.postgresql.Driver");
-      Connection con = DriverManager.getConnection(url, POSTGRES_USER, POSTGRES_PASSWORD);
-      Statement st = con.createStatement();
-      st.execute(query);
-      con.close();
-    } catch (Exception e) {
-      throw e;
+      if (con != null) {
+        con.close();
+      }
+    } catch (SQLException e) {
+      //
     }
-  }
-
-  public static Integer getMappedPort() {
-    return container.getMappedPort(POSTGRES_PORT_DEFAULT);
   }
 
 }

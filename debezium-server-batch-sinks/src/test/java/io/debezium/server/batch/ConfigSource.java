@@ -60,6 +60,7 @@ public class ConfigSource extends TestConfigSource {
     config.put("debezium.sink.sparkbatch.spark.sql.parquet.output.committer.class",
         "io.debezium.server.batch.spark.ParquetOutputCommitterV2");
     config.put("debezium.sink.sparkbatch.mapreduce.fileoutputcommitter.pending.dir", "_tmptest");
+    config.put("quarkus.log.category.\"io.debezium.server.batch.spark\".level", "WARN");
     // DEBEZIUM PROP
     // enable disable schema
     config.put("debezium.format.value.schemas.enable", "true");

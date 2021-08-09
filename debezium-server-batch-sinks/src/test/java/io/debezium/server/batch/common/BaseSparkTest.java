@@ -88,17 +88,18 @@ public class BaseSparkTest {
           String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
               "VALUES ";
           StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
-          for (int i = 0; i < 100; i++) {
+          for (int i = 0; i < 200; i++) {
             values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
           }
           SourcePostgresqlDB.runSQL(sql + values);
           SourcePostgresqlDB.runSQL("COMMIT;");
         } catch (Exception e) {
+          e.printStackTrace();
           Thread.currentThread().interrupt();
         }
       }).start();
 
-      numInsert += 100;
+      numInsert += 200;
     } while (numInsert <= numRows);
     return numInsert;
   }
