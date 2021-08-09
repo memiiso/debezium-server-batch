@@ -47,7 +47,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
 
   public Dataset<Row> dataToSparkDf(String destination, List<ChangeEvent<Object, Object>> data) {
     boolean isFirst = true;
-    JsonNode valSchema = null;
+    JsonNode valSchema;
     StructType dfSchema = null;
     List<String> rowData = new ArrayList<>();
     for (ChangeEvent<Object, Object> event : data) {

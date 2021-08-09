@@ -104,7 +104,7 @@ public class S3Minio implements QuarkusTestResourceLifecycleManager {
 
   @Override
   public Map<String, String> start() {
-    this.container.start();
+    container.start();
 
     client = MinioClient.builder()
         .endpoint("http://" + container.getHost() + ":" + container.getMappedPort(MINIO_DEFAULT_PORT))
