@@ -12,7 +12,7 @@ import io.debezium.engine.ChangeEvent;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -87,7 +87,7 @@ public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
   }
 
   @Override
-  public long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
+  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
     JsonlinesBatchFile jsonLinesFile = this.getJsonLines(destination, data);
     String s3File = objectStorageNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
     if (jsonLinesFile == null) {

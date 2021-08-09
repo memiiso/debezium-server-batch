@@ -16,7 +16,7 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -46,7 +46,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
   }
 
   @Override
-  public long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
+  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException {
     return this.uploadDestination(destination, this.getJsonLines(destination, data));
   }
 

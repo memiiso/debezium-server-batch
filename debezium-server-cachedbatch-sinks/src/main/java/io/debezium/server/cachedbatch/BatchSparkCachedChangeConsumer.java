@@ -12,7 +12,7 @@ import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.BatchSparkChangeConsumer;
 import io.debezium.server.batch.JsonlinesBatchFile;
 
-import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -66,7 +66,7 @@ public class BatchSparkCachedChangeConsumer extends BatchSparkChangeConsumer imp
   }
 
   @Override
-  public long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException {
+  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException {
     this.cache.appendAll(destination, data);
     return this.startUploadIfRowLimitReached(destination);
   }

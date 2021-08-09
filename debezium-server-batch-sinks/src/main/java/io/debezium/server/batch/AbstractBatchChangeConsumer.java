@@ -118,7 +118,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
 
   }
 
-  public JsonlinesBatchFile getJsonLines(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
+  public JsonlinesBatchFile getJsonLines(String destination, List<ChangeEvent<Object, Object>> data) {
 
     Instant start = Instant.now();
     JsonNode valSchema = null;
@@ -187,6 +187,6 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
     return new JsonlinesBatchFile(tempFile, valSchema, keySchema, numLines);
   }
 
-  public abstract long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) throws InterruptedException;
+  public abstract long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException;
 
 }
