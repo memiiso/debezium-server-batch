@@ -23,7 +23,6 @@ public class BatchS3JsonChangeConsumerTestProfile implements QuarkusTestProfile 
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "sparkbatch");
     config.put("quarkus.arc.selected-alternatives", "S3JsonWriter");
     config.put("debezium.sink.batch.s3.region", S3_REGION);
     config.put("debezium.sink.batch.s3.endpoint-override", "http://localhost:9000");

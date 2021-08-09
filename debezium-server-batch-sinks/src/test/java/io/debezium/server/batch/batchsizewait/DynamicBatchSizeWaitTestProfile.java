@@ -20,7 +20,6 @@ public class DynamicBatchSizeWaitTestProfile implements QuarkusTestProfile {
     Map<String, String> config = new HashMap<>();
     config.put("debezium.source.max.batch.size", "100");
     config.put("debezium.sink.batch.batch-size-wait.max-wait-ms", "5000");
-    config.put("debezium.sink.type", "sparkbatch");
     config.put("debezium.source.poll.interval.ms", "5000");
     return config;
   }

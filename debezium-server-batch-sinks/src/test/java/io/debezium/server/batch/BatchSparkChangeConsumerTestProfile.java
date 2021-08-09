@@ -20,7 +20,6 @@ public class BatchSparkChangeConsumerTestProfile implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "sparkbatch");
     config.put("quarkus.log.category.\"io.debezium.server.batch\".level", "INFO");
     return config;
   }
