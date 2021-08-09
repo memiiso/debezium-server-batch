@@ -20,7 +20,6 @@ public class ObjectStorageNameMapperTestProfile implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "sparkbatch");
     config.put("debezium.sink.batch.objectkey-partition", "true");
     config.put("debezium.sink.batch.objectkey-partition-time-zone", "UTC");
     config.put("debezium.sink.batch.objectkey-prefix", "myprefix");

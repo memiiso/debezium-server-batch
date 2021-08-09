@@ -81,10 +81,7 @@ public class InfinispanCache extends AbstractCache {
   @Override
   public void initialize() {
     super.initialize();
-    boolean preloadCache = true;
-    if (purgeOnStartup) {
-      preloadCache = false;
-    }
+    boolean preloadCache = !purgeOnStartup;
 
     if (!cacheStore.equalsIgnoreCase("simple")) {
       builder

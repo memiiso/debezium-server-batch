@@ -10,9 +10,17 @@ package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -20,6 +28,7 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -86,8 +95,78 @@ public class BatchS3JsonChangeConsumer extends AbstractBatchChangeConsumer {
     LOGGER.info("Starting S3 Batch Consumer({})", this.getClass().getName());
   }
 
+  public JsonlinesBatchFile getJsonLines(String destination, List<ChangeEvent<Object, Object>> data) {
+
+    Instant start = Instant.now();
+    JsonNode valSchema = null;
+    JsonNode keySchema = null;
+    boolean isFirst = true;
+    final File tempFile;
+    long numLines = 0L;
+    try {
+      tempFile = File.createTempFile(UUID.randomUUID() + "-", ".json");
+      FileOutputStream fos = new FileOutputStream(tempFile, true);
+      LOGGER.debug("Writing {} events as jsonlines file: {}", data.size(), tempFile);
+
+      for (ChangeEvent<Object, Object> e : data) {
+        Object val = e.value();
+        Object key = e.key();
+
+        // this could happen if multiple threads reading and removing data
+        if (val == null) {
+          LOGGER.warn("Cache.getJsonLines Null Event Value found for destination:'{}'! " +
+              "skipping the entry!", destination);
+          continue;
+        }
+        LOGGER.trace("Cache.getJsonLines val:{}", getString(val));
+
+        if (isFirst) {
+          valSchema = BatchUtil.getJsonSchemaNode(getString(val));
+          if (key != null) {
+            keySchema = BatchUtil.getJsonSchemaNode(getString(key));
+          }
+          isFirst = false;
+        }
+
+        try {
+          final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
+          final String valData = mapper.writeValueAsString(valNode) + System.lineSeparator();
+
+          if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Cache.getJsonLines val Json Node:{}", valNode.toString());
+            LOGGER.trace("Cache.getJsonLines val String:{}", valData);
+          }
+
+          fos.write(valData.getBytes(StandardCharsets.UTF_8));
+          numLines++;
+        } catch (IOException ioe) {
+          LOGGER.error("Failed writing record to file", ioe);
+          fos.close();
+          throw new UncheckedIOException(ioe);
+        }
+      }
+
+      fos.close();
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    LOGGER.trace("Writing jsonlines file took:{}",
+        Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS));
+
+    // if nothing processed return null
+    if (isFirst) {
+      tempFile.delete();
+      return null;
+    }
+
+    return new JsonlinesBatchFile(tempFile, valSchema, keySchema, numLines);
+  }
+
+
   @Override
-  public long uploadDestination(String destination, ArrayList<ChangeEvent<Object, Object>> data) {
+  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
     JsonlinesBatchFile jsonLinesFile = this.getJsonLines(destination, data);
     String s3File = objectStorageNameMapper.map(destination) + "/" + UUID.randomUUID() + ".json";
     if (jsonLinesFile == null) {
