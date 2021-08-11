@@ -72,20 +72,23 @@ public class BatchSparkChangeConsumerTest extends BaseSparkTest {
         "            c_interval INTERVAL,\n" +
         "            c_boolean BOOLean,\n" +
         "            c_uuid UUID,\n" +
-        "            c_bytea BYTEA\n" +
+        "            c_bytea BYTEA,\n" +
+        "            c_json json,\n" +
+        "            c_jsonb jsonb\n" +
         "          );";
     SourcePostgresqlDB.runSQL(sql);
     sql = "INSERT INTO inventory.table_datatypes (" +
         "c_id, " +
         "c_text, c_varchar, c_int, c_date, c_timestamp, c_timestamptz, " +
-        "c_float, c_decimal,c_numeric,c_interval,c_boolean,c_uuid,c_bytea  " +
-        ") " +
+        "c_float, c_decimal,c_numeric,c_interval,c_boolean,c_uuid,c_bytea,  " +
+        "c_json, c_jsonb) " +
         "VALUES (1, null, null, null,null,null,null," +
-        "null,null,null,null,null,null,null" +
-        ")," +
+        "null,null,null,null,null,null,null," +
+        "null,null)," +
         "(2, 'val_text', 'A', 123, current_date , current_timestamp, current_timestamp," +
         "'1.23'::float,'1234566.34456'::decimal,'345.452'::numeric(18,4), interval '1 day',false," +
-        "'3f207ac6-5dba-11eb-ae93-0242ac130002'::UUID, 'aBC'::bytea" +
+        "'3f207ac6-5dba-11eb-ae93-0242ac130002'::UUID, 'aBC'::bytea," +
+        "'{\"reading\": 1123}'::json, '{\"reading\": 1123}'::jsonb" +
         ")";
     SourcePostgresqlDB.runSQL(sql);
 
@@ -98,12 +101,12 @@ public class BatchSparkChangeConsumerTest extends BaseSparkTest {
         df = df.withColumn("c_decimal", df.col("c_decimal").cast("float"));
         df.show(false);
         return df.where("c_bytea == 'aBC' " +
-            "AND c_float == '1.23'" +
-            "AND c_decimal == '1234566.3446'" +
-            "AND c_numeric == '345.452'" +
-            // interval as milisecond
-            "AND c_interval == '86400000000'" +
-            "").
+                "AND c_float == '1.23'" +
+                "AND c_decimal == '1234566.3446'" +
+                "AND c_numeric == '345.452'" +
+                // interval as milisecond
+                "AND c_interval == '86400000000'" +
+                "").
             count() == 1;
       } catch (Exception e) {
         return false;

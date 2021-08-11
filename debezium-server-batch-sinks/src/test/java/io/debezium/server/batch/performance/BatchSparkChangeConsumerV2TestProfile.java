@@ -23,7 +23,7 @@ public class BatchSparkChangeConsumerV2TestProfile implements QuarkusTestProfile
     config.put("debezium.sink.type", "sparkbatchv2");
     config.put("debezium.source.max.batch.size", "24000");
     config.put("debezium.source.max.queue.size", "700000");
-    config.put("debezium.source.table.include.list", "inventory.test_date_table");
+    config.put("debezium.source.table.include.list", "inventory.test_date_table,inventory.customers");
     config.put("quarkus.log.category.\"org.apache.spark.scheduler.TaskSetManager\".level", "ERROR");
     // 30000 30-second
     // config.put("debezium.source.poll.interval.ms", "30000");
