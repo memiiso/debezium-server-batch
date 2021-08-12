@@ -69,7 +69,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
       try (BufferedReader br = new BufferedReader(new FileReader(jsonLinesFile.getFile().getAbsolutePath()))) {
         String line;
         while ((line = br.readLine()) != null) {
-          LOGGER.trace("SparkWriter.uploadDestination Json file:{} line val:{}", fileName, line);
+          LOGGER.trace("Spark uploadDestination Json file:{} line val:{}", fileName, line);
         }
       } catch (Exception e) {
         LOGGER.warn("Exception happened during debug logging!", e);
@@ -105,7 +105,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
     if (LOGGER.isTraceEnabled()) {
       df.toJavaRDD().foreach(x ->
-          LOGGER.trace("SparkWriter.uploadDestination row val:{}", x.toString())
+          LOGGER.trace("Spark uploadDestination row val:{}", x.toString())
       );
     }
     df.unpersist();
@@ -134,13 +134,10 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
         Object val = e.value();
         Object key = e.key();
 
-        // this could happen if multiple threads reading and removing data
         if (val == null) {
-          LOGGER.warn("Cache.getJsonLines Null Event Value found for destination:'{}'! " +
-              "skipping the entry!", destination);
+          LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(key));
           continue;
         }
-        LOGGER.trace("Cache.getJsonLines val:{}", getString(val));
 
         if (isFirst) {
           valSchema = BatchUtil.getJsonSchemaNode(getString(val));
@@ -155,8 +152,8 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
           final String valData = mapper.writeValueAsString(valNode) + System.lineSeparator();
 
           if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("Cache.getJsonLines val Json Node:{}", valNode.toString());
-            LOGGER.trace("Cache.getJsonLines val String:{}", valData);
+            LOGGER.trace("Event value Json Node:{}", valNode.toString());
+            LOGGER.trace("Event value String:{}", valData);
           }
 
           fos.write(valData.getBytes(StandardCharsets.UTF_8));

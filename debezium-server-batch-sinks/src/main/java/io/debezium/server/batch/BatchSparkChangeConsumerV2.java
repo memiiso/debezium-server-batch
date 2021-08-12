@@ -61,7 +61,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
       final Object val = event.value();
 
       if (val == null) {
-        LOGGER.warn("Null Event Value found for destination:'{}'! skipping the entry!", destination);
+        LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(event.key()));
         continue;
       }
 
