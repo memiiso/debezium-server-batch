@@ -69,8 +69,8 @@ public class ConfigSource extends TestConfigSource {
     config.put("debezium.transforms", "unwrap");
     config.put("debezium.transforms.unwrap.type", "io.debezium.transforms.ExtractNewRecordState");
     config.put("debezium.transforms.unwrap.add.fields", "op,table,source.ts_ms,db");
-    //s3Test.put("debezium.transforms.unwrap.add.headers", "db");
     config.put("debezium.transforms.unwrap.delete.handling.mode", "rewrite");
+    config.put("debezium.transforms.unwrap.drop.tombstones", "true");
 
     // DEBEZIUM SOURCE conf
     config.put("debezium.source.connector.class", "io.debezium.connector.postgresql.PostgresConnector");
@@ -86,7 +86,8 @@ public class ConfigSource extends TestConfigSource {
     config.put("%mysql.debezium.source.database.include.list", "inventory");
     config.put("%postgresql.debezium.source.schema.include.list", "inventory");
     config.put("debezium.source.table.include.list", "inventory.customers,inventory.orders,inventory.products," +
-        "inventory.test_date_table,inventory.products_on_hand,inventory.geom,inventory.table_datatypes");
+        "inventory.products_on_hand,inventory.geom," +
+        "inventory.test_date_table,inventory.table_datatypes,inventory.test_delete_table");
 
     config.put("debezium.source.snapshot.select.statement.overrides.inventory.products_on_hand", "SELECT * FROM products_on_hand WHERE 1>2");
 //    However, when decimal.handling.mode configuration property is set to double, then the connector will represent
