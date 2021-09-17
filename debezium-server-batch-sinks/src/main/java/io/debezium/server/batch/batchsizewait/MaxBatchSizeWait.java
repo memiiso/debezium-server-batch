@@ -67,8 +67,10 @@ public class MaxBatchSizeWait implements InterfaceBatchSizeWait {
     final int streamingSecondsBehindSource = (int) (debeziumMetrics.streamingMilliSecondsBehindSource() / 1000);
     final boolean snapshotCompleted = debeziumMetrics.snapshotCompleted();
 
-    LOGGER.debug("Processed {}, QueueCurrentSize:{}, QueueTotalCapacity:{}, SecondsBehindSource:{}, SnapshotCompleted:{}",
-        numRecordsProcessed, streamingQueueCurrentSize, maxQueueSize, streamingSecondsBehindSource, snapshotCompleted
+    LOGGER.debug("Processed {}, QueueCurrentSize:{}, QueueTotalCapacity:{}, SecondsBehindSource:{}, " +
+            "SnapshotCompleted:{}, snapshotRunning:{}",
+        numRecordsProcessed, streamingQueueCurrentSize, maxQueueSize, streamingSecondsBehindSource, snapshotCompleted,
+        debeziumMetrics.snapshotRunning()
     );
 
     int totalWaitMs = 0;

@@ -89,4 +89,14 @@ public class DebeziumMetrics {
     }
   }
 
+  public void logMetrics() {
+    LOGGER.info("Debezium Metrics:" +
+        " snapshotCompleted=" + this.snapshotCompleted() +
+        " snapshotRunning=" + this.snapshotRunning() +
+        " streamingQueueCurrentSize=" + this.streamingQueueCurrentSize() +
+        " streamingQueueRemainingCapacity=" + this.streamingQueueRemainingCapacity() +
+        " maxQueueSize=" + this.maxQueueSize +
+        " streamingMilliSecondsBehindSource=" + this.streamingMilliSecondsBehindSource()
+    );
+  }
 }
