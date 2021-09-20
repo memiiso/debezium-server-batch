@@ -36,15 +36,16 @@
         <version.hadoop>3.2.2</version.hadoop>
         <version.log4j>2.14.1</version.log4j>
         <!-- Debezium -->
-        <version.debezium>1.5.4.Final</version.debezium>
+        <version.debezium>1.7.0.CR1</version.debezium>
+        <version.mysql.driver>8.0.26</version.mysql.driver>
         <!-- ANTLR -->
         <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
-        <antlr.version>4.7.2</antlr.version>
+        <!-- <antlr.version>4.7.2</antlr.version> -->
         <!-- Quarkus -->
-        <version.quarkus>1.13.7.Final</version.quarkus>
+        <version.quarkus>2.0.2.Final</version.quarkus>
 
         <!-- Plugin versions -->
-        <version.maven-enforcer-plugin>3.0.0-M3</version.maven-enforcer-plugin>
+        <version.maven-enforcer-plugin>3.0.0</version.maven-enforcer-plugin>
         <version.maven-failsafe-plugin>3.0.0-M5</version.maven-failsafe-plugin>
         <version.maven-surefire-plugin>3.0.0-M5</version.maven-surefire-plugin>
     </properties>
@@ -66,6 +67,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-junit5</artifactId>
+                <version>${version.quarkus}</version>
+            </dependency>
+            <!-- MySQL JDBC Driver, Binlog reader, Geometry support -->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${version.mysql.driver}</version>
+            </dependency>
             <!-- debezium server -->
             <dependency>
                 <groupId>io.debezium</groupId>
@@ -81,12 +93,13 @@
                 <scope>import</scope>
             </dependency>
             <!-- ANTLR -->
-            <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
+            <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104
             <dependency>
                 <groupId>org.antlr</groupId>
                 <artifactId>antlr4-runtime</artifactId>
                 <version>${antlr.version}</version>
             </dependency>
+            -->
             <!-- Debezium Scripting -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>
