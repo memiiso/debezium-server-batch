@@ -89,7 +89,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Override
   public void handleBatch(List<ChangeEvent<Object, Object>> records, DebeziumEngine.RecordCommitter<ChangeEvent<Object, Object>> committer)
       throws InterruptedException {
-    LOGGER.debug("Received {} events", records.size());
+    LOGGER.trace("Received {} events", records.size());
 
     Instant start = Instant.now();
     Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
@@ -109,7 +109,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       committer.markProcessed(record);
     }
     committer.markBatchFinished();
-    LOGGER.debug("Processed {} events", numUploadedEvents);
+    LOGGER.debug("Received:{} Processed:{} events", records.size(), numUploadedEvents);
 
     batchSizeWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
 
