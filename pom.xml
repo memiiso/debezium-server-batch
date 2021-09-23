@@ -36,7 +36,7 @@
         <version.hadoop>3.2.2</version.hadoop>
         <version.log4j>2.14.1</version.log4j>
         <!-- Debezium -->
-        <version.debezium>1.7.0.CR1</version.debezium>
+        <version.debezium>1.7.0.CR2</version.debezium>
         <version.mysql.driver>8.0.26</version.mysql.driver>
         <!-- ANTLR -->
         <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
