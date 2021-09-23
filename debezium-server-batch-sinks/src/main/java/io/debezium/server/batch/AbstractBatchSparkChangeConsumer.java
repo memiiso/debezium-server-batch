@@ -8,12 +8,23 @@
 
 package io.debezium.server.batch;
 
+import io.debezium.engine.ChangeEvent;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.spark.SparkConf;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.StructType;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -69,6 +80,46 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
     LOGGER.info("Spark save format is '{}'", saveFormat);
     LOGGER.info("Spark Version {}", this.spark.version());
     LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
+  }
+
+  protected StructType getSparkSchema(ChangeEvent<Object, Object> event) {
+    return BatchUtil.getSparkDfSchema(BatchUtil.getJsonSchemaNode(getString(event.value())));
+  }
+
+  protected Dataset<Row> dataToSparkDf(String destination, List<ChangeEvent<Object, Object>> data) {
+
+    // get spark schema using one event
+    StructType dfSchema = getSparkSchema(data.get(0));
+
+    List<String> rowData = new ArrayList<>();
+    for (ChangeEvent<Object, Object> event : data) {
+      final Object val = event.value();
+
+      if (val == null) {
+        LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(event.key()));
+        continue;
+      }
+
+      final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
+
+      try {
+        rowData.add(mapper.writeValueAsString(valNode));
+      } catch (IOException ioe) {
+        throw new UncheckedIOException("Failed reading event value", ioe);
+      }
+    }
+
+    Dataset<String> ds = this.spark.createDataset(rowData, Encoders.STRING());
+    Dataset<Row> df;
+    if (dfSchema != null) {
+      LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
+      df = spark.read().schema(dfSchema).json(ds);
+    } else {
+      LOGGER.debug("Reading data without schema definition");
+      df = spark.read().json(ds);
+    }
+    ds.unpersist();
+    return df;
   }
 
 }

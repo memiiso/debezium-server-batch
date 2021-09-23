@@ -81,6 +81,18 @@
             <artifactId>spark-avro_2.12</artifactId>
             <version>${version.spark}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.cloud.spark</groupId>
+            <artifactId>spark-bigquery-with-dependencies_2.12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.bigdataoss</groupId>
+            <artifactId>gcs-connector</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.12</artifactId>
+        </dependency>
 
         <!-- using spark sink -->
         <!-- https://mvnrepository.com/artifact/org.apache.parquet/parquet-common -->
