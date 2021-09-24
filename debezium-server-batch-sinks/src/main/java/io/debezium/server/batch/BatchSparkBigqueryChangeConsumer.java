@@ -20,8 +20,10 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import static org.apache.spark.sql.functions.*;
 
@@ -37,17 +39,16 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   static HashMap<String, String> saveOptions = new HashMap<>();
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset")
   String bqDataset;
-  // default spark bigquery  settings
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project")
   String gcpProject;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket")
+  String temporaryGcsBucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.createDisposition", defaultValue = "CREATE_IF_NEEDED")
   String createDisposition;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.partitionField", defaultValue = "__source_ts")
   String partitionField;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.partitionType", defaultValue = "MONTH")
   String partitionType;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket")
-  String temporaryGcsBucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldAddition", defaultValue = "true")
   String allowFieldAddition;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.intermediateFormat", defaultValue = "parquet")
@@ -75,6 +76,20 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     this.stopSparkSession();
   }
 
+  protected String getClusteringFields(ChangeEvent<Object, Object> event) {
+
+    if (event.key() == null) {
+      return "__source_ts";
+    }
+
+    StructType keyFieldsSchema = BatchUtil.getSparkDfSchema(BatchUtil.getJsonSchemaNode(getString(event.key())));
+    if (keyFieldsSchema == null) {
+      return "__source_ts";
+    }
+
+    return StringUtils.strip(String.join(",", keyFieldsSchema.fieldNames()) + ",__source_ts", ",");
+  }
+
   @Override
   public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
 
@@ -83,6 +98,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     df = df.withColumn("__source_ts", from_utc_timestamp(from_unixtime(col("__source_ts_ms").divide(1000)), "UTC"));
     long numRecords;
 
+    final String clusteringFields = getClusteringFields(data.get(0));
     final String tableName = bqDataset + "." + destination.replace(".", "_");
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
@@ -90,7 +106,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
           .mode(saveMode)
           .format(saveFormat)
           .options(saveOptions)
-          //.option("clusteredFields", "field1,field2")// @TODO get keys from key schema
+          .option("clusteredFields", clusteringFields)
           .save(tableName);
 
       numRecords = df.count();
