@@ -23,8 +23,8 @@ public class ObjectStorageNameMapperTestProfile implements QuarkusTestProfile {
     config.put("debezium.sink.batch.objectkey-partition", "true");
     config.put("debezium.sink.batch.objectkey-partition-time-zone", "UTC");
     config.put("debezium.sink.batch.objectkey-prefix", "myprefix");
-    config.put("debezium.sink.batch.objectkey-regexp", "\\d");
-    config.put("debezium.sink.batch.objectkey-regexp-replace", "");
+    config.put("debezium.sink.batch.destination-regexp", "\\d");
+    config.put("debezium.sink.batch.destination-regexp-replace", "");
     return config;
   }
 }

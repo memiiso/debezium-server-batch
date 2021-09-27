@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -37,6 +38,10 @@ import static org.apache.spark.sql.functions.*;
 public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   static HashMap<String, String> saveOptions = new HashMap<>();
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
+  protected Optional<String> destinationRegexp;
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
+  protected Optional<String> destinationRegexpReplace;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset")
   String bqDataset;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project")
@@ -99,7 +104,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     long numRecords;
 
     final String clusteringFields = getClusteringFields(data.get(0));
-    final String tableName = bqDataset + "." + destination.replace(".", "_");
+    final String tableName = bqDataset + "." + destination.replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse("")).replace(".", "_");
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()
