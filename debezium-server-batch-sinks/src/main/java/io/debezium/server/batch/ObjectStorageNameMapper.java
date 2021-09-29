@@ -31,11 +31,11 @@ public class ObjectStorageNameMapper implements StreamNameMapper {
   @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
   protected Optional<String> objectKeyPrefix;
 
-  @ConfigProperty(name = "debezium.sink.batch.objectkey-regexp", defaultValue = "")
-  protected Optional<String> objectKeyRegexp;
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
+  protected Optional<String> destinationRegexp;
 
-  @ConfigProperty(name = "debezium.sink.batch.objectkey-regexp-replace", defaultValue = "")
-  protected Optional<String> objectKeyRegexpReplace;
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
+  protected Optional<String> destinationRegexpReplace;
 
   protected String getPartition() {
     final ZonedDateTime batchTime = ZonedDateTime.now(ZoneId.of(partitionDataZone));
@@ -48,10 +48,11 @@ public class ObjectStorageNameMapper implements StreamNameMapper {
     Objects.requireNonNull(destination, "destination Cannot be Null");
     if (partitionData) {
       String partitioned = getPartition();
-      return objectKeyPrefix.orElse("") + destination.replaceAll(objectKeyRegexp.orElse(""),
-          objectKeyRegexpReplace.orElse("")) + "/" + partitioned;
+      return objectKeyPrefix.orElse("") +
+          destination.replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse("")) +
+          "/" + partitioned;
     } else {
-      return objectKeyPrefix + destination.replaceAll(objectKeyRegexp.orElse(""), objectKeyRegexpReplace.orElse(""));
+      return objectKeyPrefix + destination.replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse(""));
     }
   }
 }
