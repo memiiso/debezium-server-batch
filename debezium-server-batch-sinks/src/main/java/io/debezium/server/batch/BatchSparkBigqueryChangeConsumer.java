@@ -42,12 +42,12 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   protected Optional<String> destinationRegexp;
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
   protected Optional<String> destinationRegexpReplace;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset")
-  String bqDataset;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project")
-  String gcpProject;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket")
-  String temporaryGcsBucket;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", defaultValue = "")
+  Optional<String> bqDataset;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project", defaultValue = "")
+  Optional<String> gcpProject;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket", defaultValue = "")
+  Optional<String> temporaryGcsBucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.createDisposition", defaultValue = "CREATE_IF_NEEDED")
   String createDisposition;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.partitionField", defaultValue = "__source_ts")
@@ -63,11 +63,30 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldRelaxation", defaultValue = "true")
   String allowFieldRelaxation;
 
+
+  public void initizalize() throws InterruptedException {
+
+    LOGGER.error("inside initizalize");
+    LOGGER.error("inside bqDataset.isempty = {}", bqDataset.isEmpty());
+    if (gcpProject.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.project`");
+    }
+    if (bqDataset.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.dataset`");
+    }
+    if (temporaryGcsBucket.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket`");
+    }
+
+    super.initizalize();
+  }
+
   @PostConstruct
   void connect() throws InterruptedException {
+    LOGGER.error("inside connect");
     this.initizalize();
-    saveOptions.put("project", gcpProject);
-    saveOptions.put("temporaryGcsBucket", temporaryGcsBucket);
+    saveOptions.put("project", gcpProject.get());
+    saveOptions.put("temporaryGcsBucket", temporaryGcsBucket.get());
     saveOptions.put("createDisposition", createDisposition);
     saveOptions.put("partitionField", partitionField);
     saveOptions.put("partitionType", partitionType);
@@ -104,7 +123,10 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     long numRecords;
 
     final String clusteringFields = getClusteringFields(data.get(0));
-    final String tableName = bqDataset + "." + destination.replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse("")).replace(".", "_");
+    final String tableName = bqDataset.get() + "." +
+        destination
+            .replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse(""))
+            .replace(".", "_");
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()
