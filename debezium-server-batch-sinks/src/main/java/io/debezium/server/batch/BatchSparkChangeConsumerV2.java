@@ -27,7 +27,7 @@ import org.apache.spark.sql.Row;
  *
  * @author Ismail Simsek
  */
-@Named("sparkbatchv2")
+@Named("sparkbatch")
 @Dependent
 public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer {
 
