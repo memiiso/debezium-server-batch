@@ -33,11 +33,6 @@ public class ConfigSource extends TestConfigSource {
     config.put("debezium.sink.batch.row-limit", "2");
     config.put("debezium.sink.batch.time-limit", "10"); // second
 
-    // sparkbigquerybatch mandatory configs
-    config.put("debezium.sink.sparkbatch.spark.datasource.bigquery.project", "test");
-    config.put("debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", "test");
-    config.put("debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket", "bigquery-buffer-bucket");
-
     config.put("debezium.source.max.batch.size", "100");
     config.put("debezium.source.poll.interval.ms", "5000");
 
