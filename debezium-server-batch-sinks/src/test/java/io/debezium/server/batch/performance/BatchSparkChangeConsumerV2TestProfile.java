@@ -20,7 +20,7 @@ public class BatchSparkChangeConsumerV2TestProfile implements QuarkusTestProfile
   public Map<String, String> getConfigOverrides() {
     Map<String, String> config = new HashMap<>();
 
-    config.put("debezium.sink.type", "sparkbatchv2");
+    config.put("debezium.sink.type", "sparkbatch");
     config.put("debezium.source.max.batch.size", "24000");
     config.put("debezium.source.max.queue.size", "700000");
     config.put("debezium.source.table.include.list", "inventory.test_date_table,inventory.customers");
