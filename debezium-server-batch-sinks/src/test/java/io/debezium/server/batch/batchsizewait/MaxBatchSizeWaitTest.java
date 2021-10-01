@@ -8,6 +8,7 @@
 
 package io.debezium.server.batch.batchsizewait;
 
+import io.debezium.server.batch.DebeziumMetrics;
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -25,15 +26,15 @@ import org.junit.jupiter.api.Test;
 @TestProfile(MaxBatchSizeWaitTestProfile.class)
 class MaxBatchSizeWaitTest extends BaseSparkTest {
   @Inject
-  MaxBatchSizeWait waitBatchSize;
+  DebeziumMetrics debeziumMetrics;
   @ConfigProperty(name = "debezium.source.poll.interval.ms", defaultValue = "1000")
   Integer pollIntervalMs;
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = "1000")
   Integer maxBatchSize;
 
-
   @Test
   public void testPerformance() throws Exception {
+    debeziumMetrics.initizalize();
     int iteration = 100;
     PGCreateTestDataTable();
     for (int i = 0; i <= iteration; i++) {

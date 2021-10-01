@@ -76,7 +76,7 @@ public class MaxBatchSizeWait implements InterfaceBatchSizeWait {
     int totalWaitMs = 0;
     while (totalWaitMs < maxWaitMs && debeziumMetrics.streamingQueueCurrentSize() < maxBatchSize) {
       totalWaitMs += waitIntervalMs;
-      LOGGER.debug("Sleeping {} Milliseconds, QueueCurrentSize:{} < maxBatchSize:{}",
+      LOGGER.trace("Sleeping {} Milliseconds, QueueCurrentSize:{} < maxBatchSize:{}",
           waitIntervalMs, debeziumMetrics.streamingQueueCurrentSize(), maxBatchSize);
 
       Thread.sleep(waitIntervalMs);
