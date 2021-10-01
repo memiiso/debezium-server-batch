@@ -41,10 +41,14 @@ public class DebeziumMetrics {
   ObjectName streamingMetricsObjectName;
 
   public void initizalize() throws DebeziumException {
-    assert snapshotMbean.isPresent() :
-        "Snapshot metrics Mbean `debezium.sink.batch.metrics.snapshot-mbean` not provided";
-    assert streamingMbean.isPresent() :
-        "Streaming metrics Mbean `debezium.sink.batch.metrics.streaming-mbean` not provided";
+
+    if (snapshotMbean.isEmpty()) {
+      throw new DebeziumException("Snapshot metrics Mbean `debezium.sink.batch.metrics.snapshot-mbean` not provided");
+    }
+    if (streamingMbean.isEmpty()) {
+      throw new DebeziumException("Streaming metrics Mbean `debezium.sink.batch.metrics.streaming-mbean` not provided");
+    }
+
     try {
       snapshotMetricsObjectName = new ObjectName(snapshotMbean.get());
       streamingMetricsObjectName = new ObjectName(streamingMbean.get());

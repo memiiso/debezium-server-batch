@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -37,19 +38,22 @@ import static org.apache.spark.sql.functions.*;
 public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   static HashMap<String, String> saveOptions = new HashMap<>();
-  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset")
-  String bqDataset;
-  // default spark bigquery  settings
-  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project")
-  String gcpProject;
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
+  protected Optional<String> destinationRegexp;
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
+  protected Optional<String> destinationRegexpReplace;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", defaultValue = "")
+  Optional<String> bqDataset;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project", defaultValue = "")
+  Optional<String> gcpProject;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket", defaultValue = "")
+  Optional<String> temporaryGcsBucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.createDisposition", defaultValue = "CREATE_IF_NEEDED")
   String createDisposition;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.partitionField", defaultValue = "__source_ts")
   String partitionField;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.partitionType", defaultValue = "MONTH")
   String partitionType;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket")
-  String temporaryGcsBucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldAddition", defaultValue = "true")
   String allowFieldAddition;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.intermediateFormat", defaultValue = "parquet")
@@ -59,11 +63,30 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldRelaxation", defaultValue = "true")
   String allowFieldRelaxation;
 
+
+  public void initizalize() throws InterruptedException {
+
+    LOGGER.error("inside initizalize");
+    LOGGER.error("inside bqDataset.isempty = {}", bqDataset.isEmpty());
+    if (gcpProject.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.project`");
+    }
+    if (bqDataset.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.dataset`");
+    }
+    if (temporaryGcsBucket.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket`");
+    }
+
+    super.initizalize();
+  }
+
   @PostConstruct
   void connect() throws InterruptedException {
+    LOGGER.error("inside connect");
     this.initizalize();
-    saveOptions.put("project", gcpProject);
-    saveOptions.put("temporaryGcsBucket", temporaryGcsBucket);
+    saveOptions.put("project", gcpProject.get());
+    saveOptions.put("temporaryGcsBucket", temporaryGcsBucket.get());
     saveOptions.put("createDisposition", createDisposition);
     saveOptions.put("partitionField", partitionField);
     saveOptions.put("partitionType", partitionType);
@@ -100,7 +123,10 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     long numRecords;
 
     final String clusteringFields = getClusteringFields(data.get(0));
-    final String tableName = bqDataset + "." + destination.replace(".", "_");
+    final String tableName = bqDataset.get() + "." +
+        destination
+            .replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse(""))
+            .replace(".", "_");
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()
