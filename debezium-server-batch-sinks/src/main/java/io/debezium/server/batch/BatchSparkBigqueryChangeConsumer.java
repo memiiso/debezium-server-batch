@@ -66,8 +66,6 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
 
   public void initizalize() throws InterruptedException {
 
-    LOGGER.error("inside initizalize");
-    LOGGER.error("inside bqDataset.isempty = {}", bqDataset.isEmpty());
     if (gcpProject.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.project`");
     }
@@ -83,7 +81,6 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
 
   @PostConstruct
   void connect() throws InterruptedException {
-    LOGGER.error("inside connect");
     this.initizalize();
     saveOptions.put("project", gcpProject.get());
     saveOptions.put("temporaryGcsBucket", temporaryGcsBucket.get());
@@ -137,10 +134,12 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
           .save(tableName);
 
       numRecords = df.count();
-      LOGGER.debug("Uploaded {} rows to:'{}' upload time:{}, ",
+      LOGGER.debug("Uploaded {} rows to:{}, upload time:{}, saveOptions:{}, clusteredFields:{}",
           numRecords,
           tableName,
-          Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS)
+          Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS),
+          saveOptions,
+          clusteringFields
       );
     }
 
