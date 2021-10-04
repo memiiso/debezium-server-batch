@@ -27,6 +27,9 @@ public class BatchSparkBigqueryChangeConsumerTestProfile implements QuarkusTestP
     config.put("debezium.sink.sparkbatch.spark.hadoop.google.cloud.auth.service.account.json.keyfile", "/path/to/application_credentials.json");
     config.put("quarkus.log.category.\"io.debezium.server.batch\".level", "INFO");
     config.put("quarkus.log.category.\"io.debezium.server.batch.BatchSparkBigqueryChangeConsumer\".level", "DEBUG");
+    config.put("quarkus.log.category.\"com.google.cloud.spark.bigquery\".level", "DEBUG");
+    config.put("debezium.source.table.include.list", "inventory.customers");
+
     return config;
   }
 }
