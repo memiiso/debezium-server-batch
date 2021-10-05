@@ -165,6 +165,11 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
       df = spark.read().json(jsonlines.getAbsolutePath());
     }
 //    ds.unpersist();
+
+    if (jsonlines.exists()) {
+      jsonlines.delete();
+    }
+
     return df;
   }
 
