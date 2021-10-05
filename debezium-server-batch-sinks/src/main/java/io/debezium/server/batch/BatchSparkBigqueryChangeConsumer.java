@@ -59,10 +59,10 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   String allowFieldAddition;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.intermediateFormat", defaultValue = "parquet")
   String intermediateFormat;
-  @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "bigquery")
-  String saveFormat;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldRelaxation", defaultValue = "true")
   String allowFieldRelaxation;
+
+  String saveFormat = "bigquery";
 
 
   public void initizalize() throws InterruptedException {
