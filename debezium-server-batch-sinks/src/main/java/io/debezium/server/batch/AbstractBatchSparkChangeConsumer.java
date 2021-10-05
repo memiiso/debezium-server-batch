@@ -26,8 +26,6 @@ import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.spark.SparkConf;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructType;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -131,46 +129,46 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
   }
 
 
-  protected Dataset<Row> dataToSparkDf(String destination, List<ChangeEvent<Object, Object>> data) {
-
-    // get spark schema using one event
-    StructType dfSchema = getSparkSchema(data.get(0));
-    File jsonlines = getJsonLinesFile(destination, data);
-
-//    List<String> rowData = new ArrayList<>();
-//    for (ChangeEvent<Object, Object> event : data) {
-//      final Object val = event.value();
+//  protected Dataset<Row> dataToSparkDf(String destination, List<ChangeEvent<Object, Object>> data) {
 //
-//      if (val == null) {
-//        LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(event.key()));
-//        continue;
-//      }
+//    // get spark schema using one event
+//    StructType dfSchema = getSparkSchema(data.get(0));
+//    File jsonlines = getJsonLinesFile(destination, data);
 //
-//      final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
+////    List<String> rowData = new ArrayList<>();
+////    for (ChangeEvent<Object, Object> event : data) {
+////      final Object val = event.value();
+////
+////      if (val == null) {
+////        LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(event.key()));
+////        continue;
+////      }
+////
+////      final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
+////
+////      try {
+////        rowData.add(mapper.writeValueAsString(valNode));
+////      } catch (IOException ioe) {
+////        throw new UncheckedIOException("Failed reading event value", ioe);
+////      }
+////    }
+////    Dataset<String> ds = this.spark.createDataset(rowData, Encoders.STRING());
 //
-//      try {
-//        rowData.add(mapper.writeValueAsString(valNode));
-//      } catch (IOException ioe) {
-//        throw new UncheckedIOException("Failed reading event value", ioe);
-//      }
+//    Dataset<Row> df;
+//    if (dfSchema != null) {
+//      LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
+//      df = spark.read().schema(dfSchema).json(jsonlines.getAbsolutePath());
+//    } else {
+//      LOGGER.debug("Reading data without schema definition");
+//      df = spark.read().json(jsonlines.getAbsolutePath());
 //    }
-//    Dataset<String> ds = this.spark.createDataset(rowData, Encoders.STRING());
-
-    Dataset<Row> df;
-    if (dfSchema != null) {
-      LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
-      df = spark.read().schema(dfSchema).json(jsonlines.getAbsolutePath());
-    } else {
-      LOGGER.debug("Reading data without schema definition");
-      df = spark.read().json(jsonlines.getAbsolutePath());
-    }
-//    ds.unpersist();
-
-    if (jsonlines.exists()) {
-      jsonlines.delete();
-    }
-
-    return df;
-  }
+////    ds.unpersist();
+//
+//    if (jsonlines.exists()) {
+//      jsonlines.delete();
+//    }
+//
+//    return df;
+//  }
 
 }

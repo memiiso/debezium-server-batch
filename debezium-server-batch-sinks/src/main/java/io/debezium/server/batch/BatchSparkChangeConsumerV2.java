@@ -10,6 +10,7 @@ package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -21,6 +22,7 @@ import javax.inject.Named;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -45,7 +47,18 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
   public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
 
     Instant start = Instant.now();
-    Dataset<Row> df = dataToSparkDf(destination, data);
+    StructType dfSchema = getSparkSchema(data.get(0));
+    File jsonlines = getJsonLinesFile(destination, data);
+    Dataset<Row> df;
+
+    if (dfSchema != null) {
+      LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
+      df = spark.read().schema(dfSchema).json(jsonlines.getAbsolutePath());
+    } else {
+      LOGGER.debug("Reading data without schema definition");
+      df = spark.read().json(jsonlines.getAbsolutePath());
+    }
+
     long numRecords;
 
     String uploadFile = objectStorageNameMapper.map(destination);
@@ -70,6 +83,9 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
       );
     }
     df.unpersist();
+    if (jsonlines.exists()) {
+      jsonlines.delete();
+    }
 
     return numRecords;
   }

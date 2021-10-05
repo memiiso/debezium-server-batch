@@ -10,6 +10,7 @@ package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
 
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -115,7 +116,19 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
 
     Instant start = Instant.now();
-    Dataset<Row> df = dataToSparkDf(destination, data);
+
+    StructType dfSchema = getSparkSchema(data.get(0));
+    File jsonlines = getJsonLinesFile(destination, data);
+    Dataset<Row> df;
+
+    if (dfSchema != null) {
+      LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
+      df = spark.read().schema(dfSchema).json(jsonlines.getAbsolutePath());
+    } else {
+      LOGGER.debug("Reading data without schema definition");
+      df = spark.read().json(jsonlines.getAbsolutePath());
+    }
+
     df = df.withColumn("__source_ts", from_utc_timestamp(from_unixtime(col("__source_ts_ms").divide(1000)), "UTC"));
     long numRecords;
 
@@ -148,7 +161,11 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
           LOGGER.trace("uploadDestination df row val:{}", x.toString())
       );
     }
+
     df.unpersist();
+    if (jsonlines.exists()) {
+      jsonlines.delete();
+    }
 
     return numRecords;
   }
