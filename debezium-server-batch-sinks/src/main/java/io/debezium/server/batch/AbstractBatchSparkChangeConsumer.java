@@ -10,18 +10,23 @@ package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructType;
@@ -86,39 +91,80 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
     return BatchUtil.getSparkDfSchema(BatchUtil.getJsonSchemaNode(getString(event.value())));
   }
 
+  public File getJsonLinesFile(String destination, List<ChangeEvent<Object, Object>> data) {
+
+    Instant start = Instant.now();
+    final File tempFile;
+    try {
+      tempFile = File.createTempFile(UUID.randomUUID() + "-", ".json");
+      FileOutputStream fos = new FileOutputStream(tempFile, true);
+      LOGGER.debug("Writing {} events as jsonlines file: {}", data.size(), tempFile);
+
+      for (ChangeEvent<Object, Object> e : data) {
+        Object val = e.value();
+
+        if (val == null) {
+          LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(e.key()));
+          continue;
+        }
+
+        try {
+          final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
+          final String valData = mapper.writeValueAsString(valNode) + System.lineSeparator();
+
+          fos.write(valData.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException ioe) {
+          LOGGER.error("Failed writing record to file", ioe);
+          fos.close();
+          throw new UncheckedIOException(ioe);
+        }
+      }
+
+      fos.close();
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    LOGGER.trace("Writing jsonlines took:{}", Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS));
+    return tempFile;
+  }
+
+
   protected Dataset<Row> dataToSparkDf(String destination, List<ChangeEvent<Object, Object>> data) {
 
     // get spark schema using one event
     StructType dfSchema = getSparkSchema(data.get(0));
+    File jsonlines = getJsonLinesFile(destination, data);
 
-    List<String> rowData = new ArrayList<>();
-    for (ChangeEvent<Object, Object> event : data) {
-      final Object val = event.value();
+//    List<String> rowData = new ArrayList<>();
+//    for (ChangeEvent<Object, Object> event : data) {
+//      final Object val = event.value();
+//
+//      if (val == null) {
+//        LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(event.key()));
+//        continue;
+//      }
+//
+//      final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
+//
+//      try {
+//        rowData.add(mapper.writeValueAsString(valNode));
+//      } catch (IOException ioe) {
+//        throw new UncheckedIOException("Failed reading event value", ioe);
+//      }
+//    }
+//    Dataset<String> ds = this.spark.createDataset(rowData, Encoders.STRING());
 
-      if (val == null) {
-        LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(event.key()));
-        continue;
-      }
-
-      final JsonNode valNode = valDeserializer.deserialize(destination, getBytes(val));
-
-      try {
-        rowData.add(mapper.writeValueAsString(valNode));
-      } catch (IOException ioe) {
-        throw new UncheckedIOException("Failed reading event value", ioe);
-      }
-    }
-
-    Dataset<String> ds = this.spark.createDataset(rowData, Encoders.STRING());
     Dataset<Row> df;
     if (dfSchema != null) {
       LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
-      df = spark.read().schema(dfSchema).json(ds);
+      df = spark.read().schema(dfSchema).json(jsonlines.getAbsolutePath());
     } else {
       LOGGER.debug("Reading data without schema definition");
-      df = spark.read().json(ds);
+      df = spark.read().json(jsonlines.getAbsolutePath());
     }
-    ds.unpersist();
+//    ds.unpersist();
     return df;
   }
 
