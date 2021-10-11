@@ -22,7 +22,9 @@ import javax.inject.Named;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import static org.apache.spark.sql.functions.col;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -57,6 +59,10 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
     } else {
       LOGGER.debug("Reading data without schema definition");
       df = spark.read().json(jsonlines.getAbsolutePath());
+    }
+
+    if (castDeletedField) {
+      df = df.withColumn("__deleted", col("__deleted").cast(DataTypes.BooleanType));
     }
 
     long numRecords;
