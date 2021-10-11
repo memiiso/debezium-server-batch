@@ -25,6 +25,7 @@ import javax.inject.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import static org.apache.spark.sql.functions.*;
@@ -130,6 +131,11 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     }
 
     df = df.withColumn("__source_ts", from_utc_timestamp(from_unixtime(col("__source_ts_ms").divide(1000)), "UTC"));
+
+    if (castDeletedField) {
+      df = df.withColumn("__deleted", col("__deleted").cast(DataTypes.BooleanType));
+    }
+
     long numRecords;
 
     final String clusteringFields = getClusteringFields(data.get(0));

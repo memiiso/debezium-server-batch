@@ -26,7 +26,9 @@ import javax.inject.Named;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import static org.apache.spark.sql.functions.col;
 
 /**
  * Implementation of the consumer that delivers the messages into Amazon S3 destination.
@@ -85,6 +87,11 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     String uploadFile = objectStorageNameMapper.map(destination);
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
+
+    if (castDeletedField) {
+      df = df.withColumn("__deleted", col("__deleted").cast(DataTypes.BooleanType));
+    }
+
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()

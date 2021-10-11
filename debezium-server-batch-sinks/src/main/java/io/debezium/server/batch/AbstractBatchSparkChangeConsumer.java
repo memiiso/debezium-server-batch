@@ -53,6 +53,8 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
   String saveFormat;
   @ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
   String saveMode;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.cast-deleted-field", defaultValue = "false")
+  Boolean castDeletedField;
 
   protected void stopSparkSession() {
     try {
