@@ -55,11 +55,6 @@
             <name>Cloudera Repository</name>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
-        <repository>
-            <id>spark-3.2.0</id>
-            <name>spark-3.2.0 stage repo</name>
-            <url>https://repository.apache.org/content/repositories/orgapachespark-1394/</url>
-        </repository>
     </repositories>
     <dependencyManagement>
         <dependencies>
