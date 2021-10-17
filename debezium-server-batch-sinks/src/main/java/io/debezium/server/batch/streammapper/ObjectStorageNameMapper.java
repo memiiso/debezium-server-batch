@@ -8,8 +8,6 @@
 
 package io.debezium.server.batch.streammapper;
 
-import io.debezium.server.StreamNameMapper;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;

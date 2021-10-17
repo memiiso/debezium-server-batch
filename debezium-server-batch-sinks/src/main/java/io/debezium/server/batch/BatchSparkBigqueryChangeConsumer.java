@@ -76,13 +76,11 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     if (gcpProject.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.project`");
     }
-    if (bqDataset.isEmpty()) {
-      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.dataset`");
-    }
     if (temporaryGcsBucket.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket`");
     }
 
+    streamMapper.initialize();
     super.initizalize();
   }
 

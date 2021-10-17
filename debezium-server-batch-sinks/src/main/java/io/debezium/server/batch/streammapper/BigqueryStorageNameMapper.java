@@ -8,8 +8,6 @@
 
 package io.debezium.server.batch.streammapper;
 
-import io.debezium.server.StreamNameMapper;
-
 import java.util.Optional;
 import javax.enterprise.context.Dependent;
 
@@ -24,6 +22,13 @@ public class BigqueryStorageNameMapper implements StreamNameMapper {
   protected Optional<String> destinationRegexpReplace;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", defaultValue = "")
   Optional<String> bqDataset;
+
+  @Override
+  public void initialize() throws InterruptedException {
+    if (bqDataset.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.dataset`");
+    }
+  }
 
   @Override
   public String map(String destination) {
