@@ -9,6 +9,7 @@
 package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.streammapper.BigqueryStorageNameMapper;
 
 import java.io.File;
 import java.time.Duration;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.apache.commons.lang3.StringUtils;
@@ -65,19 +67,20 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
 
   String saveFormat = "bigquery";
 
+  @Inject
+  protected BigqueryStorageNameMapper streamMapper;
+
 
   public void initizalize() throws InterruptedException {
 
     if (gcpProject.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.project`");
     }
-    if (bqDataset.isEmpty()) {
-      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.dataset`");
-    }
     if (temporaryGcsBucket.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket`");
     }
 
+    streamMapper.initialize();
     super.initizalize();
   }
 
@@ -139,10 +142,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     long numRecords;
 
     final String clusteringFields = getClusteringFields(data.get(0));
-    final String tableName = bqDataset.get() + "." +
-        destination
-            .replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse(""))
-            .replace(".", "_");
+    final String tableName = streamMapper.map(destination);
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()

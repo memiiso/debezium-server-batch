@@ -67,7 +67,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer
 
     long numRecords;
 
-    String uploadFile = objectStorageNameMapper.map(destination);
+    String uploadFile = streamMapper.map(destination);
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()

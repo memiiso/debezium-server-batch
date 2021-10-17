@@ -37,6 +37,7 @@ import static org.apache.spark.sql.functions.col;
  */
 @Named("sparkbatchv1")
 @Dependent
+@Deprecated
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   @PostConstruct
@@ -84,7 +85,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
       LOGGER.debug("Reading data without schema definition");
     }
 
-    String uploadFile = objectStorageNameMapper.map(destination);
+    String uploadFile = streamMapper.map(destination);
 
     Dataset<Row> df = spark.read().schema(dfSchema).json(jsonLinesFile.getFile().getAbsolutePath());
 
