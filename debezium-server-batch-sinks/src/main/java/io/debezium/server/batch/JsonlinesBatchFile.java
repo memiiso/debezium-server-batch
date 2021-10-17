@@ -17,6 +17,8 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * @author Ismail Simsek
  */
+
+@Deprecated
 public class JsonlinesBatchFile {
   private final File file;
   private JsonNode valSchema;

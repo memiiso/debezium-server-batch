@@ -9,6 +9,7 @@
 package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.streammapper.ObjectStorageNameMapper;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,7 +47,7 @@ public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChan
   protected SparkSession spark;
 
   @Inject
-  protected ObjectStorageNameMapper objectStorageNameMapper;
+  protected ObjectStorageNameMapper streamMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
   String bucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "parquet")

@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.streammapper;
 
 import io.debezium.server.StreamNameMapper;
 
@@ -37,7 +37,7 @@ public class ObjectStorageNameMapper implements StreamNameMapper {
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
   protected Optional<String> destinationRegexpReplace;
 
-  protected String getPartition() {
+  public String getPartition() {
     final ZonedDateTime batchTime = ZonedDateTime.now(ZoneId.of(partitionDataZone));
     return "year=" + batchTime.getYear() + "/month=" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0') + "/day="
         + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
