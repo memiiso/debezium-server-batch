@@ -125,6 +125,16 @@
                 <version>hadoop3-2.2.3</version>
             </dependency>
             <dependency>
+                <groupId>com.google.api-client</groupId>
+                <artifactId>google-api-client</artifactId>
+                <version>1.32.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api-client</groupId>
+                <artifactId>google-api-client-jackson2</artifactId>
+                <version>1.32.2</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-mllib_2.12</artifactId>
                 <version>${version.spark}</version>
