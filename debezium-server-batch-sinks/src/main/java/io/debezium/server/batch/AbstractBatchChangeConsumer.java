@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
-  private static final Duration LOG_INTERVAL = Duration.ofMinutes(15);
+  protected static final Duration LOG_INTERVAL = Duration.ofMinutes(15);
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final ObjectMapper mapper = new ObjectMapper();
@@ -65,10 +65,10 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Any
   Instance<InterfaceBatchSizeWait> batchSizeWaitInstances;
   InterfaceBatchSizeWait batchSizeWait;
-  Clock clock = Clock.system();
-  long consumerStart = clock.currentTimeInMillis();
-  long numConsumedEvents = 0;
-  Threads.Timer logTimer = Threads.timer(clock, LOG_INTERVAL);
+  protected Clock clock = Clock.system();
+  protected long consumerStart = clock.currentTimeInMillis();
+  protected long numConsumedEvents = 0;
+  protected Threads.Timer logTimer = Threads.timer(clock, LOG_INTERVAL);
 
   public void initizalize() throws InterruptedException {
 
@@ -124,7 +124,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
 
   }
 
-  public void logConsumerProgress(long numUploadedEvents) {
+  protected void logConsumerProgress(long numUploadedEvents) {
     numConsumedEvents += numUploadedEvents;
     if (logTimer.expired()) {
       LOGGER.info("Consumed {} records after {}", numConsumedEvents, Strings.duration(clock.currentTimeInMillis() - consumerStart));
