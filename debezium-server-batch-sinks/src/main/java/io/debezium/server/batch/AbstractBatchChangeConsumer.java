@@ -15,6 +15,9 @@ import io.debezium.engine.format.Json;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.BaseChangeConsumer;
 import io.debezium.server.batch.batchsizewait.InterfaceBatchSizeWait;
+import io.debezium.util.Clock;
+import io.debezium.util.Strings;
+import io.debezium.util.Threads;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,6 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
+  private static final Duration LOG_INTERVAL = Duration.ofMinutes(15);
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final ObjectMapper mapper = new ObjectMapper();
@@ -61,6 +65,10 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Any
   Instance<InterfaceBatchSizeWait> batchSizeWaitInstances;
   InterfaceBatchSizeWait batchSizeWait;
+  Clock clock = Clock.system();
+  long consumerStart = clock.currentTimeInMillis();
+  long numConsumedEvents = 0;
+  Threads.Timer logTimer = Threads.timer(clock, LOG_INTERVAL);
 
   public void initizalize() throws InterruptedException {
 
@@ -109,10 +117,21 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       committer.markProcessed(record);
     }
     committer.markBatchFinished();
+    this.logConsumerProgress(numUploadedEvents);
     LOGGER.debug("Received:{} Processed:{} events", records.size(), numUploadedEvents);
 
     batchSizeWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
 
+  }
+
+  public void logConsumerProgress(long numUploadedEvents) {
+    numConsumedEvents += numUploadedEvents;
+    if (logTimer.expired()) {
+      LOGGER.info("Consumed {} records after {}", numConsumedEvents, Strings.duration(clock.currentTimeInMillis() - consumerStart));
+      numConsumedEvents = 0;
+      consumerStart = clock.currentTimeInMillis();
+      logTimer = Threads.timer(clock, LOG_INTERVAL);
+    }
   }
 
   public abstract long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException;
