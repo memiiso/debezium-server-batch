@@ -34,8 +34,8 @@ public class DynamicBatchSizeWait implements InterfaceBatchSizeWait {
   @ConfigProperty(name = "debezium.sink.batch.batch-size-wait.max-wait-ms", defaultValue = "300000")
   Integer maxWaitMs;
 
-  LinkedList<Integer> batchSizeHistory = new LinkedList<Integer>();
-  LinkedList<Integer> sleepMsHistory = new LinkedList<Integer>();
+  final LinkedList<Integer> batchSizeHistory = new LinkedList<Integer>();
+  final LinkedList<Integer> sleepMsHistory = new LinkedList<Integer>();
 
   public DynamicBatchSizeWait() {
     batchSizeHistory.add(1);

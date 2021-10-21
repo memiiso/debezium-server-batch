@@ -11,7 +11,6 @@ package io.debezium.server.batch;
 import io.debezium.engine.ChangeEvent;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -41,7 +40,7 @@ import static org.apache.spark.sql.functions.col;
 public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   @PostConstruct
-  void connect() throws URISyntaxException, InterruptedException {
+  void connect() throws InterruptedException {
     this.initizalize();
   }
 
@@ -55,7 +54,7 @@ public class BatchSparkChangeConsumer extends AbstractBatchSparkChangeConsumer {
     return this.uploadDestination(destination, this.getJsonLines(destination, data));
   }
 
-  protected long uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) throws InterruptedException {
+  protected long uploadDestination(String destination, JsonlinesBatchFile jsonLinesFile) {
 
     Instant start = Instant.now();
     long numRecords = 0L;

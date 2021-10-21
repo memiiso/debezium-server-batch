@@ -328,9 +328,8 @@ public class FileOutputCommitterV2 extends FileOutputCommitter {
    * Get the directory that the task should write results into.
    *
    * @return the work directory
-   * @throws IOException
    */
-  public Path getWorkPath() throws IOException {
+  public Path getWorkPath() {
     return workPath;
   }
 
@@ -521,13 +520,7 @@ public class FileOutputCommitterV2 extends FileOutputCommitter {
       // if job allow repeatable commit and pendingJobAttemptsPath could be
       // deleted by previous AM, we should tolerate FileNotFoundException in
       // this case.
-      try {
-        fs.delete(pendingJobAttemptsPath, true);
-      } catch (FileNotFoundException e) {
-        if (!isCommitJobRepeatable(context)) {
-          throw e;
-        }
-      }
+      fs.delete(pendingJobAttemptsPath, true);
     } else {
       LOG.warn("Output Path is null in cleanupJob()");
     }
@@ -549,7 +542,7 @@ public class FileOutputCommitterV2 extends FileOutputCommitter {
    * No task setup required.
    */
   @Override
-  public void setupTask(TaskAttemptContext context) throws IOException {
+  public void setupTask(TaskAttemptContext context) {
     // FileOutputCommitter's setupTask doesn't do anything. Because the
     // temporary task directory is created on demand when the
     // task is writing.
@@ -680,7 +673,7 @@ public class FileOutputCommitterV2 extends FileOutputCommitter {
   }
 
   @Override
-  public boolean isCommitJobRepeatable(JobContext context) throws IOException {
+  public boolean isCommitJobRepeatable(JobContext context) {
     return algorithmVersion == 2;
   }
 

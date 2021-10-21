@@ -41,7 +41,7 @@ import static org.apache.spark.sql.functions.*;
 @Dependent
 public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
-  static HashMap<String, String> saveOptions = new HashMap<>();
+  static final HashMap<String, String> saveOptions = new HashMap<>();
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
   protected Optional<String> destinationRegexp;
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
@@ -65,7 +65,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldRelaxation", defaultValue = "true")
   String allowFieldRelaxation;
 
-  String saveFormat = "bigquery";
+  final String saveFormat = "bigquery";
 
   @Inject
   protected BigqueryStorageNameMapper streamMapper;

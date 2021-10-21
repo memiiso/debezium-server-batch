@@ -65,7 +65,7 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
   @Any
   Instance<InterfaceBatchSizeWait> batchSizeWaitInstances;
   InterfaceBatchSizeWait batchSizeWait;
-  protected Clock clock = Clock.system();
+  protected final Clock clock = Clock.system();
   protected long consumerStart = clock.currentTimeInMillis();
   protected long numConsumedEvents = 0;
   protected Threads.Timer logTimer = Threads.timer(clock, LOG_INTERVAL);
