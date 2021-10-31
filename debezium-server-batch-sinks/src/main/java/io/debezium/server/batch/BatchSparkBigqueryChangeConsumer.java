@@ -12,6 +12,7 @@ import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.streammapper.BigqueryStorageNameMapper;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -24,6 +25,7 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import com.google.cloud.spark.bigquery.repackaged.com.google.auth.oauth2.GoogleCredentials;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -42,10 +44,13 @@ import static org.apache.spark.sql.functions.*;
 public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeConsumer {
 
   static final HashMap<String, String> saveOptions = new HashMap<>();
+  final String saveFormat = "bigquery";
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
   protected Optional<String> destinationRegexp;
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
   protected Optional<String> destinationRegexpReplace;
+  @Inject
+  protected BigqueryStorageNameMapper streamMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", defaultValue = "")
   Optional<String> bqDataset;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project", defaultValue = "")
@@ -64,14 +69,16 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   String intermediateFormat;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldRelaxation", defaultValue = "true")
   String allowFieldRelaxation;
-
-  final String saveFormat = "bigquery";
-
-  @Inject
-  protected BigqueryStorageNameMapper streamMapper;
-
+  GoogleCredentials googleAppCredentials;
 
   public void initizalize() throws InterruptedException {
+
+    try {
+      googleAppCredentials = GoogleCredentials.getApplicationDefault();
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new InterruptedException("Failed to initialize Google Credentials");
+    }
 
     if (gcpProject.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.project`");
@@ -117,7 +124,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   }
 
   @Override
-  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
+  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException {
 
     Instant start = Instant.now();
 
@@ -145,10 +152,19 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     final String tableName = streamMapper.map(destination);
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
+
+      try {
+        googleAppCredentials.refreshIfExpired();
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new InterruptedException("Failed to refresh access token");
+      }
+
       df.write()
           .mode(saveMode)
           .format(saveFormat)
           .options(saveOptions)
+          .option("gcpAccessToken", googleAppCredentials.getAccessToken().getTokenValue())
           .option("clusteredFields", clusteringFields)
           .save(tableName);
 
