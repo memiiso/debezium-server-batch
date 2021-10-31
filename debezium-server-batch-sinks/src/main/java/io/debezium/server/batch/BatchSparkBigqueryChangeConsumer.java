@@ -69,12 +69,12 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   String intermediateFormat;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldRelaxation", defaultValue = "true")
   String allowFieldRelaxation;
-  GoogleCredentials googleAppCredentials;
+  GoogleCredentials googleCredentials;
 
   public void initizalize() throws InterruptedException {
 
     try {
-      googleAppCredentials = GoogleCredentials.getApplicationDefault();
+      googleCredentials = GoogleCredentials.getApplicationDefault();
     } catch (IOException e) {
       e.printStackTrace();
       throw new InterruptedException("Failed to initialize Google Credentials");
@@ -154,7 +154,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
 
       try {
-        googleAppCredentials.refreshIfExpired();
+        googleCredentials.refreshIfExpired();
       } catch (IOException e) {
         e.printStackTrace();
         throw new InterruptedException("Failed to refresh access token");
@@ -164,7 +164,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
           .mode(saveMode)
           .format(saveFormat)
           .options(saveOptions)
-          .option("gcpAccessToken", googleAppCredentials.getAccessToken().getTokenValue())
+          .option("gcpAccessToken", googleCredentials.getAccessToken().getTokenValue())
           .option("clusteredFields", clusteringFields)
           .save(tableName);
 
