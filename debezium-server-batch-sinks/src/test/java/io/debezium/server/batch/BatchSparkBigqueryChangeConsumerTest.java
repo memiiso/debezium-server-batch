@@ -9,7 +9,6 @@
 package io.debezium.server.batch;
 
 import io.debezium.server.batch.common.BaseSparkTest;
-import io.debezium.server.batch.common.S3Minio;
 import io.debezium.server.batch.common.SourcePostgresqlDB;
 import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -31,7 +30,6 @@ import org.junit.jupiter.api.Test;
  * @author Ismail Simsek
  */
 @QuarkusTest
-@QuarkusTestResource(S3Minio.class)
 @QuarkusTestResource(SourcePostgresqlDB.class)
 @TestProfile(BatchSparkBigqueryChangeConsumerTestProfile.class)
 @Disabled("manual run")
