@@ -35,11 +35,8 @@
         <version.hadoop>3.3.1</version.hadoop>
         <version.log4j>2.14.1</version.log4j>
         <!-- Debezium -->
-        <version.debezium>1.7.0.Final</version.debezium>
+        <version.debezium>1.7.1.Final</version.debezium>
         <version.mysql.driver>8.0.26</version.mysql.driver>
-        <!-- ANTLR -->
-        <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104 -->
-        <!-- <antlr.version>4.7.2</antlr.version> -->
         <!-- Quarkus -->
         <version.quarkus>2.2.3.Final</version.quarkus>
 
@@ -91,14 +88,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- ANTLR -->
-            <!-- WARNING it should be same as debezium version https://github.com/debezium/debezium/blob/master/pom.xml#L104
-            <dependency>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-runtime</artifactId>
-                <version>${antlr.version}</version>
-            </dependency>
-            -->
             <!-- Debezium Scripting -->
             <dependency>
                 <groupId>org.codehaus.groovy</groupId>

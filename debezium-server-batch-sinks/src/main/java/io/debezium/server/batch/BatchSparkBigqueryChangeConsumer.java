@@ -9,10 +9,10 @@
 package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
+import io.debezium.server.batch.spark.GCSAccessTokenProvider;
 import io.debezium.server.batch.streammapper.BigqueryStorageNameMapper;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -25,7 +25,6 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.cloud.spark.bigquery.repackaged.com.google.auth.oauth2.GoogleCredentials;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -69,16 +68,10 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
   String intermediateFormat;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.allowFieldRelaxation", defaultValue = "true")
   String allowFieldRelaxation;
-  GoogleCredentials googleCredentials;
+  @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.credentialsFile", defaultValue = "")
+  Optional<String> credentialsFile;
 
   public void initizalize() throws InterruptedException {
-
-    try {
-      googleCredentials = GoogleCredentials.getApplicationDefault();
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new InterruptedException("Failed to initialize Google Credentials");
-    }
 
     if (gcpProject.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.project`");
@@ -86,13 +79,18 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     if (temporaryGcsBucket.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket`");
     }
-
+    if (credentialsFile.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.credentialsFile`");
+    }
     streamMapper.initialize();
     super.initizalize();
   }
 
   @PostConstruct
   void connect() throws InterruptedException {
+    // gcs token provider
+    this.sparkconf.set("spark.hadoop.fs.gs.auth.access.token.provider.impl", GCSAccessTokenProvider.class.getName());
+    this.sparkconf.set("spark.hadoop.credentialsFile", credentialsFile.get());
     this.initizalize();
     saveOptions.put("project", gcpProject.get());
     saveOptions.put("temporaryGcsBucket", temporaryGcsBucket.get());
@@ -152,19 +150,10 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
     final String tableName = streamMapper.map(destination);
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-
-      try {
-        googleCredentials.refreshIfExpired();
-      } catch (IOException e) {
-        e.printStackTrace();
-        throw new InterruptedException("Failed to refresh access token");
-      }
-
       df.write()
           .mode(saveMode)
           .format(saveFormat)
           .options(saveOptions)
-          .option("gcpAccessToken", googleCredentials.getAccessToken().getTokenValue())
           .option("clusteredFields", clusteringFields)
           .save(tableName);
 
