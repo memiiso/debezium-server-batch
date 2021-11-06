@@ -27,8 +27,10 @@ public final class GCSAccessTokenProvider implements AccessTokenProvider {
 
   @Override
   public AccessToken getAccessToken() {
+    LOGGER.debug("Getting access token");
 
     try {
+      LOGGER.trace("Refreshing google credentials if expired");
       googleCredentials.refreshIfExpired();
     } catch (IOException e) {
       throw new DebeziumException("Failed to refresh google credentials", e);
@@ -40,6 +42,7 @@ public final class GCSAccessTokenProvider implements AccessTokenProvider {
 
   @Override
   public void refresh() throws IOException {
+    LOGGER.trace("Refreshing google credentials");
     googleCredentials.refresh();
   }
 
@@ -50,6 +53,7 @@ public final class GCSAccessTokenProvider implements AccessTokenProvider {
 
   @Override
   public void setConf(Configuration config) {
+    LOGGER.debug("Initializing {}", this.getClass().getName());
 
     this.config = config;
     String credentialsFile = config.get("credentialsFile");
@@ -65,10 +69,9 @@ public final class GCSAccessTokenProvider implements AccessTokenProvider {
     }
 
     try {
-      LOGGER.debug("Initialized GoogleCredentials from file:{}", credentialsFile);
       googleCredentials = GoogleCredentials.fromStream(new FileInputStream(credFile));
     } catch (IOException e) {
-      throw new DebeziumException("Failed to initialize Google Credentials", e);
+      throw new DebeziumException("Failed to initialize Google Credentials from file:" + credentialsFile, e);
     }
 
   }
