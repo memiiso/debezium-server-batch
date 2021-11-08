@@ -9,7 +9,6 @@
 package io.debezium.server.batch;
 
 import io.debezium.engine.ChangeEvent;
-import io.debezium.server.batch.spark.GCSAccessTokenProvider;
 import io.debezium.server.batch.streammapper.BigqueryStorageNameMapper;
 
 import java.io.File;
@@ -88,9 +87,6 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
 
   @PostConstruct
   void connect() throws InterruptedException {
-    // gcs token provider
-    this.sparkconf.set("spark.hadoop.fs.gs.auth.access.token.provider.impl", GCSAccessTokenProvider.class.getName());
-    this.sparkconf.set("spark.hadoop.credentialsFile", credentialsFile.get());
     this.initizalize();
     saveOptions.put("project", gcpProject.get());
     saveOptions.put("temporaryGcsBucket", temporaryGcsBucket.get());
