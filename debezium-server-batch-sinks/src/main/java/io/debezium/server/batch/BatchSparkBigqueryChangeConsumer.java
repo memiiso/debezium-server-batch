@@ -109,7 +109,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeCo
       return "__source_ts";
     }
 
-    StructType keyFieldsSchema = BatchUtil.getSparkDfSchema(BatchUtil.getJsonSchemaNode(getString(event.key())));
+    StructType keyFieldsSchema = BatchUtil.getSparkDfSchema(BatchUtil.getSchemaNode(getString(event.key())));
     if (keyFieldsSchema == null) {
       return "__source_ts";
     }

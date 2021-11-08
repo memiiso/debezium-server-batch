@@ -8,11 +8,11 @@
 
 package io.debezium.server.batch;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.bigquery.*;
 import org.apache.spark.sql.types.*;
 import org.eclipse.microprofile.config.Config;
 import org.slf4j.Logger;
@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
  * @author Ismail Simsek
  */
 public class BatchUtil {
-  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchUtil.class);
   public static final ObjectMapper jsonObjectMapper = new ObjectMapper();
+  protected static final Logger LOGGER = LoggerFactory.getLogger(BatchUtil.class);
 
   public static StructType getSparkDfSchema(JsonNode eventSchema) {
 
@@ -103,7 +103,7 @@ public class BatchUtil {
   }
 
 
-  public static JsonNode getJsonSchemaNode(String eventVal) {
+  public static JsonNode getSchemaNode(String eventVal) {
 
     try {
       JsonNode jsonNode = BatchUtil.jsonObjectMapper.readTree(eventVal);
@@ -131,5 +131,102 @@ public class BatchUtil {
 
     return ret;
   }
+
+  public static Clustering getBigQueryClustering(String keyJsonString) {
+    return BatchUtil.getBigQueryClustering(BatchUtil.getSchemaNode(keyJsonString));
+  }
+
+  public static Clustering getBigQueryClustering(JsonNode keySchema) {
+
+    if (keySchema == null) {
+      return Clustering.newBuilder().setFields(List.of("__source_ts_ms")).build();
+    }
+
+    ArrayList<String> fl = new ArrayList<>();
+    for (JsonNode jsonSchemaFieldNode : keySchema.get("fields")) {
+      String fieldName = jsonSchemaFieldNode.get("field").textValue();
+      fl.add(fieldName);
+    }
+
+    fl.add("__source_ts_ms");
+    return Clustering.newBuilder().setFields(fl).build();
+  }
+
+  public static Schema getBigQuerySchema(String eventJsonString, Boolean castDeletedField) {
+    ArrayList<Field> fields = BatchUtil.getBigQuerySchemaFields(BatchUtil.getSchemaNode(eventJsonString), castDeletedField);
+
+    if (fields == null) {
+      return null;
+    }
+
+    fields.add(Field.of("__source_ts", StandardSQLTypeName.TIMESTAMP));
+    return Schema.of(fields);
+  }
+
+  public static ArrayList<Field> getBigQuerySchemaFields(JsonNode eventSchema, Boolean castDeletedField) {
+
+    if (eventSchema == null) {
+      return null;
+    }
+
+    ArrayList<Field> fields = new ArrayList();
+
+    String schemaType = eventSchema.get("type").textValue();
+    String schemaName = "root";
+    if (eventSchema.has("field")) {
+      schemaName = eventSchema.get("field").textValue();
+    }
+    LOGGER.trace("Converting Schema of: {}::{}", schemaName, schemaType);
+
+    for (JsonNode jsonSchemaFieldNode : eventSchema.get("fields")) {
+      String fieldName = jsonSchemaFieldNode.get("field").textValue();
+      String fieldType = jsonSchemaFieldNode.get("type").textValue();
+      LOGGER.trace("Processing Field: {}.{}::{}", schemaName, fieldName, fieldType);
+      // for all the debezium data types please see org.apache.kafka.connect.data.Schema;
+      switch (fieldType) {
+        case "int8":
+        case "int16":
+        case "int32":
+        case "int64":
+          fields.add(Field.of(fieldName, StandardSQLTypeName.INT64));
+          break;
+        case "float8":
+        case "float16":
+        case "float32":
+        case "float64":
+          fields.add(Field.of(fieldName, StandardSQLTypeName.FLOAT64));
+          break;
+        case "boolean":
+          fields.add(Field.of(fieldName, StandardSQLTypeName.BOOL));
+          break;
+        case "string":
+          fields.add((castDeletedField && Objects.equals(fieldName, "__deleted"))
+              ? Field.of(fieldName, StandardSQLTypeName.BOOL)
+              : Field.of(fieldName, StandardSQLTypeName.STRING));
+          break;
+        case "bytes":
+          fields.add(Field.of(fieldName, StandardSQLTypeName.BYTES));
+          break;
+        case "array":
+          fields.add(Field.of(fieldName, StandardSQLTypeName.ARRAY));
+          break;
+        case "map":
+          fields.add(Field.of(fieldName, StandardSQLTypeName.STRUCT));
+          break;
+        case "struct":
+          // recursive call
+          ArrayList<Field> subFields = BatchUtil.getBigQuerySchemaFields(jsonSchemaFieldNode, false);
+          fields.add(Field.newBuilder(fieldName, StandardSQLTypeName.STRUCT, FieldList.of(subFields)).build());
+          break;
+        default:
+          // default to String type
+          fields.add(Field.of(fieldName, StandardSQLTypeName.STRING));
+          break;
+      }
+    }
+
+    return fields;
+  }
+
 
 }
