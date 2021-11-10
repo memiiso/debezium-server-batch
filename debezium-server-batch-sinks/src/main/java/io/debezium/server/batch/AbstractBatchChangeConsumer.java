@@ -19,12 +19,16 @@ import io.debezium.util.Clock;
 import io.debezium.util.Strings;
 import io.debezium.util.Threads;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
@@ -47,28 +51,25 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
   protected static final Duration LOG_INTERVAL = Duration.ofMinutes(15);
+  protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
   protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final ObjectMapper mapper = new ObjectMapper();
+  protected final Clock clock = Clock.system();
   protected Deserializer<JsonNode> valDeserializer;
-
+  protected long consumerStart = clock.currentTimeInMillis();
+  protected long numConsumedEvents = 0;
+  protected Threads.Timer logTimer = Threads.timer(clock, LOG_INTERVAL);
   @ConfigProperty(name = "debezium.format.value", defaultValue = "json")
   String valueFormat;
-
   @ConfigProperty(name = "debezium.format.key", defaultValue = "json")
   String keyFormat;
-
   @ConfigProperty(name = "debezium.sink.batch.batch-size-wait", defaultValue = "NoBatchSizeWait")
   String batchSizeWaitName;
-
   @Inject
   @Any
   Instance<InterfaceBatchSizeWait> batchSizeWaitInstances;
   InterfaceBatchSizeWait batchSizeWait;
-  protected final Clock clock = Clock.system();
-  protected long consumerStart = clock.currentTimeInMillis();
-  protected long numConsumedEvents = 0;
-  protected Threads.Timer logTimer = Threads.timer(clock, LOG_INTERVAL);
 
   public void initizalize() throws InterruptedException {
 
@@ -132,6 +133,49 @@ public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer imp
       consumerStart = clock.currentTimeInMillis();
       logTimer = Threads.timer(clock, LOG_INTERVAL);
     }
+  }
+
+  public JsonNode getPayload(String destination, Object val) {
+    return valDeserializer.deserialize(destination, getBytes(val));
+  }
+
+  public File getJsonLinesFile(String destination, List<ChangeEvent<Object, Object>> data) {
+
+    Instant start = Instant.now();
+    final File tempFile;
+    try {
+      tempFile = File.createTempFile(UUID.randomUUID() + "-", ".json");
+      FileOutputStream fos = new FileOutputStream(tempFile, true);
+      LOGGER.debug("Writing {} events as jsonlines file: {}", data.size(), tempFile);
+
+      for (ChangeEvent<Object, Object> e : data) {
+        Object val = e.value();
+
+        if (val == null) {
+          LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(e.key()));
+          continue;
+        }
+
+        try {
+          final JsonNode valNode = getPayload(destination, val);
+          final String valData = mapper.writeValueAsString(valNode) + System.lineSeparator();
+
+          fos.write(valData.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException ioe) {
+          LOGGER.error("Failed writing record to file", ioe);
+          fos.close();
+          throw new UncheckedIOException(ioe);
+        }
+      }
+
+      fos.close();
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    LOGGER.trace("Writing jsonlines took:{}", Duration.between(start, Instant.now()).truncatedTo(ChronoUnit.SECONDS));
+    return tempFile;
   }
 
   public abstract long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException;

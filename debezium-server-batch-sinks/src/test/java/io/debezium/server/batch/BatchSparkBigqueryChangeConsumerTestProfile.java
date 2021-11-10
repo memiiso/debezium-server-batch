@@ -21,19 +21,19 @@ public class BatchSparkBigqueryChangeConsumerTestProfile implements QuarkusTestP
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "sparkbigquerybatch");
+    config.put("debezium.source.table.include.list", "inventory.customers");
+    //
     config.put("debezium.sink.sparkbatch.spark.datasource.bigquery.project", "test");
     config.put("debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", "test");
     config.put("debezium.sink.sparkbatch.spark.datasource.bigquery.temporaryGcsBucket", "bigquery-buffer-bucket");
     config.put("debezium.sink.sparkbatch.spark.datasource.bigquery.credentialsFile", "/path/to/application_credentials.json");
+    // gcs token provider
+    config.put("debezium.sink.sparkbatch.spark.hadoop.fs.gs.auth.access.token.provider.impl", "io.debezium.server.batch.spark.GCSAccessTokenProvider");
+    config.put("debezium.sink.sparkbatch.spark.hadoop.credentialsFile", "/path/to/application_credentials.json");
+    //
     config.put("quarkus.log.category.\"io.debezium.server.batch\".level", "INFO");
     config.put("quarkus.log.category.\"io.debezium.server.batch.BatchSparkBigqueryChangeConsumer\".level", "DEBUG");
     config.put("quarkus.log.category.\"com.google.cloud.spark.bigquery\".level", "DEBUG");
-    config.put("debezium.source.table.include.list", "inventory.customers");
-    // gcs token provider
-    config.put("debezium.sink.sparkbatch.spark.hadoop.fs.gs.auth.access.token.provider.impl",
-        "io.debezium.server.batch.spark.GCSAccessTokenProvider");
-    config.put("debezium.sink.sparkbatch.spark.hadoop.credentialsFile",
-        "/Users/ismailsimsek/.config/gcloud/application_default_credentials.json");
 
     return config;
   }
