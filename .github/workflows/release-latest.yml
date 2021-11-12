@@ -1,9 +1,8 @@
-name: Create Release
+name: Create Release of master branch
 
 on:
   push:
-    tags:
-      - '*.*.*.*'
+    branches: [ master ]
 
 env:
   SPARK_LOCAL_IP: 127.0.0.1
@@ -19,7 +18,7 @@ jobs:
 
       - name: Set env
         run: |
-          echo "RELEASE_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=latest" >> $GITHUB_ENV
           echo "RELEASE_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
           echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
@@ -42,7 +41,7 @@ jobs:
         with:
           name: Release ${{ env.RELEASE_NAME }}
           tag_name: ${{ env.RELEASE_NAME }}
-          body: Release ${{ env.RELEASE_NAME }}
+          body: Release master branch
           draft: false
-          prerelease: false
+          prerelease: true
           files: debezium-server-dist/target/debezium-server-dist-${{ env.RELEASE_NAME }}.zip
