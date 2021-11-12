@@ -193,7 +193,7 @@
 
     <modules>
         <module>debezium-server-batch-sinks</module>
-        <module>debezium-server-dist</module>
+        <module>debezium-server-batch-dist</module>
     </modules>
 
 
