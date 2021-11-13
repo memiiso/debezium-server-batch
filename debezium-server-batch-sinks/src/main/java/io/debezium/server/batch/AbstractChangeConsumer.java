@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Ismail Simsek
  */
-public abstract class AbstractBatchChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
+public abstract class AbstractChangeConsumer extends BaseChangeConsumer implements DebeziumEngine.ChangeConsumer<ChangeEvent<Object, Object>> {
 
   protected static final Duration LOG_INTERVAL = Duration.ofMinutes(15);
   protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();

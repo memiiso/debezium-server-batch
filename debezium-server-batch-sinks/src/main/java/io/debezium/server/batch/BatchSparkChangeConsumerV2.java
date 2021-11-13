@@ -33,7 +33,7 @@ import static org.apache.spark.sql.functions.col;
  */
 @Named("sparkbatch")
 @Dependent
-public class BatchSparkChangeConsumerV2 extends AbstractBatchSparkChangeConsumer {
+public class BatchSparkChangeConsumerV2 extends AbstractSparkChangeConsumer {
 
   @PostConstruct
   void connect() throws InterruptedException {

@@ -25,7 +25,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  *
  * @author Ismail Simsek
  */
-public abstract class AbstractBatchSparkChangeConsumer extends AbstractBatchChangeConsumer {
+public abstract class AbstractSparkChangeConsumer extends AbstractChangeConsumer {
 
   protected static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
   protected final SparkConf sparkconf = new SparkConf()

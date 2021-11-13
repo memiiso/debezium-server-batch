@@ -39,7 +39,7 @@ import static org.apache.spark.sql.functions.*;
  */
 @Named("sparkbigquerybatch")
 @Dependent
-public class BatchSparkBigqueryChangeConsumer extends AbstractBatchSparkChangeConsumer {
+public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsumer {
 
   static final HashMap<String, String> saveOptions = new HashMap<>();
   final String saveFormat = "bigquery";
