@@ -170,10 +170,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
     }
 
     df.unpersist();
-    if (jsonlines.exists()) {
-      jsonlines.delete();
-    }
-
+    jsonlines.delete();
     return numRecords;
   }
 

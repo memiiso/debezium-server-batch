@@ -138,7 +138,7 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
   public JsonNode getPayload(String destination, Object val) {
     return valDeserializer.deserialize(destination, getBytes(val));
   }
-
+  
   public File getJsonLinesFile(String destination, List<ChangeEvent<Object, Object>> data) {
 
     Instant start = Instant.now();

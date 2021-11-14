@@ -91,19 +91,14 @@ public class BatchBigqueryChangeConsumer extends AbstractBigqueryChangeConsumer 
           clustering
       );
 
-      if (jsonlines.exists()) {
-        jsonlines.delete();
-      }
-
+      jsonlines.delete();
       return numRecords;
 
     } catch (BigQueryException | InterruptedException | IOException e) {
       e.printStackTrace();
       throw new DebeziumException(e);
     } finally {
-      if (jsonlines.exists()) {
-        jsonlines.delete();
-      }
+      jsonlines.delete();
     }
   }
 

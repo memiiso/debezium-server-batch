@@ -89,10 +89,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractSparkChangeConsumer {
       );
     }
     df.unpersist();
-    if (jsonlines.exists()) {
-      jsonlines.delete();
-    }
-
+    jsonlines.delete();
     return numRecords;
   }
 
