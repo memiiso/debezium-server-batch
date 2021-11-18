@@ -6,7 +6,7 @@ RUN mvn clean package -Passembly -Dmaven.test.skip --quiet
 RUN unzip /app/debezium-server-batch-dist/target/debezium-server-batch-dist*.zip -d appdist
 
 FROM eclipse-temurin:11-jre
-COPY --from=builder /app/appdist/ /app/
+COPY --from=builder /app/appdist/debezium-server-batch/ /app/
 
 WORKDIR /app
 EXPOSE 8080 8083
