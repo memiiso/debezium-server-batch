@@ -45,8 +45,6 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
   protected Optional<String> destinationRegexp;
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
   protected Optional<String> destinationRegexpReplace;
-  @Inject
-  protected DestinationMapperBigquery streamMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", defaultValue = "")
   Optional<String> bqDataset;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project", defaultValue = "")
@@ -79,7 +77,9 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
     if (credentialsFile.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.credentialsFile`");
     }
-    streamMapper.initialize();
+    if (bqDataset.isEmpty()) {
+      throw new InterruptedException("Please provide a value for `debezium.sink.sparkbatch.spark.datasource.bigquery.dataset`");
+    }
     super.initizalize();
   }
 
@@ -99,6 +99,13 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
   @PreDestroy
   void close() {
     this.stopSparkSession();
+  }
+
+  public String map(String destination) {
+    return bqDataset.get() + "." +
+        destination
+            .replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse(""))
+            .replace(".", "_");
   }
 
   @Override
@@ -127,7 +134,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
     long numRecords;
 
     final String clusteringFields = data.get(0).getBigQueryClusteringFields();
-    final String tableName = streamMapper.map(destination);
+    final String tableName = map(destination);
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()

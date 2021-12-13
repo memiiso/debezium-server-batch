@@ -13,17 +13,23 @@ import io.debezium.server.batch.BatchEvent;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import static org.apache.spark.sql.functions.col;
 
 /**
@@ -33,8 +39,23 @@ import static org.apache.spark.sql.functions.col;
  */
 @Named("sparkbatch")
 @Dependent
-public class BatchSparkChangeConsumerV2 extends AbstractSparkChangeConsumer {
+public class BatchSparkChangeConsumer extends AbstractSparkChangeConsumer {
 
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-partition", defaultValue = "false")
+  protected Boolean partitionData;
+
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-partition-time-zone", defaultValue = "UTC")
+  protected String partitionDataZone;
+
+  @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
+  protected Optional<String> objectKeyPrefix;
+
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
+  protected Optional<String> destinationRegexp;
+
+  @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
+  protected Optional<String> destinationRegexpReplace;
+  
   @PostConstruct
   void connect() throws InterruptedException {
     this.initizalize();
@@ -67,7 +88,7 @@ public class BatchSparkChangeConsumerV2 extends AbstractSparkChangeConsumer {
 
     long numRecords;
 
-    String uploadFile = streamMapper.map(destination);
+    String uploadFile = map(destination);
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
       df.write()
@@ -91,6 +112,25 @@ public class BatchSparkChangeConsumerV2 extends AbstractSparkChangeConsumer {
     df.unpersist();
     jsonlines.delete();
     return numRecords;
+  }
+
+
+  private String getPartition() {
+    final ZonedDateTime batchTime = ZonedDateTime.now(ZoneId.of(partitionDataZone));
+    return "year=" + batchTime.getYear() + "/month=" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0') + "/day="
+        + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
+  }
+
+  public String map(String destination) {
+    Objects.requireNonNull(destination, "destination Cannot be Null");
+    if (partitionData) {
+      String partitioned = getPartition();
+      return objectKeyPrefix.orElse("") +
+          destination.replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse("")) +
+          "/" + partitioned;
+    } else {
+      return objectKeyPrefix + destination.replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse(""));
+    }
   }
 
 }

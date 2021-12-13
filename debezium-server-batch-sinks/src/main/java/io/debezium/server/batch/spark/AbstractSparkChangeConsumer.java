@@ -31,9 +31,6 @@ public abstract class AbstractSparkChangeConsumer extends AbstractChangeConsumer
       .setAppName("CDC-Batch-Spark-Sink")
       .setMaster("local[*]");
   protected SparkSession spark;
-
-  @Inject
-  protected DestinationMapperObject streamMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
   String bucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "parquet")
@@ -57,7 +54,6 @@ public abstract class AbstractSparkChangeConsumer extends AbstractChangeConsumer
 
   public void initizalize() throws InterruptedException {
     super.initizalize();
-    streamMapper.initialize();
 
     Map<String, String> appSparkConf = BatchUtil.getConfigSubset(ConfigProvider.getConfig(), SPARK_PROP_PREFIX);
     appSparkConf.forEach(this.sparkconf::set);
