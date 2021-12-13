@@ -8,7 +8,6 @@
 
 package io.debezium.server.batch;
 
-import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.streammapper.BigqueryStorageNameMapper;
 
 import java.io.File;
@@ -24,7 +23,6 @@ import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -103,26 +101,12 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
     this.stopSparkSession();
   }
 
-  protected String getClusteringFields(ChangeEvent<Object, Object> event) {
-
-    if (event.key() == null) {
-      return "__source_ts";
-    }
-
-    StructType keyFieldsSchema = BatchUtil.getSparkDfSchema(BatchUtil.getSchemaNode(getString(event.key())));
-    if (keyFieldsSchema == null) {
-      return "__source_ts";
-    }
-
-    return StringUtils.strip(String.join(",", keyFieldsSchema.fieldNames()) + ",__source_ts", ",");
-  }
-
   @Override
-  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException {
+  public long uploadDestination(String destination, List<BatchEvent> data) throws InterruptedException {
 
     Instant start = Instant.now();
 
-    StructType dfSchema = getSparkSchema(data.get(0));
+    StructType dfSchema = data.get(0).getSparkDfSchema();
     File jsonlines = getJsonLinesFile(destination, data);
     Dataset<Row> df;
 
@@ -142,7 +126,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
 
     long numRecords;
 
-    final String clusteringFields = getClusteringFields(data.get(0));
+    final String clusteringFields = data.get(0).getBigQueryClusteringFields();
     final String tableName = streamMapper.map(destination);
     // serialize same destination uploads
     synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {

@@ -9,7 +9,6 @@
 package io.debezium.server.batch;
 
 import io.debezium.DebeziumException;
-import io.debezium.engine.ChangeEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +39,7 @@ public class BatchBigqueryChangeConsumer extends AbstractBigqueryChangeConsumer 
   }
 
   @Override
-  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException {
+  public long uploadDestination(String destination, List<BatchEvent> data) throws InterruptedException {
 
     File jsonlines = getJsonLinesFile(destination, data);
     try {
@@ -48,8 +47,8 @@ public class BatchBigqueryChangeConsumer extends AbstractBigqueryChangeConsumer 
       long numRecords = Files.lines(jsonlines.toPath()).count();
       TableId tableId = getTableId(destination);
 
-      Schema schema = BatchUtil.getBigQuerySchema(getString(data.get(0).value()), castDeletedField);
-      Clustering clustering = BatchUtil.getBigQueryClustering(getString(data.get(0).key()));
+      Schema schema = data.get(0).getBigQuerySchema(castDeletedField);
+      Clustering clustering = data.get(0).getBigQueryClustering();
 
       // serialize same destination uploads
       synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {

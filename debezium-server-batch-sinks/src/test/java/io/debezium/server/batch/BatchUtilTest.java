@@ -29,10 +29,13 @@ class BatchUtilTest {
   public StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
 
-    if (!BatchUtil.hasSchema(jsonNode)) {
-      return null;
-    }
-    return BatchUtil.getSparkDfSchema(jsonNode.get("schema"));
+    BatchEvent e = new BatchEvent("test",
+        jsonNode.get("payload"),
+        null,
+        jsonNode.get("schema"),
+        null
+    );
+    return e.getSparkDfSchema();
   }
 
   @Test

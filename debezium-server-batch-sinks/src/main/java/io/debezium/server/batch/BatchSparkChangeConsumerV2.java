@@ -8,8 +8,6 @@
 
 package io.debezium.server.batch;
 
-import io.debezium.engine.ChangeEvent;
-
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
@@ -46,10 +44,10 @@ public class BatchSparkChangeConsumerV2 extends AbstractSparkChangeConsumer {
   }
 
   @Override
-  public long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) {
+  public long uploadDestination(String destination, List<BatchEvent> data) {
 
     Instant start = Instant.now();
-    StructType dfSchema = getSparkSchema(data.get(0));
+    StructType dfSchema = data.get(0).getSparkDfSchema();
     File jsonlines = getJsonLinesFile(destination, data);
     Dataset<Row> df;
 

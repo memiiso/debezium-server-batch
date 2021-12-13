@@ -8,7 +8,6 @@
 
 package io.debezium.server.batch;
 
-import io.debezium.engine.ChangeEvent;
 import io.debezium.server.batch.streammapper.ObjectStorageNameMapper;
 
 import java.util.Map;
@@ -16,7 +15,6 @@ import javax.inject.Inject;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.StructType;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -74,10 +72,6 @@ public abstract class AbstractSparkChangeConsumer extends AbstractChangeConsumer
     LOGGER.info("Spark save format is '{}'", saveFormat);
     LOGGER.info("Spark Version {}", this.spark.version());
     LOGGER.info("Spark Config Values\n{}", this.spark.sparkContext().getConf().toDebugString());
-  }
-
-  protected StructType getSparkSchema(ChangeEvent<Object, Object> event) {
-    return BatchUtil.getSparkDfSchema(BatchUtil.getSchemaNode(getString(event.value())));
   }
 
 }
