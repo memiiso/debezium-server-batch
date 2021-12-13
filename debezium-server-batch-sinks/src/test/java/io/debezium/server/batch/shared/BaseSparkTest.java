@@ -3,10 +3,10 @@
  *  * Copyright memiiso Authors.
  *  *
  *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
- *
+ *  
  */
 
-package io.debezium.server.batch.common;
+package io.debezium.server.batch.shared;
 
 import io.debezium.server.batch.BatchUtil;
 import io.debezium.server.batch.ConfigSource;
@@ -22,8 +22,6 @@ import org.apache.spark.sql.functions;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.BeforeAll;
-import static io.debezium.server.batch.common.TestUtil.randomInt;
-import static io.debezium.server.batch.common.TestUtil.randomString;
 
 /**
  * Integration test that verifies basic reading from PostgreSQL database and writing to s3 destination.
@@ -83,13 +81,13 @@ public class BaseSparkTest {
       new Thread(() -> {
         try {
           if (addRandomDelay) {
-            Thread.sleep(randomInt(20000, 100000));
+            Thread.sleep(TestUtil.randomInt(20000, 100000));
           }
           String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
               "VALUES ";
-          StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
+          StringBuilder values = new StringBuilder("\n(" + TestUtil.randomInt(15, 32) + ", '" + TestUtil.randomString(524) + "', '" + TestUtil.randomString(524) + "')");
           for (int i = 0; i < 200; i++) {
-            values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
+            values.append("\n,(").append(TestUtil.randomInt(15, 32)).append(", '").append(TestUtil.randomString(524)).append("', '").append(TestUtil.randomString(524)).append("')");
           }
           SourcePostgresqlDB.runSQL(sql + values);
           SourcePostgresqlDB.runSQL("COMMIT;");
@@ -121,9 +119,9 @@ public class BaseSparkTest {
     do {
       String sql = "INSERT INTO inventory.test_date_table (c_id, c_text, c_varchar ) " +
           "VALUES ";
-      StringBuilder values = new StringBuilder("\n(" + randomInt(15, 32) + ", '" + randomString(524) + "', '" + randomString(524) + "')");
+      StringBuilder values = new StringBuilder("\n(" + TestUtil.randomInt(15, 32) + ", '" + TestUtil.randomString(524) + "', '" + TestUtil.randomString(524) + "')");
       for (int i = 0; i < 10; i++) {
-        values.append("\n,(").append(randomInt(15, 32)).append(", '").append(randomString(524)).append("', '").append(randomString(524)).append("')");
+        values.append("\n,(").append(TestUtil.randomInt(15, 32)).append(", '").append(TestUtil.randomString(524)).append("', '").append(TestUtil.randomString(524)).append("')");
       }
       SourceMysqlDB.runSQL(sql + values);
       numInsert += 10;

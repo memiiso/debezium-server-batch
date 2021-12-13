@@ -10,7 +10,6 @@ package io.debezium.server.batch.spark;
 
 import io.debezium.server.batch.AbstractChangeConsumer;
 import io.debezium.server.batch.BatchUtil;
-import io.debezium.server.batch.streammapper.ObjectStorageNameMapper;
 
 import java.util.Map;
 import javax.inject.Inject;

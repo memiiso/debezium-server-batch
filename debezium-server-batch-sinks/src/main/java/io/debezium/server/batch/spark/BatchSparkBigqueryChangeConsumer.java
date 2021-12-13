@@ -9,7 +9,6 @@
 package io.debezium.server.batch.spark;
 
 import io.debezium.server.batch.BatchEvent;
-import io.debezium.server.batch.streammapper.BigqueryStorageNameMapper;
 
 import java.io.File;
 import java.time.Duration;

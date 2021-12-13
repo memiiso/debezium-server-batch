@@ -14,7 +14,7 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.batchsizewait.InterfaceBatchSizeWait;
+import io.debezium.server.batch.common.InterfaceBatchSizeWait;
 import io.debezium.util.Clock;
 import io.debezium.util.Strings;
 import io.debezium.util.Threads;

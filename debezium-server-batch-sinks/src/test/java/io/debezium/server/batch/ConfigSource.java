@@ -9,8 +9,8 @@
 package io.debezium.server.batch;
 
 import io.debezium.server.TestConfigSource;
-import io.debezium.server.batch.common.S3Minio;
-import io.debezium.server.batch.common.SourcePostgresqlDB;
+import io.debezium.server.batch.shared.S3Minio;
+import io.debezium.server.batch.shared.SourcePostgresqlDB;
 import io.debezium.util.Testing;
 
 import java.nio.file.Path;

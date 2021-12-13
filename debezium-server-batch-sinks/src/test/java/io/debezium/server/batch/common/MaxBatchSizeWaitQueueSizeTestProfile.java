@@ -6,14 +6,14 @@
  *
  */
 
-package io.debezium.server.batch.batchsizewait;
+package io.debezium.server.batch.common;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MaxBatchSizeWaitTestProfile implements QuarkusTestProfile {
+public class MaxBatchSizeWaitQueueSizeTestProfile implements QuarkusTestProfile {
 
   @Override
   public Map<String, String> getConfigOverrides() {
@@ -26,9 +26,17 @@ public class MaxBatchSizeWaitTestProfile implements QuarkusTestProfile {
     config.put("debezium.source.max.batch.size", "5000");
     config.put("debezium.source.max.queue.size", "70000");
     //config.put("debezium.source.poll.interval.ms", "1000");
-    config.put("debezium.sink.batch.batch-size-wait.max-wait-ms", "5000");
+    config.put("debezium.sink.batch.batch-size-wait.max-wait-ms", "25000");
     config.put("debezium.sink.batch.batch-size-wait.wait-interval-ms", "1000");
-    config.put("quarkus.log.category.\"io.debezium.server.batch.batchsizewait\".level", "DEBUG");
+    //
+    config.put("quarkus.log.category.\"io.debezium.server.batch\".level", "DEBUG");
+    config.put("quarkus.log.category.\"io.debezium\".level", "DEBUG");
+    config.put("quarkus.log.level", "WARN");
+    config.put("quarkus.log.category.\"org.apache.spark\".level", "WARN");
+    config.put("quarkus.log.category.\"org.apache.hadoop\".level", "ERROR");
+    config.put("quarkus.log.category.\"org.apache.parquet\".level", "WARN");
+    config.put("quarkus.log.category.\"org.eclipse.jetty\".level", "WARN");
+
     return config;
   }
 }

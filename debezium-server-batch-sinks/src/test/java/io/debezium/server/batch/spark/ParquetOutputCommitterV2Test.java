@@ -8,8 +8,8 @@
 
 package io.debezium.server.batch.spark;
 
-import io.debezium.server.batch.common.BaseSparkTest;
-import io.debezium.server.batch.common.S3Minio;
+import io.debezium.server.batch.shared.BaseSparkTest;
+import io.debezium.server.batch.shared.S3Minio;
 import io.debezium.util.Testing;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;

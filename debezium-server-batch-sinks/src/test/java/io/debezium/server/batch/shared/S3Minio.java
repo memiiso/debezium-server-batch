@@ -3,10 +3,10 @@
  *  * Copyright memiiso Authors.
  *  *
  *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
- *
+ *  
  */
 
-package io.debezium.server.batch.common;
+package io.debezium.server.batch.shared;
 
 import io.debezium.server.batch.ConfigSource;
 import io.minio.ListObjectsArgs;

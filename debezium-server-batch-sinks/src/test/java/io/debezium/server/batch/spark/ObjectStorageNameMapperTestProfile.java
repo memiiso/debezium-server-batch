@@ -6,7 +6,7 @@
  *  
  */
 
-package io.debezium.server.batch.streammapper;
+package io.debezium.server.batch.spark;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 

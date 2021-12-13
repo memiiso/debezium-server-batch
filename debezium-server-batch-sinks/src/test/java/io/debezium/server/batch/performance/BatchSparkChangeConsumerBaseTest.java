@@ -8,7 +8,7 @@
 
 package io.debezium.server.batch.performance;
 
-import io.debezium.server.batch.common.BaseSparkTest;
+import io.debezium.server.batch.shared.BaseSparkTest;
 
 import java.time.Duration;
 

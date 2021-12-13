@@ -8,7 +8,7 @@
 
 package io.debezium.server.batch.bigquery;
 
-import io.debezium.server.batch.common.SourcePostgresqlDB;
+import io.debezium.server.batch.shared.SourcePostgresqlDB;
 import io.debezium.util.Testing;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
