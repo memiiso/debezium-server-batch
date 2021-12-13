@@ -33,7 +33,7 @@ public abstract class AbstractSparkChangeConsumer extends AbstractChangeConsumer
   protected SparkSession spark;
 
   @Inject
-  protected ObjectStorageNameMapper streamMapper;
+  protected DestinationMapperObject streamMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
   String bucket;
   @ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "parquet")

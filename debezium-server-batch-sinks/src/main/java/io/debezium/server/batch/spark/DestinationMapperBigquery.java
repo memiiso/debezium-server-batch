@@ -14,7 +14,7 @@ import javax.enterprise.context.Dependent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @Dependent
-public class BigqueryStorageNameMapper implements StreamNameMapper {
+public class DestinationMapperBigquery implements DestinationMapper {
 
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
   protected Optional<String> destinationRegexp;

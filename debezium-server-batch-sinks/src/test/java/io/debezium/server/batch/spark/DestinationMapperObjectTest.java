@@ -21,11 +21,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(ObjectStorageNameMapperTestProfile.class)
-class ObjectStorageNameMapperTest {
+@TestProfile(DestinationMapperObjectTestProfile.class)
+class DestinationMapperObjectTest {
 
   @Inject
-  ObjectStorageNameMapper mapper;
+  DestinationMapperObject mapper;
 
   @ConfigProperty(name = "debezium.sink.batch.objectkey-partition-time-zone", defaultValue = "UTC")
   String partitionDataZone;

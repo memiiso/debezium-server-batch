@@ -8,7 +8,7 @@
 
 package io.debezium.server.batch.spark;
 
-public interface StreamNameMapper {
+public interface DestinationMapper {
 
   default void initialize() throws InterruptedException {
   }

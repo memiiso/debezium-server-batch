@@ -46,7 +46,7 @@ public class BatchSparkBigqueryChangeConsumer extends AbstractSparkChangeConsume
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
   protected Optional<String> destinationRegexpReplace;
   @Inject
-  protected BigqueryStorageNameMapper streamMapper;
+  protected DestinationMapperBigquery streamMapper;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.dataset", defaultValue = "")
   Optional<String> bqDataset;
   @ConfigProperty(name = "debezium.sink.sparkbatch.spark.datasource.bigquery.project", defaultValue = "")
