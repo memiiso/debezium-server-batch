@@ -6,9 +6,10 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.bigquery;
 
 import io.debezium.DebeziumException;
+import io.debezium.server.batch.BatchEvent;
 
 import java.io.File;
 import java.io.IOException;

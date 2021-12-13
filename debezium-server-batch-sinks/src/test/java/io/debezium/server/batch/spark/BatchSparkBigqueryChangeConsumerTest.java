@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.spark;
 
 import io.debezium.server.batch.common.BaseSparkTest;
 import io.debezium.server.batch.common.SourcePostgresqlDB;

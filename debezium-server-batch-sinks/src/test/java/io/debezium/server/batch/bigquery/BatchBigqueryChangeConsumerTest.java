@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.bigquery;
 
 import io.debezium.server.batch.common.SourcePostgresqlDB;
 import io.debezium.util.Testing;

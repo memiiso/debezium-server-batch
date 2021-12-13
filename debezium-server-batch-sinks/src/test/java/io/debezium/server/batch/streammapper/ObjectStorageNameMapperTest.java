@@ -6,9 +6,8 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.streammapper;
 
-import io.debezium.server.batch.streammapper.ObjectStorageNameMapper;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 

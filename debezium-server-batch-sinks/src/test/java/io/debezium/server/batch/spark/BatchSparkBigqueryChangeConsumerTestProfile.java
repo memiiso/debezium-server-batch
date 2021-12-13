@@ -6,7 +6,7 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.spark;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 
@@ -32,7 +32,7 @@ public class BatchSparkBigqueryChangeConsumerTestProfile implements QuarkusTestP
     config.put("debezium.sink.sparkbatch.spark.hadoop.credentialsFile", "/path/to/application_credentials.json");
     //
     config.put("quarkus.log.category.\"io.debezium.server.batch\".level", "INFO");
-    config.put("quarkus.log.category.\"io.debezium.server.batch.BatchSparkBigqueryChangeConsumer\".level", "DEBUG");
+    config.put("quarkus.log.category.\"io.debezium.server.batch.spark.BatchSparkBigqueryChangeConsumer\".level", "DEBUG");
     config.put("quarkus.log.category.\"com.google.cloud.spark.bigquery\".level", "DEBUG");
 
     return config;

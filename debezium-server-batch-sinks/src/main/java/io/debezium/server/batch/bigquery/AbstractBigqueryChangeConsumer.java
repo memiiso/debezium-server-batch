@@ -6,9 +6,10 @@
  *
  */
 
-package io.debezium.server.batch;
+package io.debezium.server.batch.bigquery;
 
 import io.debezium.DebeziumException;
+import io.debezium.server.batch.AbstractChangeConsumer;
 
 import java.io.FileInputStream;
 import java.io.IOException;
