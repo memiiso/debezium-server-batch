@@ -14,7 +14,7 @@ import io.debezium.engine.DebeziumEngine;
 import io.debezium.engine.format.Json;
 import io.debezium.serde.DebeziumSerdes;
 import io.debezium.server.BaseChangeConsumer;
-import io.debezium.server.batch.batchsizewait.InterfaceBatchSizeWait;
+import io.debezium.server.batch.common.InterfaceBatchSizeWait;
 import io.debezium.util.Clock;
 import io.debezium.util.Strings;
 import io.debezium.util.Threads;
@@ -27,12 +27,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.literal.NamedLiteral;
 import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,8 +54,10 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
 
   protected static final Duration LOG_INTERVAL = Duration.ofMinutes(15);
   protected static final ConcurrentHashMap<String, Object> uploadLock = new ConcurrentHashMap<>();
+  protected static final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
+  protected static final Serde<JsonNode> keySerde = DebeziumSerdes.payloadJson(JsonNode.class);
+  static Deserializer<JsonNode> keyDeserializer;
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
-  protected final Serde<JsonNode> valSerde = DebeziumSerdes.payloadJson(JsonNode.class);
   protected final ObjectMapper mapper = new ObjectMapper();
   protected final Clock clock = Clock.system();
   protected Deserializer<JsonNode> valDeserializer;
@@ -72,9 +76,12 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
   InterfaceBatchSizeWait batchSizeWait;
 
   public void initizalize() throws InterruptedException {
-
+    // configure and set 
     valSerde.configure(Collections.emptyMap(), false);
     valDeserializer = valSerde.deserializer();
+    // configure and set 
+    keySerde.configure(Collections.emptyMap(), true);
+    keyDeserializer = keySerde.deserializer();
 
     if (!valueFormat.equalsIgnoreCase(Json.class.getSimpleName().toLowerCase())) {
       throw new InterruptedException("debezium.format.value={" + valueFormat + "} not supported! Supported (debezium.format.value=*) formats are {json,}!");
@@ -84,15 +91,8 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
       throw new InterruptedException("debezium.format.key={" + valueFormat + "} not supported! Supported (debezium.format.key=*) formats are {json,}!");
     }
 
-    Instance<InterfaceBatchSizeWait> instance = batchSizeWaitInstances.select(NamedLiteral.of(batchSizeWaitName));
-    if (instance.isAmbiguous()) {
-      throw new DebeziumException("Multiple batch size wait class named '" + batchSizeWaitName + "' were found");
-    } else if (instance.isUnsatisfied()) {
-      throw new DebeziumException("No batch size wait class named '" + batchSizeWaitName + "' is available");
-    }
-    batchSizeWait = instance.get();
+    batchSizeWait = BatchUtil.selectInstance(batchSizeWaitInstances, batchSizeWaitName);
     batchSizeWait.initizalize();
-    LOGGER.info("Using {}", batchSizeWait.getClass().getName());
   }
 
   @Override
@@ -101,14 +101,24 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     LOGGER.trace("Received {} events", records.size());
 
     Instant start = Instant.now();
-    Map<String, ArrayList<ChangeEvent<Object, Object>>> result = records.stream()
-        .collect(Collectors.groupingBy(
-            ChangeEvent::destination,
-            Collectors.mapping(p -> p,
-                Collectors.toCollection(ArrayList::new))));
+    Map<String, List<BatchEvent>> result = records.stream()
+        .map((ChangeEvent<Object, Object> e)
+            -> {
+          try {
+            return new BatchEvent(e.destination(),
+                getPayload(e.destination(), e.value()), //valDeserializer.deserialize(e.destination(), getBytes(e.value())),
+                e.key() == null ? null : keyDeserializer.deserialize(e.destination(), getBytes(e.key())),
+                mapper.readTree(getBytes(e.value())).get("schema"),
+                e.key() == null ? null : mapper.readTree(getBytes(e.key())).get("schema")
+            );
+          } catch (IOException ex) {
+            throw new DebeziumException(ex);
+          }
+        })
+        .collect(Collectors.groupingBy(BatchEvent::destination));
 
     long numUploadedEvents = 0;
-    for (Map.Entry<String, ArrayList<ChangeEvent<Object, Object>>> destinationEvents : result.entrySet()) {
+    for (Map.Entry<String, List<BatchEvent>> destinationEvents : result.entrySet()) {
       numUploadedEvents += this.uploadDestination(destinationEvents.getKey(), destinationEvents.getValue());
     }
     // workaround! somehow offset is not saved to file unless we call committer.markProcessed
@@ -138,8 +148,8 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
   public JsonNode getPayload(String destination, Object val) {
     return valDeserializer.deserialize(destination, getBytes(val));
   }
-  
-  public File getJsonLinesFile(String destination, List<ChangeEvent<Object, Object>> data) {
+
+  public File getJsonLinesFile(String destination, List<BatchEvent> data) {
 
     Instant start = Instant.now();
     final File tempFile;
@@ -148,16 +158,15 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
       FileOutputStream fos = new FileOutputStream(tempFile, true);
       LOGGER.debug("Writing {} events as jsonlines file: {}", data.size(), tempFile);
 
-      for (ChangeEvent<Object, Object> e : data) {
-        Object val = e.value();
+      for (BatchEvent e : data) {
+        final JsonNode valNode = e.value();
 
-        if (val == null) {
+        if (valNode == null) {
           LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(e.key()));
           continue;
         }
 
         try {
-          final JsonNode valNode = getPayload(destination, val);
           final String valData = mapper.writeValueAsString(valNode) + System.lineSeparator();
 
           fos.write(valData.getBytes(StandardCharsets.UTF_8));
@@ -178,6 +187,6 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     return tempFile;
   }
 
-  public abstract long uploadDestination(String destination, List<ChangeEvent<Object, Object>> data) throws InterruptedException;
+  public abstract long uploadDestination(String destination, List<BatchEvent> data) throws InterruptedException;
 
 }

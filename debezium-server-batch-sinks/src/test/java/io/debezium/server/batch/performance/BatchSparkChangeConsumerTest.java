@@ -8,8 +8,8 @@
 
 package io.debezium.server.batch.performance;
 
-import io.debezium.server.batch.common.S3Minio;
-import io.debezium.server.batch.common.SourcePostgresqlDB;
+import io.debezium.server.batch.shared.S3Minio;
+import io.debezium.server.batch.shared.SourcePostgresqlDB;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
