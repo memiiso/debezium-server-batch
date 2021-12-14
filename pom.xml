@@ -35,7 +35,7 @@
         <version.hadoop>3.3.1</version.hadoop>
         <version.log4j>2.15.0</version.log4j>
         <!-- Debezium -->
-        <version.debezium>1.7.1.Final</version.debezium>
+        <version.debezium>1.7.2.Final</version.debezium>
         <version.mysql.driver>8.0.26</version.mysql.driver>
         <!-- Quarkus -->
         <version.quarkus>2.2.3.Final</version.quarkus>
