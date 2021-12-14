@@ -112,6 +112,7 @@ public abstract class AbstractBigqueryChangeConsumer extends AbstractChangeConsu
   @Override
   public JsonNode getPayload(String destination, Object val) {
     JsonNode pl = valDeserializer.deserialize(destination, getBytes(val));
+    // used to partition tables __source_ts
     ((ObjectNode) pl).put("__source_ts", pl.get("__source_ts_ms").longValue() / 1000);
     return pl;
   }

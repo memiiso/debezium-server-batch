@@ -61,7 +61,7 @@ public class BatchSparkChangeConsumerMysqlTest extends BaseSparkTest {
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         Dataset<Row> df = getTableData("testc.inventory.test_delete_table");
-        df.show();
+        df.show(false);
         return df.count() >= 12; // 4 insert 4 delete 4 insert!
       } catch (Exception e) {
         return false;
