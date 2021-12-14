@@ -184,8 +184,7 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
     }
   }
 
-
-  private TableId getTableId(String destination) {
+  TableId getTableId(String destination) {
     final String tableName = destination
         .replaceAll(destinationRegexp.orElse(""), destinationRegexpReplace.orElse(""))
         .replace(".", "_");
