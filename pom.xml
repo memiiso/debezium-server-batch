@@ -54,6 +54,11 @@
             <name>Cloudera Repository</name>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
+        <repository>
+            <id>staged-staged</id>
+            <name>Staged Rtaged</name>
+            <url>https://repository.apache.org/content/groups/staging/</url>
+        </repository>
     </repositories>
     <dependencyManagement>
         <dependencies>
