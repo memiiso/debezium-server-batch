@@ -78,12 +78,12 @@
         <dependency>
             <groupId>org.jboss.logmanager</groupId>
             <artifactId>log4j-jboss-logmanager</artifactId>
-            <version>1.2.0.Final</version>
+            <version>${version.log4j-jboss}</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.logmanager</groupId>
             <artifactId>log4j2-jboss-logmanager</artifactId>
-            <version>1.0.0.Final</version>
+            <version>${version.log4j2-jboss}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>

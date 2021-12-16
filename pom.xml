@@ -33,7 +33,9 @@
         <version.spark>3.2.0</version.spark>
         <version.spark.hadoopcloud>3.1.1.3.1.7270.0-253</version.spark.hadoopcloud>
         <version.hadoop>3.3.1</version.hadoop>
-        <version.log4j>2.15.0</version.log4j>
+        <version.log4j>2.16.0</version.log4j>
+        <version.log4j-jboss>1.2.2.Final</version.log4j-jboss>
+        <version.log4j2-jboss>1.1.1.Final</version.log4j2-jboss>
         <!-- Debezium -->
         <version.debezium>1.8.0.RC1</version.debezium>
         <version.mysql.driver>8.0.26</version.mysql.driver>
@@ -51,6 +53,19 @@
             <id>cloudera-repos</id>
             <name>Cloudera Repository</name>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+        </repository>
+        <repository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
     <dependencyManagement>
@@ -187,6 +202,11 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
                 <version>4.4.14</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${version.log4j}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
