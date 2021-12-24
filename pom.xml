@@ -33,7 +33,7 @@
         <version.spark>3.2.0</version.spark>
         <version.spark.hadoopcloud>3.1.1.3.1.7270.0-253</version.spark.hadoopcloud>
         <version.hadoop>3.3.1</version.hadoop>
-        <version.log4j>2.16.0</version.log4j>
+        <version.log4j>2.17.0</version.log4j>
         <version.log4j-jboss>1.2.2.Final</version.log4j-jboss>
         <version.log4j2-jboss>1.1.1.Final</version.log4j2-jboss>
         <!-- Debezium -->
@@ -53,19 +53,6 @@
             <id>cloudera-repos</id>
             <name>Cloudera Repository</name>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-        </repository>
-        <repository>
-            <id>jboss-public-repository-group</id>
-            <name>JBoss Public Repository Group</name>
-            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-            <layout>default</layout>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </repository>
     </repositories>
     <dependencyManagement>
@@ -122,22 +109,10 @@
                 <artifactId>hadoop-client</artifactId>
                 <version>${version.hadoop}</version>
             </dependency>
-            <!-- Google -->
-            <!--            <dependency>-->
-            <!--                <groupId>com.google.api-client</groupId>-->
-            <!--                <artifactId>google-api-client</artifactId>-->
-            <!--                <version>1.32.2</version>-->
-            <!--            </dependency>-->
-            <!--            <dependency>-->
-            <!--                <groupId>com.google.api-client</groupId>-->
-            <!--                <artifactId>google-api-client-jackson2</artifactId>-->
-            <!--                <version>1.32.2</version>-->
-            <!--            </dependency>-->
-            <!-- Google spark-bigquery -->
             <dependency>
                 <groupId>com.google.cloud.spark</groupId>
                 <artifactId>spark-bigquery-with-dependencies_2.12</artifactId>
-                <version>0.22.2</version>
+                <version>0.23.1</version>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud.bigdataoss</groupId>
@@ -148,19 +123,19 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>24.0.0</version>
+                <version>24.1.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>google-cloud-bigquery</artifactId>
-                <version>2.3.3</version>
+                <version>2.5.1</version>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>google-cloud-bigquerystorage</artifactId>
-                <version>2.5.1</version>
+                <version>2.7.0</version>
             </dependency>
             <!-- END Google -->
 
