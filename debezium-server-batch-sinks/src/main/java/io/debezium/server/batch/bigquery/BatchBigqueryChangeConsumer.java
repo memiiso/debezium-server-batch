@@ -135,7 +135,8 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
 
       // serialize same destination uploads
       synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-
+         // Google BigQuery Configuration for a load operation. A load configuration can be used to load data
+         // into a table with a {@link com.google.cloud.WriteChannel}
         WriteChannelConfiguration.Builder wCCBuilder = WriteChannelConfiguration
             .newBuilder(tableId, FormatOptions.json())
             .setWriteDisposition(JobInfo.WriteDisposition.WRITE_APPEND)
@@ -152,7 +153,9 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
 //          wCCBuilder.setAutodetect(true);
 //        }
 
+        //WriteChannel implementation to stream data into a BigQuery table. 
         TableDataWriteChannel writer = bqClient.writer(wCCBuilder.build());
+        //Constructs a stream that writes bytes to the given channel.
         try (OutputStream stream = Channels.newOutputStream(writer)) {
           Files.copy(jsonlines.toPath(), stream);
         }

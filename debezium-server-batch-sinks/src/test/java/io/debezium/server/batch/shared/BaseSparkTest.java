@@ -35,13 +35,6 @@ public class BaseSparkTest {
   private static final String SPARK_PROP_PREFIX = "debezium.sink.sparkbatch.";
   protected static SparkSession spark;
 
-  static {
-    Testing.Files.delete(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.createTestingFile(ConfigSource.OFFSET_STORE_PATH);
-    Testing.Files.delete(ConfigSource.HISTORY_FILE);
-    Testing.Files.createTestingFile(ConfigSource.HISTORY_FILE);
-  }
-
   @ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
   String objectKeyPrefix;
   @ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "")
