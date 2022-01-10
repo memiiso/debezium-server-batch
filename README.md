@@ -124,3 +124,15 @@ quarkus.log.category."org.apache.parquet".level=WARN
 quarkus.log.category."org.eclipse.jetty".level=WARN
 #
 ```
+
+# Install from source
+- Requirements:
+    - JDK 11
+    - Maven
+- Clone from repo: `git clone https://github.com/memiiso/debezium-server-batch.git`
+- From the root of the project:
+    - Build and package debezium server: `mvn -Passembly -Dmaven.test.skip package`
+    - After building, unzip your server distribution: `unzip debezium-server-batch-dist/target/debezium-server-batch-dist*.zip -d appdist`
+    - cd into unzipped folder: `cd appdist`
+    - Create `application.properties` file and config it: `nano conf/application.properties`, you can check the example configuration in [application.properties.example](debezium-server-batch-sink/src/main/resources/conf/application.properties.example)
+    - Run the server using provided script: `bash run.sh`
