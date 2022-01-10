@@ -44,7 +44,9 @@ Consumes debezium events to Bigquery using Bigquery writer api.
 | `debezium.sink.batch.batch-size-wait`              | `NoBatchSizeWait`  | Batch size wait strategy to optimize data files and upload interval. explained below. |
 
 ### Mandatory config
-json firmat with schema
+
+#### Debezium Event format and schema
+
 ```properties
 debezium.format.value=json
 debezium.format.key=json
