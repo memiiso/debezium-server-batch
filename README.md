@@ -9,55 +9,58 @@ its possible to consume CDC events as mini batches
 ## `sparkbatch` Consumer
 Consumes debezium events using spark
 
-@ConfigProperty(name = "debezium.sink.batch.batch-size-wait", defaultValue = "NoBatchSizeWait")
-@ConfigProperty(name = "debezium.sink.sparkbatch.bucket-name", defaultValue = "s3a://My-S3-Bucket")
-@ConfigProperty(name = "debezium.sink.sparkbatch.save-format", defaultValue = "parquet")
-@ConfigProperty(name = "debezium.sink.sparkbatch.save-mode", defaultValue = "append")
-@ConfigProperty(name = "debezium.sink.sparkbatch.cast-deleted-field", defaultValue = "false")
-@ConfigProperty(name = "debezium.sink.batch.objectkey-partition", defaultValue = "false")
-protected Boolean partitionData;
-@ConfigProperty(name = "debezium.sink.batch.objectkey-partition-time-zone", defaultValue = "UTC")
-protected String partitionDataZone;
-@ConfigProperty(name = "debezium.sink.batch.objectkey-prefix", defaultValue = "")
-protected Optional<String> objectKeyPrefix;
-@ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
-protected Optional<String> destinationRegexp;
-@ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
-protected Optional<String> destinationRegexpReplace;
+| Config                                              | Default              | Description                                                                         |
+|-----------------------------------------------------|----------------------|-------------------------------------------------------------------------------------|
+| `debezium.sink.sparkbatch.bucket-name`              | `s3a://My-S3-Bucket` | Destination bucket                                                              |
+| `debezium.sink.sparkbatch.save-format`              | `parquet`            | Spark save format                                                                   |
+| `debezium.sink.sparkbatch.save-mode`                | `append`             | Spark save mode                                                                     |
+| `debezium.sink.sparkbatch.cast-deleted-field`       | `false`              | Cast deleted field to bolean type(by default it is string mode)                     |
+| `debezium.sink.sparkbatch.<spark config>`           | ``                   | Any spark config passed to spark                                                    |
+| `debezium.sink.batch.objectkey-partition`           | `false`              | Partition destination by year=yyy/month=mm/day=dd                                   |
+| `debezium.sink.batch.objectkey-partition-time-zone` | `UTC`                | Timezone to use when generating partitions                                          |
+| `debezium.sink.batch.objectkey-prefix`              | ``                   | Prefix to add each destination                                                      |
+| `debezium.sink.batch.destination-regexp`            | ``                   | Regexp to modify destination                                                        |
+| `debezium.sink.batch.destination-regexp-replace`    | ``                   | Regexp Replace part to modify destination                                           |
+| `debezium.sink.batch.batch-size-wait`               | `NoBatchSizeWait`    | Batch size wait strategy to optimize data files and upload interval. explained below. |
 
 ## `bigquerybatch` Consumer
 Consumes debezium events to Bigquery using Bigquery writer api.
 
-@ConfigProperty(name = "debezium.sink.batch.batch-size-wait", defaultValue = "NoBatchSizeWait")
 
-@ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
-protected Optional<String> destinationRegexp;
-@ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
-protected Optional<String> destinationRegexpReplace;
-@Inject
-@ConfigProperty(name = "debezium.sink.bigquerybatch.dataset", defaultValue = "")
-Optional<String> bqDataset;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.location", defaultValue = "US")
-String bqLocation;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.project", defaultValue = "")
-Optional<String> gcpProject;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.createDisposition", defaultValue = "CREATE_IF_NEEDED")
-String createDisposition;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.partitionField", defaultValue = "__source_ts")
-String partitionField;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.partitionType", defaultValue = "MONTH")
-String partitionType;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.allowFieldAddition", defaultValue = "true")
-Boolean allowFieldAddition;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.allowFieldRelaxation", defaultValue = "true")
-Boolean allowFieldRelaxation;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.credentialsFile", defaultValue = "")
-Optional<String> credentialsFile;
-@ConfigProperty(name = "debezium.sink.bigquerybatch.cast-deleted-field", defaultValue = "false")
-Boolean castDeletedField;
+| Config                                             | Default            | Description                                                                           |
+|----------------------------------------------------|--------------------|---------------------------------------------------------------------------------------|
+| `debezium.sink.bigquerybatch.dataset`              |                    | Destination Bigquery dataset name                                                     |
+| `debezium.sink.bigquerybatch.location`             | `US`               | Bigquery table location                                                               |
+| `debezium.sink.bigquerybatch.project`              |                    | Bigquery project                                                                      |
+| `debezium.sink.bigquerybatch.createDisposition`    | `CREATE_IF_NEEDED` | Create tables if needed                                                               |
+| `debezium.sink.bigquerybatch.partitionField`       | `source_ts`        | Partition target tables by field                                                      |
+| `debezium.sink.bigquerybatch.partitionType`        | `MONTH`            | Partitioning type                                                                     |
+| `debezium.sink.bigquerybatch.allowFieldAddition`   | `true`             | Allow field addition to target tables                                                 |
+| `debezium.sink.bigquerybatch.allowFieldRelaxation` | `true`             | Allow field relaxation                                                                |
+| `debezium.sink.bigquerybatch.credentialsFile`      | ``                 |                                                                                       |
+| `debezium.sink.bigquerybatch.cast-deleted-field`   | `false`            | Cast deleted field to bolean type(by default it is string mode)                       |
+| `debezium.sink.batch.destination-regexp`           | ``                 | Regexp to modify destination                                                          |
+| `debezium.sink.batch.destination-regexp-replace`   | ``                 | Regexp Replace part to modify destination                                             |
+| `debezium.sink.batch.batch-size-wait`              | `NoBatchSizeWait`  | Batch size wait strategy to optimize data files and upload interval. explained below. |
+
+### Mandatory config
+json firmat with schema
+```properties
+debezium.format.value=json
+debezium.format.key=json
+debezium.format.schemas.enable=true
+```
+
+#### Flattening Event Data
+
+Batch consumer requires event flattening, please see [debezium feature](https://debezium.io/documentation/reference/configuration/event-flattening.html#_configuration)
 
 ```properties
-debezium.format.value.schemas.enable=true
+debezium.transforms=unwrap
+debezium.transforms.unwrap.type=io.debezium.transforms.ExtractNewRecordState
+debezium.transforms.unwrap.add.fields=op,table,lsn,source.ts_ms
+debezium.transforms.unwrap.add.headers=db
+debezium.transforms.unwrap.delete.handling.mode=rewrite
 ```
 
 ### Optimizing batch size (or commit interval)
@@ -104,19 +107,6 @@ debezium.source.max.batch.size=2048;
 debezium.source.max.queue.size=16000";
 debezium.sink.batch.batch-size-wait.max-wait-ms=30000
 debezium.sink.batch.batch-size-wait.wait-interval-ms=5000
-```
-
-## Flattening Event Data
-
-Batch consumer requires event flattening, please
-see [debezium feature](https://debezium.io/documentation/reference/configuration/event-flattening.html#_configuration)
-
-```properties
-debezium.transforms=unwrap
-debezium.transforms.unwrap.type=io.debezium.transforms.ExtractNewRecordState
-debezium.transforms.unwrap.add.fields=op,table,lsn,source.ts_ms
-debezium.transforms.unwrap.add.headers=db
-debezium.transforms.unwrap.delete.handling.mode=rewrite
 ```
 
 ## Configuring log levels
