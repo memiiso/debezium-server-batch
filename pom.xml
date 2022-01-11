@@ -41,6 +41,9 @@
         <version.mysql.driver>8.0.27</version.mysql.driver>
         <!-- Quarkus -->
         <version.quarkus>2.5.3.Final</version.quarkus>
+        <!-- ANTLR -->
+        <!-- Align with Antlr runtime version pulled in via debezium -->
+        <version.antlr>4.8</version.antlr>
 
         <!-- Plugin versions -->
         <version.maven-enforcer-plugin>3.0.0</version.maven-enforcer-plugin>
@@ -57,6 +60,11 @@
     </repositories>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${version.antlr}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
