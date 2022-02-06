@@ -2,11 +2,17 @@
 ![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)
 ![Java CI with Maven](https://github.com/memiiso/debezium-server-batch/workflows/Java%20CI%20with%20Maven/badge.svg?branch=master)
 
+# Table of contents
+* [Debezium Batch Consumers](#debezium-batch-consumers)
+  * [`sparkbatch` Consumer](#sparkbatch-consumer)
+  * [`sparkbigquerybatch` Consumer](#sparkbigquerybatch-consumer)
+  * [`bigquerybatch` Consumer](#bigquerybatch-consumer)
+* [Install from source](#install-from-source)
+
 # Debezium Batch Consumers
 
 This project adds batch consumers
-to [Debezium Server](https://debezium.io/documentation/reference/operations/debezium-server.html). Using batch consumers
-its possible to consume CDC events as mini batches
+to [Debezium Server](https://debezium.io/documentation/reference/operations/debezium-server.html). Using batch consumers its possible to consume CDC events as mini batches
 
 ## `sparkbatch` Consumer
 Consumes debezium events using spark
@@ -24,6 +30,13 @@ Consumes debezium events using spark
 | `debezium.sink.batch.destination-regexp`            | ``                   | Regexp to modify destination                                                        |
 | `debezium.sink.batch.destination-regexp-replace`    | ``                   | Regexp Replace part to modify destination                                           |
 | `debezium.sink.batch.batch-size-wait`               | `NoBatchSizeWait`    | Batch size wait strategy to optimize data files and upload interval. explained below. |
+
+## `sparkbigquerybatch` Consumer
+Slightly customized spark consumer that delivers the messages into Bigquery.
+
+| Config  | Default       | Description        |
+|---------|---------------|--------------------|
+| `@TODO` | `@TODO` | Destination bucket |
 
 ## `bigquerybatch` Consumer
 Consumes debezium events to Bigquery using Bigquery writer api.

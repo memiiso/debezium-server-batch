@@ -31,7 +31,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import static org.apache.spark.sql.functions.*;
 
 /**
- * Implementation of the consumer that delivers the messages into Amazon S3 destination.
+ * Implementation of the consumer that delivers the messages into Bigquery destination using Spark.
  *
  * @author Ismail Simsek
  */
