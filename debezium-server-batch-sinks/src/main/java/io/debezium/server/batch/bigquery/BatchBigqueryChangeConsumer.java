@@ -127,7 +127,7 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
     File jsonlines = getJsonLinesFile(destination, data);
     try {
       Instant start = Instant.now();
-      long numRecords = Files.lines(jsonlines.toPath()).count();
+      final long numRecords;
       TableId tableId = getTableId(destination);
 
       Schema schema = data.get(0).getBigQuerySchema(castDeletedField);
@@ -135,15 +135,16 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
 
       // serialize same destination uploads
       synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-         // Google BigQuery Configuration for a load operation. A load configuration can be used to load data
-         // into a table with a {@link com.google.cloud.WriteChannel}
+        // Google BigQuery Configuration for a load operation. A load configuration can be used to load data
+        // into a table with a {@link com.google.cloud.WriteChannel}
         WriteChannelConfiguration.Builder wCCBuilder = WriteChannelConfiguration
             .newBuilder(tableId, FormatOptions.json())
             .setWriteDisposition(JobInfo.WriteDisposition.WRITE_APPEND)
             .setClustering(clustering)
             .setTimePartitioning(timePartitioning)
             .setSchemaUpdateOptions(schemaUpdateOptions)
-            .setCreateDisposition(JobInfo.CreateDisposition.CREATE_IF_NEEDED);
+            .setCreateDisposition(JobInfo.CreateDisposition.CREATE_IF_NEEDED)
+            .setMaxBadRecords(0);
 
         if (schema != null) {
           LOGGER.trace("Setting schema to: {}", schema);
@@ -161,10 +162,18 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
         }
 
         Job job = writer.getJob().waitFor();
+        JobStatistics.LoadStatistics jobStatistics = job.getStatistics();
+        numRecords = jobStatistics.getOutputRows();
+
         if (job.isDone()) {
-          LOGGER.debug("Data successfully loaded to {}. {}", tableId, job.getStatistics());
+          LOGGER.debug("Data successfully loaded to {}. rows: {}, jobStatistics: {}", tableId, numRecords,
+              jobStatistics);
         } else {
-          throw new DebeziumException("BigQuery was unable to load into the table due to an error:" + job.getStatus().getError());
+          throw new DebeziumException("BigQuery was unable to load into the table:" + tableId + "." +
+              "\nError:" + job.getStatus().getError() +
+              "\nJobStatistics:" + jobStatistics +
+              "\nBadRecords:" + jobStatistics.getBadRecords() +
+              "\nJobStatistics:" + jobStatistics);
         }
 
       }
