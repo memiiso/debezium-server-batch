@@ -39,8 +39,8 @@ Slightly customized spark consumer that delivers the messages into Bigquery.
 | `@TODO` | `@TODO` | Destination bucket |
 
 ## `bigquerybatch` Consumer
-Consumes debezium events to Bigquery using Bigquery writer api.
-
+Consumes debezium events to Bigquery tables using [BigQuery Storage Write API](https://cloud.google.com/bigquery/docs/write-api).
+It groups and writes events to jsonlines file per destination. Then appends jsonlines to destination BigQuery table using BigQuery Write API.
 
 | Config                                             | Default            | Description                                                                           |
 |----------------------------------------------------|--------------------|---------------------------------------------------------------------------------------|
