@@ -31,6 +31,7 @@ import javax.inject.Named;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.*;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -104,6 +105,19 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
         .setCredentials(credentials)
         .setProjectId(gcpProject.get())
         .setLocation(bqLocation)
+        .setRetrySettings(
+            RetrySettings.newBuilder()
+                // Set the max number of attempts
+                .setMaxAttempts(5)
+                // InitialRetryDelay controls the delay before the first retry. 
+                // Subsequent retries will use this value adjusted according to the RetryDelayMultiplier. 
+                .setInitialRetryDelay(org.threeten.bp.Duration.ofSeconds(5))
+                // Set the backoff multiplier
+                .setRetryDelayMultiplier(2.0)
+                // Set the max duration of all attempts
+                .setTotalTimeout(org.threeten.bp.Duration.ofMinutes(5))
+                .build()
+        )
         .build()
         .getService();
 
