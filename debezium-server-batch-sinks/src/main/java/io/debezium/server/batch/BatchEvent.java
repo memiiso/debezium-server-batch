@@ -120,10 +120,12 @@ public class BatchEvent {
     ArrayList<String> clusteringFields = new ArrayList<>();
     for (JsonNode jsonSchemaFieldNode : schemaNode.get("fields")) {
       // NOTE Limit clustering fields to 4. it's the limit of Bigquery 
-      if (clusteringFields.size() <= 3) {
-        String fieldName = jsonSchemaFieldNode.get("field").textValue();
-        clusteringFields.add(fieldName);
+      if (clusteringFields.size() >= 3) {
+        break;
       }
+
+      String fieldName = jsonSchemaFieldNode.get("field").textValue();
+      clusteringFields.add(fieldName);
     }
 
     clusteringFields.add("__source_ts_ms");
