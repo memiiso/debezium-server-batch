@@ -117,14 +117,19 @@ public class BatchEvent {
       return Clustering.newBuilder().setFields(List.of("__source_ts_ms")).build();
     }
 
-    ArrayList<String> fl = new ArrayList<>();
+    ArrayList<String> clusteringFields = new ArrayList<>();
     for (JsonNode jsonSchemaFieldNode : schemaNode.get("fields")) {
+      // NOTE Limit clustering fields to 4. it's the limit of Bigquery 
+      if (clusteringFields.size() >= 3) {
+        break;
+      }
+
       String fieldName = jsonSchemaFieldNode.get("field").textValue();
-      fl.add(fieldName);
+      clusteringFields.add(fieldName);
     }
 
-    fl.add("__source_ts_ms");
-    return Clustering.newBuilder().setFields(fl).build();
+    clusteringFields.add("__source_ts_ms");
+    return Clustering.newBuilder().setFields(clusteringFields).build();
   }
 
   private static ArrayList<Field> getBigQuerySchemaFields(JsonNode schemaNode, Boolean castDeletedField) {
