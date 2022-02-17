@@ -112,6 +112,7 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
                 // InitialRetryDelay controls the delay before the first retry. 
                 // Subsequent retries will use this value adjusted according to the RetryDelayMultiplier. 
                 .setInitialRetryDelay(org.threeten.bp.Duration.ofSeconds(5))
+                .setMaxRetryDelay(org.threeten.bp.Duration.ofSeconds(60))
                 // Set the backoff multiplier
                 .setRetryDelayMultiplier(2.0)
                 // Set the max duration of all attempts
