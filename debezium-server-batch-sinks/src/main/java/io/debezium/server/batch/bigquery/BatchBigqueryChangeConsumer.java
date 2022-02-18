@@ -81,6 +81,7 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
   }
 
   public void initizalize() throws InterruptedException {
+    super.initizalize();
 
     if (gcpProject.isEmpty()) {
       throw new InterruptedException("Please provide a value for `debezium.sink.bigquerybatch.project`");
@@ -132,7 +133,6 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
       schemaUpdateOptions.add(JobInfo.SchemaUpdateOption.ALLOW_FIELD_RELAXATION);
     }
 
-    super.initizalize();
   }
 
 

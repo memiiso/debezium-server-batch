@@ -92,6 +92,7 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     }
 
     batchSizeWait = BatchUtil.selectInstance(batchSizeWaitInstances, batchSizeWaitName);
+    LOGGER.info("Using {} to optimize batch size", batchSizeWait.getClass().getSimpleName());
     batchSizeWait.initizalize();
   }
 
