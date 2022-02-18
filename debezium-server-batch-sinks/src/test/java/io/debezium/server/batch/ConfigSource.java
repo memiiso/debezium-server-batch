@@ -90,7 +90,7 @@ public class ConfigSource extends TestConfigSource {
     config.put("quarkus.log.category.\"org.apache.hadoop\".level", "ERROR");
     config.put("quarkus.log.category.\"org.apache.parquet\".level", "WARN");
     config.put("quarkus.log.category.\"org.eclipse.jetty\".level", "WARN");
-    config.put("quarkus.log.category.\"io.debezium.server.batch.spark\".level", "WARN");
+    config.put("quarkus.log.category.\"io.debezium.server.batch.spark\".level", "INFO");
 
   }
   
