@@ -91,15 +91,15 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
       throw new InterruptedException("Please provide a value for `debezium.sink.bigquerybatch.dataset`");
     }
 
-    if (credentialsFile.isEmpty()) {
-      throw new InterruptedException("Please provide a value for `debezium.sink.bigquerybatch.credentialsFile`");
-    }
-
     GoogleCredentials credentials;
-    try (FileInputStream serviceAccountStream = new FileInputStream(credentialsFile.get())) {
-      credentials = GoogleCredentials.fromStream(serviceAccountStream);
+    try {
+      if (credentialsFile.isPresent()) {
+        credentials = GoogleCredentials.fromStream(new FileInputStream(credentialsFile.get()));
+      } else {
+        credentials = GoogleCredentials.getApplicationDefault();
+      }
     } catch (IOException e) {
-      throw new DebeziumException(e);
+      throw new DebeziumException("Failed to initialize google credentials", e);
     }
 
     bqClient = BigQueryOptions.newBuilder()

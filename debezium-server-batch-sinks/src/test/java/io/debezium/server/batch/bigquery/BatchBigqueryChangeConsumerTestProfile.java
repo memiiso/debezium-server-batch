@@ -21,12 +21,13 @@ public class BatchBigqueryChangeConsumerTestProfile implements QuarkusTestProfil
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "bigquerybatch");
-    config.put("debezium.source.table.include.list", "inventory.customers,inventory.geom");
+    config.put("debezium.source.table.include.list", "inventory.test_date_table,inventory.customers,inventory.geom");
     config.put("debezium.sink.bigquerybatch.cast-deleted-field", "true");
     //
     config.put("debezium.sink.bigquerybatch.project", "test");
     config.put("debezium.sink.bigquerybatch.dataset", "test");
-    config.put("debezium.sink.bigquerybatch.credentialsFile", "/path/to/application_credentials.json");
+    config.put("debezium.sink.bigquerybatch.location", "US");
+    //config.put("debezium.sink.bigquerybatch.credentialsFile", "/path/to/application_credentials.json");
     // logging
     config.put("quarkus.log.category.\"io.debezium.server.batch\".level", "INFO");
     config.put("quarkus.log.category.\"io.debezium.server.batch.bigquery.BatchBigqueryChangeConsumer\".level", "INFO");
