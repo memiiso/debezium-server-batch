@@ -91,15 +91,15 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
       throw new InterruptedException("Please provide a value for `debezium.sink.bigquerybatch.dataset`");
     }
 
-    if (credentialsFile.isEmpty()) {
-      throw new InterruptedException("Please provide a value for `debezium.sink.bigquerybatch.credentialsFile`");
-    }
-
     GoogleCredentials credentials;
-    try (FileInputStream serviceAccountStream = new FileInputStream(credentialsFile.get())) {
-      credentials = GoogleCredentials.fromStream(serviceAccountStream);
+    try {
+      if (credentialsFile.isPresent()) {
+        credentials = GoogleCredentials.fromStream(new FileInputStream(credentialsFile.get()));
+      } else {
+        credentials = GoogleCredentials.getApplicationDefault();
+      }
     } catch (IOException e) {
-      throw new DebeziumException(e);
+      throw new DebeziumException("Failed to initialize google credentials", e);
     }
 
     bqClient = BigQueryOptions.newBuilder()
@@ -222,7 +222,12 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
   public JsonNode getPayload(String destination, Object val) {
     JsonNode pl = valDeserializer.deserialize(destination, getBytes(val));
     // used to partition tables __source_ts
-    ((ObjectNode) pl).put("__source_ts", pl.get("__source_ts_ms").longValue() / 1000);
+    if (pl.has("__source_ts_ms")) {
+      ((ObjectNode) pl).put("__source_ts", pl.get("__source_ts_ms").longValue() / 1000);
+    } else {
+      ((ObjectNode) pl).put("__source_ts", Instant.now().getEpochSecond());
+      ((ObjectNode) pl).put("__source_ts_ms", Instant.now().toEpochMilli());
+    }
     return pl;
   }
 
