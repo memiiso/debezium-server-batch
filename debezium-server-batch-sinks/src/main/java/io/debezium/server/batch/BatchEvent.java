@@ -113,10 +113,6 @@ public class BatchEvent {
 
   private static Clustering getBigQueryClustering(JsonNode schemaNode) {
 
-    if (schemaNode == null) {
-      return Clustering.newBuilder().setFields(List.of("__source_ts_ms")).build();
-    }
-
     ArrayList<String> clusteringFields = new ArrayList<>();
     for (JsonNode jsonSchemaFieldNode : schemaNode.get("fields")) {
       // NOTE Limit clustering fields to 4. it's the limit of Bigquery 
@@ -214,7 +210,14 @@ public class BatchEvent {
   }
 
   public Clustering getBigQueryClustering() {
-    return getBigQueryClustering(keySchema);
+    // special destinations like "heartbeat.topics"
+    if (destination.startsWith("__debezium")) {
+      return Clustering.newBuilder().setFields(List.of("__source_ts_ms")).build();
+    } else if (keySchema == null) {
+      return Clustering.newBuilder().setFields(List.of("__source_ts_ms")).build();
+    } else {
+      return getBigQueryClustering(keySchema);
+    }
   }
 
   public String getBigQueryClusteringFields() {
@@ -242,7 +245,13 @@ public class BatchEvent {
       return null;
     }
 
+    // partitioning field added by Bigquery consumer
     fields.add(Field.of("__source_ts", StandardSQLTypeName.TIMESTAMP));
+    // special destinations like "heartbeat.topics" might not have __source_ts_ms field. 
+    // which is used to cluster BQ tables
+    if (!fields.contains(Field.of("__source_ts_ms", StandardSQLTypeName.INT64))) {
+      fields.add(Field.of("__source_ts_ms", StandardSQLTypeName.INT64));
+    }
     return Schema.of(fields);
   }
 

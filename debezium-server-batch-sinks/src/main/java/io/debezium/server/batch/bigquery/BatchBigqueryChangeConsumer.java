@@ -222,7 +222,12 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
   public JsonNode getPayload(String destination, Object val) {
     JsonNode pl = valDeserializer.deserialize(destination, getBytes(val));
     // used to partition tables __source_ts
-    ((ObjectNode) pl).put("__source_ts", pl.get("__source_ts_ms").longValue() / 1000);
+    if (pl.has("__source_ts_ms")) {
+      ((ObjectNode) pl).put("__source_ts", pl.get("__source_ts_ms").longValue() / 1000);
+    } else {
+      ((ObjectNode) pl).put("__source_ts", Instant.now().getEpochSecond());
+      ((ObjectNode) pl).put("__source_ts_ms", Instant.now().toEpochMilli());
+    }
     return pl;
   }
 
