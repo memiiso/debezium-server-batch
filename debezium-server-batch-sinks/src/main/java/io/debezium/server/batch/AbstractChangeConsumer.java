@@ -132,7 +132,7 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     this.logConsumerProgress(numUploadedEvents);
     LOGGER.debug("Received:{} Processed:{} events", records.size(), numUploadedEvents);
 
-    batchSizeWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
+    batchSizeWait.waitMs(numUploadedEvents, (int) Duration.between(start, Instant.now()).toMillis());
 
   }
 

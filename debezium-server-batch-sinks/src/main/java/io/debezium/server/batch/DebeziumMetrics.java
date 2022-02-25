@@ -57,6 +57,10 @@ public class DebeziumMetrics {
     }
   }
 
+  public int maxQueueSize() {
+    return maxQueueSize;
+  }
+  
   public boolean snapshotRunning() {
     try {
       return (boolean) mbeanServer.getAttribute(snapshotMetricsObjectName, "SnapshotRunning");
