@@ -9,6 +9,7 @@
 package io.debezium.server.batch;
 
 import io.debezium.serde.DebeziumSerdes;
+import io.debezium.server.batch.spark.DebeziumSparkEvent;
 import io.debezium.util.Testing;
 
 import java.util.Collections;
@@ -16,6 +17,7 @@ import java.util.Collections;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.bigquery.storage.v1.TableName;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
@@ -29,17 +31,19 @@ class BatchUtilTest {
   public StructType getEventSparkDfSchema(String event) throws JsonProcessingException {
     JsonNode jsonNode = new ObjectMapper().readTree(event);
 
-    BatchEvent e = new BatchEvent("test",
+    DebeziumEvent e = new DebeziumEvent("test",
         jsonNode.get("payload"),
         null,
         jsonNode.get("schema"),
         null
     );
-    return e.getSparkDfSchema();
+    return new DebeziumSparkEvent(e).getSparkDfSchema();
   }
 
   @Test
   public void testSimpleSchema() throws JsonProcessingException {
+    TableName t = TableName.of("gcpProject", "bqDataset", "tableName");
+    System.out.println(t.toString());
     StructType s = getEventSparkDfSchema(unwrapWithSchema);
     assertNotNull(s);
     assertTrue(s.catalogString().contains("id:int,order_date:int,purchaser:int,quantity:int,product_id:int,__op:string"));

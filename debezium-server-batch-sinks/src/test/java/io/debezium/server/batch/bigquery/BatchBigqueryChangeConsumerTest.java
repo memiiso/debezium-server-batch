@@ -13,12 +13,14 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
+import java.io.IOException;
 import java.time.Duration;
 import javax.inject.Inject;
 
 import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableResult;
+import com.google.cloud.bigquery.storage.v1.TableName;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -48,14 +50,20 @@ public class BatchBigqueryChangeConsumerTest {
     QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
     return bqchangeConsumer.bqClient.query(queryConfig);
   }
-
+  
+  public TableResult dropTable(String destination) throws InterruptedException {
+    TableId tableId = bqchangeConsumer.getTableId(destination);
+    return this.simpleQuery("DROP TABLE IF EXISTS " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
+  }
+  
   public TableResult getTableData(String destination) throws InterruptedException {
     TableId tableId = bqchangeConsumer.getTableId(destination);
     return this.simpleQuery("SELECT * FROM " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
   }
 
   @Test
-  public void testSimpleUpload() {
+  public void testSimpleUpload() throws InterruptedException {
+    dropTable("testc.inventory.geom");
     Awaitility.await().atMost(Duration.ofSeconds(120)).until(() -> {
       try {
         TableResult result = this.getTableData("testc.inventory.geom");
@@ -66,6 +74,7 @@ public class BatchBigqueryChangeConsumerTest {
       }
     });
 
+    dropTable("testc.inventory.customers");
     Awaitility.await().atMost(Duration.ofSeconds(180)).until(() -> {
       try {
         TableResult result = this.getTableData("testc.inventory.customers");

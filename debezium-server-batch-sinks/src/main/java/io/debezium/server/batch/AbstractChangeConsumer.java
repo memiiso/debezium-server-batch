@@ -39,6 +39,7 @@ import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -58,7 +59,7 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
   protected static final Serde<JsonNode> keySerde = DebeziumSerdes.payloadJson(JsonNode.class);
   static Deserializer<JsonNode> keyDeserializer;
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
-  protected final ObjectMapper mapper = new ObjectMapper();
+  protected static final ObjectMapper mapper = new ObjectMapper();
   protected final Clock clock = Clock.system();
   protected Deserializer<JsonNode> valDeserializer;
   protected long consumerStart = clock.currentTimeInMillis();
@@ -102,11 +103,11 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     LOGGER.trace("Received {} events", records.size());
 
     Instant start = Instant.now();
-    Map<String, List<BatchEvent>> result = records.stream()
+    Map<String, List<DebeziumEvent>> events = records.stream()
         .map((ChangeEvent<Object, Object> e)
             -> {
           try {
-            return new BatchEvent(e.destination(),
+            return new DebeziumEvent(e.destination(),
                 getPayload(e.destination(), e.value()), //valDeserializer.deserialize(e.destination(), getBytes(e.value())),
                 e.key() == null ? null : keyDeserializer.deserialize(e.destination(), getBytes(e.key())),
                 mapper.readTree(getBytes(e.value())).get("schema"),
@@ -116,11 +117,20 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
             throw new DebeziumException(ex);
           }
         })
-        .collect(Collectors.groupingBy(BatchEvent::destination));
+        .collect(Collectors.groupingBy(DebeziumEvent::destination));
 
     long numUploadedEvents = 0;
-    for (Map.Entry<String, List<BatchEvent>> destinationEvents : result.entrySet()) {
-      numUploadedEvents += this.uploadDestination(destinationEvents.getKey(), destinationEvents.getValue());
+    for (Map.Entry<String, List<DebeziumEvent>> destinationEvents : events.entrySet()) {
+      // group list of events by their schema, if in the batch we have schema change events grouped by their schema
+      // so with this uniform schema is guaranteed for each batch
+      Map<JsonNode, List<DebeziumEvent>> eventsGroupedBySchema =
+          destinationEvents.getValue().stream()
+              .collect(Collectors.groupingBy(DebeziumEvent::valueSchema));
+      LOGGER.debug("Batch got {} records with {} different schema!!", events.size(), eventsGroupedBySchema.keySet().size());
+
+      for (List<DebeziumEvent> schemaEvents : eventsGroupedBySchema.values()) {
+        numUploadedEvents += this.uploadDestination(destinationEvents.getKey(), schemaEvents);
+      }
     }
     // workaround! somehow offset is not saved to file unless we call committer.markProcessed
     // even its should be saved to file periodically
@@ -132,7 +142,7 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     this.logConsumerProgress(numUploadedEvents);
     LOGGER.debug("Received:{} Processed:{} events", records.size(), numUploadedEvents);
 
-    batchSizeWait.waitMs(records.size(), (int) Duration.between(start, Instant.now()).toMillis());
+    batchSizeWait.waitMs(numUploadedEvents, (int) Duration.between(start, Instant.now()).toMillis());
 
   }
 
@@ -147,10 +157,18 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
   }
 
   public JsonNode getPayload(String destination, Object val) {
-    return valDeserializer.deserialize(destination, getBytes(val));
+    JsonNode pl = valDeserializer.deserialize(destination, getBytes(val));
+    // used to partition tables __source_ts
+    if (pl.has("__source_ts_ms")) {
+      ((ObjectNode) pl).put("__source_ts", pl.get("__source_ts_ms").longValue() / 1000);
+    } else {
+      ((ObjectNode) pl).put("__source_ts", Instant.now().getEpochSecond());
+      ((ObjectNode) pl).put("__source_ts_ms", Instant.now().toEpochMilli());
+    }
+    return pl;
   }
 
-  public File getJsonLinesFile(String destination, List<BatchEvent> data) {
+  public File getJsonLinesFile(String destination, List<DebeziumEvent> data) {
 
     Instant start = Instant.now();
     final File tempFile;
@@ -159,7 +177,7 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
       FileOutputStream fos = new FileOutputStream(tempFile, true);
       LOGGER.debug("Writing {} events as jsonlines file: {}", data.size(), tempFile);
 
-      for (BatchEvent e : data) {
+      for (DebeziumEvent e : data) {
         final JsonNode valNode = e.value();
 
         if (valNode == null) {
@@ -188,6 +206,6 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     return tempFile;
   }
 
-  public abstract long uploadDestination(String destination, List<BatchEvent> data) throws InterruptedException;
+  public abstract long uploadDestination(String destination, List<DebeziumEvent> data) throws InterruptedException;
 
 }
