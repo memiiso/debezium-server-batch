@@ -20,7 +20,7 @@ import javax.inject.Named;
 @Named("NoBatchSizeWait")
 public class NoBatchSizeWait implements InterfaceBatchSizeWait {
 
-  public void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) {
+  public void waitMs(long numRecordsProcessed, Integer processingTimeMs) {
   }
 
 }
