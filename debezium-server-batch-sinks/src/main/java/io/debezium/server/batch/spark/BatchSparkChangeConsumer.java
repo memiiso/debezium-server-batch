@@ -3,12 +3,12 @@
  *  * Copyright memiiso Authors.
  *  *
  *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
- *
+ *  
  */
 
 package io.debezium.server.batch.spark;
 
-import io.debezium.server.batch.BatchEvent;
+import io.debezium.server.batch.DebeziumEvent;
 
 import java.io.File;
 import java.time.Duration;
@@ -67,10 +67,10 @@ public class BatchSparkChangeConsumer extends AbstractSparkChangeConsumer {
   }
 
   @Override
-  public long uploadDestination(String destination, List<BatchEvent> data) {
+  public long uploadDestination(String destination, List<DebeziumEvent> data) {
 
     Instant start = Instant.now();
-    StructType dfSchema = data.get(0).getSparkDfSchema();
+    StructType dfSchema = new DebeziumSparkEvent(data.get(0)).getSparkDfSchema();
     File jsonlines = getJsonLinesFile(destination, data);
     Dataset<Row> df;
 
