@@ -3,7 +3,7 @@
  *  * Copyright memiiso Authors.
  *  *
  *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  */
 
 package io.debezium.server.batch.common;
@@ -29,16 +29,12 @@ import org.slf4j.LoggerFactory;
 @Named("MaxBatchSizeWait")
 public class MaxBatchSizeWait implements InterfaceBatchSizeWait {
   protected static final Logger LOGGER = LoggerFactory.getLogger(MaxBatchSizeWait.class);
-
-  @ConfigProperty(name = "debezium.source.max.queue.size", defaultValue = CommonConnectorConfig.DEFAULT_MAX_QUEUE_SIZE + "")
-  int maxQueueSize;
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = CommonConnectorConfig.DEFAULT_MAX_BATCH_SIZE + "")
   int maxBatchSize;
   @ConfigProperty(name = "debezium.sink.batch.batch-size-wait.max-wait-ms", defaultValue = "300000")
   int maxWaitMs;
   @ConfigProperty(name = "debezium.sink.batch.batch-size-wait.wait-interval-ms", defaultValue = "10000")
   int waitIntervalMs;
-
   @Inject
   DebeziumMetrics debeziumMetrics;
 
@@ -48,29 +44,23 @@ public class MaxBatchSizeWait implements InterfaceBatchSizeWait {
     debeziumMetrics.initizalize();
   }
 
-//  log warning!
-//  if (streamingSecondsBehindSource > 30 * 60) { // behind 30 minutes
-//    LOGGER.warn("Streaming {} is behind by {} seconds, QueueCurrentSize:{}, QueueTotalCapacity:{}, " +
-//            "SnapshotCompleted:{}",
-//        numRecordsProcessed, streamingQueueCurrentSize, maxQueueSize, streamingSecondsBehindSource, snapshotCompleted
-//    );
-//  }
-
   @Override
-  public void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) throws InterruptedException {
+  public void waitMs(long numRecordsProcessed, Integer processingTimeMs) throws InterruptedException {
 
     if (debeziumMetrics.snapshotRunning()) {
       return;
     }
 
-    final int streamingQueueCurrentSize = debeziumMetrics.streamingQueueCurrentSize();
-    final int streamingSecondsBehindSource = (int) (debeziumMetrics.streamingMilliSecondsBehindSource() / 1000);
-    final boolean snapshotCompleted = debeziumMetrics.snapshotCompleted();
-
-    LOGGER.debug("Processed {}, QueueCurrentSize:{}, QueueTotalCapacity:{}, SecondsBehindSource:{}, " +
+    LOGGER.info("Processed {}, " +
+            "QueueCurrentSize:{}, QueueTotalCapacity:{}, " +
+            "QueueCurrentUtilization:{}%" +
+            "SecondsBehindSource:{}, " +
             "SnapshotCompleted:{}, snapshotRunning:{}",
-        numRecordsProcessed, streamingQueueCurrentSize, maxQueueSize, streamingSecondsBehindSource, snapshotCompleted,
-        debeziumMetrics.snapshotRunning()
+        numRecordsProcessed,
+        debeziumMetrics.streamingQueueCurrentSize(), debeziumMetrics.maxQueueSize(),
+        (debeziumMetrics.streamingQueueCurrentSize() / debeziumMetrics.maxQueueSize()) * 100,
+        (int) (debeziumMetrics.streamingMilliSecondsBehindSource() / 1000),
+        debeziumMetrics.snapshotCompleted(), debeziumMetrics.snapshotRunning()
     );
 
     int totalWaitMs = 0;

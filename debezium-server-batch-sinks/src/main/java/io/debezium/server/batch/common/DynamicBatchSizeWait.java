@@ -3,13 +3,13 @@
  *  * Copyright memiiso Authors.
  *  *
  *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  */
 
 package io.debezium.server.batch.common;
 
-import java.util.IntSummaryStatistics;
 import java.util.LinkedList;
+import java.util.LongSummaryStatistics;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
@@ -27,48 +27,45 @@ import static io.debezium.config.CommonConnectorConfig.DEFAULT_MAX_BATCH_SIZE;
 @Named("DynamicBatchSizeWait")
 public class DynamicBatchSizeWait implements InterfaceBatchSizeWait {
   protected static final Logger LOGGER = LoggerFactory.getLogger(DynamicBatchSizeWait.class);
-
+  final LinkedList<Long> batchSizeHistory = new LinkedList<>();
+  final LinkedList<Long> sleepMsHistory = new LinkedList<>();
   @ConfigProperty(name = "debezium.source.max.batch.size", defaultValue = DEFAULT_MAX_BATCH_SIZE + "")
   Integer maxBatchSize;
-
   @ConfigProperty(name = "debezium.sink.batch.batch-size-wait.max-wait-ms", defaultValue = "300000")
   Integer maxWaitMs;
 
-  final LinkedList<Integer> batchSizeHistory = new LinkedList<Integer>();
-  final LinkedList<Integer> sleepMsHistory = new LinkedList<Integer>();
-
   public DynamicBatchSizeWait() {
-    batchSizeHistory.add(1);
-    batchSizeHistory.add(1);
-    batchSizeHistory.add(1);
-    sleepMsHistory.add(100);
-    sleepMsHistory.add(100);
-    sleepMsHistory.add(100);
+    batchSizeHistory.add(1L);
+    batchSizeHistory.add(1L);
+    batchSizeHistory.add(1L);
+    sleepMsHistory.add(100L);
+    sleepMsHistory.add(100L);
+    sleepMsHistory.add(100L);
   }
 
-  private double getAverage(LinkedList<Integer> linkedList) {
-    IntSummaryStatistics stats = linkedList.stream()
-        .mapToInt((x) -> x)
+  private double getAverage(LinkedList<Long> linkedList) {
+    LongSummaryStatistics stats = linkedList.stream()
+        .mapToLong((x) -> x)
         .summaryStatistics();
     return stats.getAverage();
   }
 
-  public int getWaitMs(Integer numRecords) {
+  public long getWaitMs(long numRecords) {
     batchSizeHistory.add(numRecords);
     batchSizeHistory.removeFirst();
-    int sleepMs = 1;
+    long sleepMs = 1;
 
     // if batchsize > XX% decrease wait
     if ((getAverage(batchSizeHistory) / maxBatchSize) >= 0.97) {
-      sleepMs = (int) (sleepMsHistory.getLast() * 0.50);
+      sleepMs = (long) (sleepMsHistory.getLast() * 0.50);
     }
     // if batchsize > XX% decrease wait
     else if ((getAverage(batchSizeHistory) / maxBatchSize) >= 0.95) {
-      sleepMs = (int) (sleepMsHistory.getLast() * 0.65);
+      sleepMs = (long) (sleepMsHistory.getLast() * 0.65);
     }
     // if batchsize > XX% decrease wait
     else if ((getAverage(batchSizeHistory) / maxBatchSize) >= 0.90) {
-      sleepMs = (int) (sleepMsHistory.getLast() * 0.80);
+      sleepMs = (long) (sleepMsHistory.getLast() * 0.80);
     } else if ((getAverage(batchSizeHistory) / maxBatchSize) >= 0.85) {
       return sleepMsHistory.getLast();
     }
@@ -83,8 +80,8 @@ public class DynamicBatchSizeWait implements InterfaceBatchSizeWait {
     return sleepMsHistory.getLast();
   }
 
-  public void waitMs(Integer numRecordsProcessed, Integer processingTimeMs) throws InterruptedException {
-    int sleepMs = Math.max(getWaitMs(numRecordsProcessed) - processingTimeMs, 0);
+  public void waitMs(long numRecordsProcessed, Integer processingTimeMs) throws InterruptedException {
+    long sleepMs = Math.max(getWaitMs(numRecordsProcessed) - processingTimeMs, 0);
     if (sleepMs > 2000) {
       LOGGER.debug("Waiting {} ms", sleepMs);
       Thread.sleep(sleepMs);

@@ -10,7 +10,7 @@ package io.debezium.server.batch.bigquery;
 
 import io.debezium.DebeziumException;
 import io.debezium.server.batch.AbstractChangeConsumer;
-import io.debezium.server.batch.BatchEvent;
+import io.debezium.server.batch.DebeziumEvent;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,7 +43,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @Named("bigquerybatch")
 @Dependent
-public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
+public class BatchBigqueryChangeConsumer<T> extends AbstractChangeConsumer {
 
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp", defaultValue = "")
   protected Optional<String> destinationRegexp;
@@ -135,9 +135,8 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
 
   }
 
-
   @Override
-  public long uploadDestination(String destination, List<BatchEvent> data) throws InterruptedException {
+  public long uploadDestination(String destination, List<DebeziumEvent> data) throws InterruptedException {
 
     File jsonlines = getJsonLinesFile(destination, data);
     try {
@@ -145,8 +144,9 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
       final long numRecords;
       TableId tableId = getTableId(destination);
 
-      Schema schema = data.get(0).getBigQuerySchema(castDeletedField);
-      Clustering clustering = data.get(0).getBigQueryClustering();
+      DebeziumBigqueryEvent sampleEvent = new DebeziumBigqueryEvent(data.get(0)); 
+      Schema schema = sampleEvent.getBigQuerySchema(castDeletedField);
+      Clustering clustering = sampleEvent.getBigQueryClustering();
 
       // serialize same destination uploads
       synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
@@ -217,19 +217,5 @@ public class BatchBigqueryChangeConsumer extends AbstractChangeConsumer {
         .replace(".", "_");
     return TableId.of(gcpProject.get(), bqDataset.get(), tableName);
   }
-
-  @Override
-  public JsonNode getPayload(String destination, Object val) {
-    JsonNode pl = valDeserializer.deserialize(destination, getBytes(val));
-    // used to partition tables __source_ts
-    if (pl.has("__source_ts_ms")) {
-      ((ObjectNode) pl).put("__source_ts", pl.get("__source_ts_ms").longValue() / 1000);
-    } else {
-      ((ObjectNode) pl).put("__source_ts", Instant.now().getEpochSecond());
-      ((ObjectNode) pl).put("__source_ts_ms", Instant.now().toEpochMilli());
-    }
-    return pl;
-  }
-
-
+  
 }
