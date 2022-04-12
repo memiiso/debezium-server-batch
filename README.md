@@ -5,7 +5,6 @@
 # Table of contents
 * [Debezium Batch Consumers](#debezium-batch-consumers)
   * [`sparkbatch` Consumer](#sparkbatch-consumer)
-  * [`sparkbigquerybatch` Consumer](#sparkbigquerybatch-consumer)
   * [`bigquerybatch` Consumer](#bigquerybatch-consumer)
 * [Install from source](#install-from-source)
 
@@ -31,12 +30,6 @@ Consumes debezium events using spark
 | `debezium.sink.batch.destination-regexp-replace`    | ``                   | Regexp Replace part to modify destination                                           |
 | `debezium.sink.batch.batch-size-wait`               | `NoBatchSizeWait`    | Batch size wait strategy to optimize data files and upload interval. explained below. |
 
-## `sparkbigquerybatch` Consumer
-Slightly customized spark consumer that delivers the messages into Bigquery.
-
-| Config  | Default       | Description        |
-|---------|---------------|--------------------|
-| `@TODO` | `@TODO` | Destination bucket |
 
 ## `bigquerybatch` Consumer
 Consumes debezium events to Bigquery tables using [BigQuery Storage Write API](https://cloud.google.com/bigquery/docs/write-api).
