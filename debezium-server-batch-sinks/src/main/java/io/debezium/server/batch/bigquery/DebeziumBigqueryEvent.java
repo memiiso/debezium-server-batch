@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DebeziumBigqueryEvent {
   protected static final Logger LOGGER = LoggerFactory.getLogger(DebeziumBigqueryEvent.class);
-  
+
   private static ImmutableMap<Field.Mode, TableFieldSchema.Mode> BQTableSchemaModeMap =
       ImmutableMap.of(
           Field.Mode.NULLABLE, TableFieldSchema.Mode.NULLABLE,
@@ -51,8 +51,9 @@ public class DebeziumBigqueryEvent {
           .put(StandardSQLTypeName.TIME, TableFieldSchema.Type.TIME)
           .put(StandardSQLTypeName.TIMESTAMP, TableFieldSchema.Type.TIMESTAMP)
           .build();
-  
+
   final DebeziumEvent event;
+
   public DebeziumBigqueryEvent(DebeziumEvent event) {
     this.event = event;
   }
@@ -68,65 +69,13 @@ public class DebeziumBigqueryEvent {
     }
   }
 
-  public String getBigQueryClusteringFields() {
-
-    if (event.keySchema() == null) {
-      return "__source_ts";
-    }
-
-    List<String> keyFields = getBigQuerySchemaFields(event.keySchema(), false)
-        .stream()
-        .map(Field::getName)
-        .collect(Collectors.toList());
-
-    if (keyFields.isEmpty()) {
-      return "__source_ts";
-    }
-
-    return StringUtils.strip(String.join(",", keyFields) + ",__source_ts", ",");
-  }
-
-  public Schema getBigQuerySchema(Boolean castDeletedField) {
-    ArrayList<Field> fields = getBigQuerySchemaFields(event.valueSchema(), castDeletedField);
-
-    if (fields == null) {
-      return null;
-    }
-
-    // partitioning field added by Bigquery consumer
-    fields.add(Field.of("__source_ts", StandardSQLTypeName.TIMESTAMP));
-    // special destinations like "heartbeat.topics" might not have __source_ts_ms field. 
-    // which is used to cluster BQ tables
-    if (!fields.contains(Field.of("__source_ts_ms", StandardSQLTypeName.INT64))) {
-      fields.add(Field.of("__source_ts_ms", StandardSQLTypeName.INT64));
-    }
-    return Schema.of(fields);
-  }
-  
-  private static Clustering getBigQueryClustering(JsonNode schemaNode) {
-
-    ArrayList<String> clusteringFields = new ArrayList<>();
-    for (JsonNode jsonSchemaFieldNode : schemaNode.get("fields")) {
-      // NOTE Limit clustering fields to 4. it's the limit of Bigquery 
-      if (clusteringFields.size() >= 3) {
-        break;
-      }
-
-      String fieldName = jsonSchemaFieldNode.get("field").textValue();
-      clusteringFields.add(fieldName);
-    }
-
-    clusteringFields.add("__source_ts_ms");
-    return Clustering.newBuilder().setFields(clusteringFields).build();
-  }
-
-  private static ArrayList<Field> getBigQuerySchemaFields(JsonNode schemaNode, Boolean castDeletedField) {
+  private static ArrayList<Field> getBigQuerySchemaFields(JsonNode schemaNode, Boolean castDeletedField, Boolean binaryAsString) {
 
     if (schemaNode == null) {
       return null;
     }
 
-    ArrayList<Field> fields = new ArrayList();
+    ArrayList<Field> fields = new ArrayList<>();
 
     String schemaType = schemaNode.get("type").textValue();
     String schemaName = "root";
@@ -162,7 +111,11 @@ public class DebeziumBigqueryEvent {
               : Field.of(fieldName, StandardSQLTypeName.STRING));
           break;
         case "bytes":
-          fields.add(Field.of(fieldName, StandardSQLTypeName.BYTES));
+          if (binaryAsString) {
+            fields.add(Field.of(fieldName, StandardSQLTypeName.STRING));
+          } else {
+            fields.add(Field.of(fieldName, StandardSQLTypeName.BYTES));
+          }
           break;
         case "array":
           fields.add(Field.of(fieldName, StandardSQLTypeName.ARRAY));
@@ -172,7 +125,7 @@ public class DebeziumBigqueryEvent {
           break;
         case "struct":
           // recursive call
-          ArrayList<Field> subFields = getBigQuerySchemaFields(jsonSchemaFieldNode, false);
+          ArrayList<Field> subFields = getBigQuerySchemaFields(jsonSchemaFieldNode, false, binaryAsString);
           fields.add(Field.newBuilder(fieldName, StandardSQLTypeName.STRUCT, FieldList.of(subFields)).build());
           break;
         default:
@@ -184,15 +137,75 @@ public class DebeziumBigqueryEvent {
 
     return fields;
   }
-  
-  public TableSchema getBigQueryTableSchema(Boolean castDeletedField) {
-    Schema schema = getBigQuerySchema(castDeletedField);
-    
+
+  public String getBigQueryClusteringFields() {
+
+    if (event.keySchema() == null) {
+      return "__source_ts";
+    }
+
+    List<String> keyFields = getBigQuerySchemaFields(event.keySchema(), false, false)
+        .stream()
+        .map(Field::getName)
+        .collect(Collectors.toList());
+
+    if (keyFields.isEmpty()) {
+      return "__source_ts";
+    }
+
+    return StringUtils.strip(String.join(",", keyFields) + ",__source_ts", ",");
+  }
+
+  public Schema getBigQuerySchema(Boolean castDeletedField) {
+    return getBigQuerySchema(castDeletedField, false);
+  }
+
+  private static Clustering getBigQueryClustering(JsonNode schemaNode) {
+
+    ArrayList<String> clusteringFields = new ArrayList<>();
+    for (JsonNode jsonSchemaFieldNode : schemaNode.get("fields")) {
+      // NOTE Limit clustering fields to 4. it's the limit of Bigquery 
+      if (clusteringFields.size() >= 3) {
+        break;
+      }
+
+      String fieldName = jsonSchemaFieldNode.get("field").textValue();
+      clusteringFields.add(fieldName);
+    }
+
+    clusteringFields.add("__source_ts_ms");
+    return Clustering.newBuilder().setFields(clusteringFields).build();
+  }
+
+  public Schema getBigQuerySchema(Boolean castDeletedField, Boolean binaryAsString) {
+    ArrayList<Field> fields = getBigQuerySchemaFields(event.valueSchema(), castDeletedField, binaryAsString);
+
+    if (fields == null) {
+      return null;
+    }
+
+    // partitioning field added by Bigquery consumer
+    fields.add(Field.of("__source_ts", StandardSQLTypeName.TIMESTAMP));
+    // special destinations like "heartbeat.topics" might not have __source_ts_ms field. 
+    // which is used to cluster BQ tables
+    if (!fields.contains(Field.of("__source_ts_ms", StandardSQLTypeName.INT64))) {
+      fields.add(Field.of("__source_ts_ms", StandardSQLTypeName.INT64));
+    }
+    return Schema.of(fields);
+  }
+
+  public static TableSchema convertBigQuerySchema2TableSchema(Schema schema) {
+
     TableSchema.Builder result = TableSchema.newBuilder();
     for (int i = 0; i < schema.getFields().size(); i++) {
       result.addFields(i, convertFieldSchema(schema.getFields().get(i)));
     }
     return result.build();
+  }
+
+  public TableSchema getBigQueryTableSchema(Boolean castDeletedField) {
+    Schema schema = getBigQuerySchema(castDeletedField);
+    return DebeziumBigqueryEvent.convertBigQuerySchema2TableSchema(schema);
   }
 
   /**
