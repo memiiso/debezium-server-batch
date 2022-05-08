@@ -32,13 +32,13 @@ import static io.debezium.server.batch.shared.BaseSparkTest.PGLoadTestDataTable;
  */
 @QuarkusTest
 @QuarkusTestResource(SourcePostgresqlDB.class)
-@TestProfile(BatchBigqueryChangeConsumerTestProfile.class)
+@TestProfile(StreamBigqueryChangeConsumerTestProfile.class)
 @Disabled("manual run")
-public class BatchBigqueryChangeConsumerTest {
+public class StreamBigqueryChangeConsumerTest {
 
   @Inject
-  BatchBigqueryChangeConsumer bqchangeConsumer;
-
+  StreamBigqueryChangeConsumer bqchangeConsumer;
+  
   public TableResult simpleQuery(String query) throws InterruptedException {
 
     if (bqchangeConsumer.bqClient == null) {
@@ -57,7 +57,7 @@ public class BatchBigqueryChangeConsumerTest {
     TableId tableId = bqchangeConsumer.getTableId(destination);
     this.simpleQuery("TRUNCATE TABLE " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
   }
-
+  
   public TableResult getTableData(String destination) throws InterruptedException {
     TableId tableId = bqchangeConsumer.getTableId(destination);
     return this.simpleQuery("SELECT * FROM " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
