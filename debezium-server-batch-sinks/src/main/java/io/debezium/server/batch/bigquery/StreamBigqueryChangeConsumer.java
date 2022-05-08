@@ -186,6 +186,7 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
     DataWriter writer = jsonStreamWriters.computeIfAbsent(destination, k -> getDataWriter(table));
     try {
       writer.append(new AppendContext(data, castDeletedField));
+      writer.waitAppend();
     } catch (DescriptorValidationException | IOException e) {
       throw new DebeziumException("Failed to append data to stream " + writer.streamWriter.getStreamName(), e);
     }
@@ -278,7 +279,9 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
 
       // Increase the count of in-flight requests.
       inflightRequestCount.register();
-      
+    }
+
+    public void waitAppend() {
       // synchronous
       // Wait for all in-flight requests to complete.
       inflightRequestCount.arriveAndAwaitAdvance();
