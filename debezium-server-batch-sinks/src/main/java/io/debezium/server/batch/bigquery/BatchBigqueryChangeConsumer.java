@@ -12,12 +12,11 @@ import io.debezium.DebeziumException;
 import io.debezium.server.batch.AbstractChangeConsumer;
 import io.debezium.server.batch.DebeziumEvent;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -30,7 +29,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.*;
@@ -58,6 +56,8 @@ public class BatchBigqueryChangeConsumer<T> extends AbstractChangeConsumer {
   Optional<String> gcpProject;
   @ConfigProperty(name = "debezium.sink.bigquerybatch.createDisposition", defaultValue = "CREATE_IF_NEEDED")
   String createDisposition;
+  @ConfigProperty(name = "debezium.sink.bigquerybatch.writeDisposition", defaultValue = "WRITE_APPEND")
+  String writeDisposition;
   @ConfigProperty(name = "debezium.sink.bigquerybatch.partitionField", defaultValue = "__source_ts")
   String partitionField;
   @ConfigProperty(name = "debezium.sink.bigquerybatch.partitionType", defaultValue = "MONTH")
@@ -136,46 +136,52 @@ public class BatchBigqueryChangeConsumer<T> extends AbstractChangeConsumer {
   }
 
   @Override
-  public long uploadDestination(String destination, List<DebeziumEvent> data) throws InterruptedException {
+  public long uploadDestination(String destination, List<DebeziumEvent> data) {
 
-    File jsonlines = getJsonLinesFile(destination, data);
     try {
       Instant start = Instant.now();
       final long numRecords;
       TableId tableId = getTableId(destination);
 
-      DebeziumBigqueryEvent sampleEvent = new DebeziumBigqueryEvent(data.get(0)); 
+      DebeziumBigqueryEvent sampleEvent = new DebeziumBigqueryEvent(data.get(0));
       Schema schema = sampleEvent.getBigQuerySchema(castDeletedField);
       Clustering clustering = sampleEvent.getBigQueryClustering();
 
-      // serialize same destination uploads
-      synchronized (uploadLock.computeIfAbsent(destination, k -> new Object())) {
-        // Google BigQuery Configuration for a load operation. A load configuration can be used to load data
-        // into a table with a {@link com.google.cloud.WriteChannel}
-        WriteChannelConfiguration.Builder wCCBuilder = WriteChannelConfiguration
-            .newBuilder(tableId, FormatOptions.json())
-            .setWriteDisposition(JobInfo.WriteDisposition.WRITE_APPEND)
-            .setClustering(clustering)
-            .setTimePartitioning(timePartitioning)
-            .setSchemaUpdateOptions(schemaUpdateOptions)
-            .setCreateDisposition(JobInfo.CreateDisposition.CREATE_IF_NEEDED)
-            .setMaxBadRecords(0);
+      // Google BigQuery Configuration for a load operation. A load configuration can be used to load data
+      // into a table with a {@link com.google.cloud.WriteChannel}
+      WriteChannelConfiguration.Builder wCCBuilder = WriteChannelConfiguration
+          .newBuilder(tableId, FormatOptions.json())
+          .setWriteDisposition(JobInfo.WriteDisposition.valueOf(writeDisposition))
+          .setClustering(clustering)
+          .setTimePartitioning(timePartitioning)
+          .setSchemaUpdateOptions(schemaUpdateOptions)
+          .setCreateDisposition(JobInfo.CreateDisposition.valueOf(createDisposition))
+          .setMaxBadRecords(0);
 
-        if (schema != null) {
-          LOGGER.trace("Setting schema to: {}", schema);
-          wCCBuilder.setSchema(schema);
-        }
+      if (schema != null) {
+        LOGGER.trace("Setting schema to: {}", schema);
+        wCCBuilder.setSchema(schema);
+      }
 //        else {
 //          wCCBuilder.setAutodetect(true);
 //        }
 
-        //WriteChannel implementation to stream data into a BigQuery table. 
-        TableDataWriteChannel writer = bqClient.writer(wCCBuilder.build());
+      //WriteChannel implementation to stream data into a BigQuery table. 
+      try (TableDataWriteChannel writer = bqClient.writer(wCCBuilder.build())) {
         //Constructs a stream that writes bytes to the given channel.
         try (OutputStream stream = Channels.newOutputStream(writer)) {
-          Files.copy(jsonlines.toPath(), stream);
-        }
+          for (DebeziumEvent e : data) {
+            final JsonNode valNode = e.value();
 
+            if (valNode == null) {
+              LOGGER.warn("Null Value received skipping the entry! destination:{} key:{}", destination, getString(e.key()));
+              continue;
+            }
+
+            final String valData = mapper.writeValueAsString(valNode) + System.lineSeparator();
+            stream.write(valData.getBytes(StandardCharsets.UTF_8));
+          }
+        }
         Job job = writer.getJob().waitFor();
         JobStatistics.LoadStatistics jobStatistics = job.getStatistics();
         numRecords = jobStatistics.getOutputRows();
@@ -190,7 +196,6 @@ public class BatchBigqueryChangeConsumer<T> extends AbstractChangeConsumer {
               "\nBadRecords:" + jobStatistics.getBadRecords() +
               "\nJobStatistics:" + jobStatistics);
         }
-
       }
 
       LOGGER.debug("Uploaded {} rows to:{}, upload time:{}, clusteredFields:{}",
@@ -200,14 +205,11 @@ public class BatchBigqueryChangeConsumer<T> extends AbstractChangeConsumer {
           clustering
       );
 
-      jsonlines.delete();
       return numRecords;
 
     } catch (BigQueryException | InterruptedException | IOException e) {
       e.printStackTrace();
       throw new DebeziumException(e);
-    } finally {
-      jsonlines.delete();
     }
   }
 
@@ -217,5 +219,5 @@ public class BatchBigqueryChangeConsumer<T> extends AbstractChangeConsumer {
         .replace(".", "_");
     return TableId.of(gcpProject.get(), bqDataset.get(), tableName);
   }
-  
+
 }

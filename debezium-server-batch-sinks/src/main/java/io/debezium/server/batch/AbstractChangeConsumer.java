@@ -168,7 +168,7 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
     return pl;
   }
 
-  public File getJsonLinesFile(String destination, List<DebeziumEvent> data) {
+  protected File getJsonLinesFile(String destination, List<DebeziumEvent> data) {
 
     Instant start = Instant.now();
     final File tempFile;
