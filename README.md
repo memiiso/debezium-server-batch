@@ -3,6 +3,7 @@
 ![Java CI with Maven](https://github.com/memiiso/debezium-server-batch/workflows/Java%20CI%20with%20Maven/badge.svg?branch=master)
 
 # Table of contents
+
 * [Debezium Batch Consumers](#debezium-batch-consumers)
   * [`sparkbatch` Consumer](#sparkbatch-consumer)
   * [`bigquerybatch` Consumer](#bigquerybatch-consumer)
@@ -11,9 +12,13 @@
 # Debezium Batch Consumers
 
 This project adds batch consumers
-to [Debezium Server](https://debezium.io/documentation/reference/operations/debezium-server.html). Using batch consumers its possible to consume CDC events as mini batches
+to [Debezium Server](https://debezium.io/documentation/reference/operations/debezium-server.html). Using batch consumers
+its possible to consume CDC events as mini batches
+
+![Debezium Batch Consumers](docs/images/debezium-batch.png)
 
 ## `sparkbatch` Consumer
+
 Consumes debezium events using spark
 
 | Config                                              | Default              | Description                                                                         |
