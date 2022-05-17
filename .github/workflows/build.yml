@@ -11,7 +11,7 @@ on:
       - '.idea/**'
       - '.run/**'
   pull_request:
-    branches: [ master ]
+    branches: [ master, 0.2 ]
     paths-ignore:
       - '.github/**'
       - '.idea/**'
