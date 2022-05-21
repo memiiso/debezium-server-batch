@@ -118,58 +118,13 @@
                 <artifactId>hadoop-client</artifactId>
                 <version>${version.hadoop}</version>
             </dependency>
-            <dependency>
-                <groupId>com.google.cloud.spark</groupId>
-                <artifactId>spark-bigquery-with-dependencies_2.12</artifactId>
-                <version>0.23.2</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.cloud.bigdataoss</groupId>
-                <artifactId>gcs-connector</artifactId>
-                <version>hadoop3-2.2.6</version>
-            </dependency>
             <!-- Google -->
-            <dependency>
-                <groupId>com.google.cloud</groupId>
-                <artifactId>google-cloud-bigquerystorage</artifactId>
-                <version>2.13.0</version>
-            </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
                 <version>25.3.0</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.google.cloud</groupId>
-                <artifactId>google-cloud-bigquery</artifactId>
-                <version>2.11.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.api.grpc</groupId>
-                <artifactId>proto-google-cloud-bigquerystorage-v1</artifactId>
-                <version>2.13.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.api</groupId>
-                <artifactId>gax</artifactId>
-                <version>2.17.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.api</groupId>
-                <artifactId>gax-grpc</artifactId>
-                <version>2.17.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.auth</groupId>
-                <artifactId>google-auth-library-oauth2-http</artifactId>
-                <version>1.6.0</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.auth</groupId>
-                <artifactId>google-auth-library-credentials</artifactId>
-                <version>1.6.0</version>
             </dependency>
             <!-- END Google -->
 
