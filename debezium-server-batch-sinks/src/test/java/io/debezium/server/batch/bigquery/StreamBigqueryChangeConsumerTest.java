@@ -57,10 +57,16 @@ public class StreamBigqueryChangeConsumerTest {
     TableId tableId = bqchangeConsumer.getTableId(destination);
     this.simpleQuery("TRUNCATE TABLE " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
   }
-  
-  public TableResult getTableData(String destination) throws InterruptedException {
+
+  public TableResult getTableData(String destination, String where) throws InterruptedException {
     TableId tableId = bqchangeConsumer.getTableId(destination);
-    return this.simpleQuery("SELECT * FROM " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
+    return this.simpleQuery("SELECT * FROM " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable()
+        + " WHERE " + where
+    );
+  }
+
+  public TableResult getTableData(String destination) throws InterruptedException {
+    return getTableData(destination, "1=1");
   }
 
   @Test
@@ -122,4 +128,69 @@ public class StreamBigqueryChangeConsumerTest {
     TableResult result = this.getTableData("testc.inventory.test_date_table");
     System.out.println("Row Count=" + result.getTotalRows());
   }
+
+  @Test
+  public void testSchemaChanges() throws Exception {
+    String dest = "testc.inventory.customers";
+    truncateTable(dest);
+    Awaitility.await().atMost(Duration.ofSeconds(180)).until(() -> {
+      try {
+        return this.getTableData(dest).getTotalRows() >= 4;
+      } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+      }
+    });
+
+    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1' WHERE ID = 1002 ;");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_varchar_column varchar(255);");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_boolean_column boolean;");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ADD test_date_column date;");
+
+    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET first_name='George__UPDATE1'  WHERE id = 1002 ;");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ALTER COLUMN email DROP NOT NULL;");
+    SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
+        "(default,'SallyUSer2','Thomas',null,'value1',false, '2020-01-01');");
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers ALTER COLUMN last_name DROP NOT NULL;");
+    SourcePostgresqlDB.runSQL("UPDATE inventory.customers SET last_name = NULL  WHERE id = 1002 ;");
+    SourcePostgresqlDB.runSQL("DELETE FROM inventory.customers WHERE id = 1004 ;");
+
+    Awaitility.await().atMost(Duration.ofSeconds(180)).until(() -> {
+      try {
+        //this.getTableData(dest).getValues().forEach(System.out::println);
+        return this.getTableData(dest).getTotalRows() >= 9
+            && this.getTableData(dest, "first_name = 'George__UPDATE1'").getTotalRows() == 3
+            && this.getTableData(dest, "first_name = 'SallyUSer2'").getTotalRows() == 1
+            && this.getTableData(dest, "last_name is null").getTotalRows() == 1
+            && this.getTableData(dest, "id = 1004 AND __op = 'd'").getTotalRows() == 1
+            ;
+      } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+      }
+    });
+
+    SourcePostgresqlDB.runSQL("ALTER TABLE inventory.customers DROP COLUMN email;");
+    SourcePostgresqlDB.runSQL("INSERT INTO inventory.customers VALUES " +
+        "(default,'User3','lastname_value3','test_varchar_value3',true, '2020-01-01'::DATE);");
+
+    Awaitility.await().atMost(Duration.ofSeconds(180)).until(() -> {
+      try {
+        this.getTableData(dest).getValues().forEach(System.out::println);
+        this.getTableData(dest).getSchema().getFields().forEach(System.out::println);
+        //this.getTableData(dest, "test_varchar_column = 'test_varchar_value3'").getValues().forEach(System
+        // .out::println);
+        return this.getTableData(dest).getTotalRows() >= 10
+            && this.getTableData(dest, "first_name = 'User3'").getTotalRows() == 1
+            //&& this.getTableData(dest, "test_varchar_column == 'test_varchar_value3'").getTotalRows() ==1
+            ;
+      } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+      }
+    });
+
+  }
+
+
 }

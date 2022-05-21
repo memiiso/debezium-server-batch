@@ -20,10 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Phaser;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.annotation.concurrent.GuardedBy;
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,16 +30,12 @@ import javax.inject.Named;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutureCallback;
-import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.*;
 import com.google.cloud.bigquery.storage.v1.*;
-import com.google.cloud.bigquery.storage.v1.Exceptions.StorageException;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.Descriptors.DescriptorValidationException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.json.JSONArray;
@@ -95,7 +90,7 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
 
   @PreDestroy
   void close() {
-    jsonStreamWriters.values().forEach(DataWriter::cleanup);
+    jsonStreamWriters.values().forEach(DataWriter::close);
   }
 
 
@@ -185,8 +180,9 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
     Table table = getTable(destination, data.get(0));
     DataWriter writer = jsonStreamWriters.computeIfAbsent(destination, k -> getDataWriter(table));
     try {
-      writer.append(new AppendContext(data, castDeletedField));
-      writer.waitAppend();
+      JSONArray jsonArr = new JSONArray();
+      data.forEach(e -> jsonArr.put(jsonNode2JSONObject(e.value(), castDeletedField)));
+      writer.appendSync(jsonArr);
     } catch (DescriptorValidationException | IOException e) {
       throw new DebeziumException("Failed to append data to stream " + writer.streamWriter.getStreamName(), e);
     }
@@ -230,27 +226,8 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
     return table;
   }
 
-  private static class AppendContext {
-
-    JSONArray data;
-    int retryCount = 0;
-
-    AppendContext(List<DebeziumEvent> data, Boolean castDeletedField) {
-      JSONArray jsonArr = new JSONArray();
-      data.forEach(e -> jsonArr.put(jsonNode2JSONObject(e.value(), castDeletedField)));
-      this.data = jsonArr;
-    }
-  }
-
   private static class DataWriter {
-
-    // Track the number of in-flight requests to wait for all responses before shutting down.
-    private final Phaser inflightRequestCount = new Phaser(1);
-    private final Object lock = new Object();
     private JsonStreamWriter streamWriter;
-
-    @GuardedBy("lock")
-    private RuntimeException error = null;
 
     public void initialize(TableName parentTable, TableSchema tableSchema, Boolean ignoreUnknownFields)
         throws DescriptorValidationException, IOException, InterruptedException {
@@ -264,99 +241,42 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
               .build();
     }
 
-    public void append(AppendContext appendContext)
-        throws DescriptorValidationException, IOException {
-      synchronized (this.lock) {
-        // If earlier appends have failed, we need to reset before continuing.
-        if (this.error != null) {
-          throw this.error;
+    private void appendSync(JSONArray data, int retryCount) throws DescriptorValidationException,
+        IOException {
+      ApiFuture<AppendRowsResponse> future = streamWriter.append(data);
+      try {
+        AppendRowsResponse response = future.get();
+        if (response.hasError()) {
+          throw new DebeziumException("Failed to append data to stream. " + response.getError().getMessage());
         }
-      }
-      // Append asynchronously for increased throughput.
-      ApiFuture<AppendRowsResponse> future = streamWriter.append(appendContext.data);
-      ApiFutures.addCallback(
-          future, new AppendCompleteCallback(this, appendContext), MoreExecutors.directExecutor());
-
-      // Increase the count of in-flight requests.
-      inflightRequestCount.register();
-    }
-
-    public void waitAppend() {
-      // synchronous
-      // Wait for all in-flight requests to complete.
-      inflightRequestCount.arriveAndAwaitAdvance();
-      // Verify that no error occurred in the stream.
-      synchronized (this.lock) {
-        if (this.error != null) {
-          throw this.error;
-        }
-      }
-    }
-
-    public void cleanup() {
-      // Wait for all in-flight requests to complete.
-      inflightRequestCount.arriveAndAwaitAdvance();
-
-      // Close the connection to the server.
-      streamWriter.close();
-
-      // Verify that no error occurred in the stream.
-      synchronized (this.lock) {
-        if (this.error != null) {
-          throw this.error;
-        }
-      }
-    }
-
-    static class AppendCompleteCallback implements ApiFutureCallback<AppendRowsResponse> {
-
-      private final DataWriter parent;
-      private final AppendContext appendContext;
-
-      public AppendCompleteCallback(DataWriter parent, AppendContext appendContext) {
-        this.parent = parent;
-        this.appendContext = appendContext;
-      }
-
-      public void onSuccess(AppendRowsResponse response) {
-        done();
-      }
-
-      public void onFailure(Throwable throwable) {
+      } catch (InterruptedException | ExecutionException throwable) {
         // If the wrapped exception is a StatusRuntimeException, check the state of the operation.
         // If the state is INTERNAL, CANCELLED, or ABORTED, you can retry. For more information,
         // see: https://grpc.github.io/grpc-java/javadoc/io/grpc/StatusRuntimeException.html
         Status status = Status.fromThrowable(throwable);
-        if (appendContext.retryCount < MAX_RETRY_COUNT
+        if (retryCount < MAX_RETRY_COUNT
             && RETRIABLE_ERROR_CODES.contains(status.getCode())) {
-          appendContext.retryCount++;
           try {
             // Since default stream appends are not ordered, we can simply retry the appends.
             // Retrying with exclusive streams requires more careful consideration.
-            this.parent.append(appendContext);
+            this.appendSync(data, ++retryCount);
             // Mark the existing attempt as done since it's being retried.
-            done();
             return;
           } catch (Exception e) {
-            throw new DebeziumException("Failed to retry append", e);
+            throw new DebeziumException("Failed to append data to stream", e);
           }
         }
-
-        synchronized (this.parent.lock) {
-          if (this.parent.error == null) {
-            StorageException storageException = Exceptions.toStorageException(throwable);
-            this.parent.error =
-                (storageException != null) ? storageException : new RuntimeException(throwable);
-          }
-        }
-        done();
-        throw new DebeziumException("Error: ", throwable);
       }
 
-      private void done() {
-        // Reduce the count of in-flight requests.
-        this.parent.inflightRequestCount.arriveAndDeregister();
-      }
+    }
+
+    public void appendSync(JSONArray data)
+        throws DescriptorValidationException, IOException {
+      this.appendSync(data, 0);
+    }
+
+    public void close() {
+      streamWriter.close();
     }
   }
 
