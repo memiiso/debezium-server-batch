@@ -89,8 +89,15 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
   }
 
   @PreDestroy
-  void close() {
-    jsonStreamWriters.values().forEach(DataWriter::close);
+  void closeStreams() {
+    for (Map.Entry<String, DataWriter> sw : jsonStreamWriters.entrySet()) {
+      try {
+        sw.getValue().close();
+      } catch (Exception e) {
+        e.printStackTrace();
+        LOGGER.warn("Exception while closing bigquery stream, destination:" + sw.getKey(), e);
+      }
+    }
   }
 
 
@@ -152,17 +159,15 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
   }
 
   private DataWriter getDataWriter(Table table) {
-    DataWriter writer = new DataWriter();
     try {
       Schema schema = table.getDefinition().getSchema();
       TableSchema tableSchema = DebeziumBigqueryEvent.convertBigQuerySchema2TableSchema(schema);
-      writer.initialize(
+      return new DataWriter(
           TableName.of(table.getTableId().getProject(), table.getTableId().getDataset(), table.getTableId().getTable()),
           tableSchema, ignoreUnknownFields);
     } catch (DescriptorValidationException | IOException | InterruptedException e) {
       throw new DebeziumException("Failed to initialize stream writer for table " + table.getTableId(), e);
     }
-    return writer;
   }
 
   private static JSONObject jsonNode2JSONObject(JsonNode jsonNode, Boolean castDeletedField) {
@@ -226,10 +231,10 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
     return table;
   }
 
-  private static class DataWriter {
-    private JsonStreamWriter streamWriter;
+  protected static class DataWriter {
+    private final JsonStreamWriter streamWriter;
 
-    public void initialize(TableName parentTable, TableSchema tableSchema, Boolean ignoreUnknownFields)
+    public DataWriter(TableName parentTable, TableSchema tableSchema, Boolean ignoreUnknownFields)
         throws DescriptorValidationException, IOException, InterruptedException {
       // Use the JSON stream writer to send records in JSON format. Specify the table name to write
       // to the default stream. For more information about JsonStreamWriter, see:
@@ -261,7 +266,6 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
             // Retrying with exclusive streams requires more careful consideration.
             this.appendSync(data, ++retryCount);
             // Mark the existing attempt as done since it's being retried.
-            return;
           } catch (Exception e) {
             throw new DebeziumException("Failed to append data to stream", e);
           }
@@ -276,7 +280,9 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
     }
 
     public void close() {
-      streamWriter.close();
+      if (streamWriter != null) {
+        streamWriter.close();
+      }
     }
   }
 
