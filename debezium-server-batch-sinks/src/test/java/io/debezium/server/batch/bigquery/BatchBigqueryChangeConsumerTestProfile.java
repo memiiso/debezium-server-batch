@@ -22,7 +22,6 @@ public class BatchBigqueryChangeConsumerTestProfile implements QuarkusTestProfil
 
     config.put("debezium.sink.type", "bigquerybatch");
     config.put("debezium.source.table.include.list", "inventory.test_date_table,inventory.customers,inventory.geom");
-    config.put("debezium.sink.bigquerybatch.cast-deleted-field", "true");
     //
     config.put("debezium.sink.bigquerybatch.project", "test");
     config.put("debezium.sink.bigquerybatch.dataset", "test");
