@@ -46,14 +46,18 @@ public class BatchBigqueryChangeConsumerTest {
     }
     //System.out.println(query);
     QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(query).build();
-    return bqchangeConsumer.bqClient.query(queryConfig);
+    try {
+      return bqchangeConsumer.bqClient.query(queryConfig);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   public void truncateTable(String destination) throws InterruptedException {
     TableId tableId = bqchangeConsumer.getTableId(destination);
     this.simpleQuery("TRUNCATE TABLE " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
   }
-  
+
   public TableResult getTableData(String destination) throws InterruptedException {
     TableId tableId = bqchangeConsumer.getTableId(destination);
     return this.simpleQuery("SELECT * FROM " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
@@ -93,7 +97,7 @@ public class BatchBigqueryChangeConsumerTest {
   }
 
   public void testPerformance(int maxBatchSize) throws Exception {
-    int iteration = 10;
+    int iteration = 1;
     PGCreateTestDataTable();
     for (int i = 0; i <= iteration; i++) {
       new Thread(() -> {
