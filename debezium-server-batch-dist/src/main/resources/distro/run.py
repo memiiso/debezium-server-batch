@@ -1,10 +1,9 @@
 import argparse
+import jnius_config
 import logging
 import sys
 #####  loggger
 from pathlib import Path
-
-import jnius_config
 
 log = logging.getLogger(name="debezium")
 log.setLevel(logging.INFO)
@@ -57,7 +56,7 @@ class Debezium():
         from jnius import autoclass
         DebeziumServer = autoclass('io.debezium.server.Main')
         _dbz = DebeziumServer()
-        _dbz.main()
+        return _dbz.main()
 
 
 def main():
