@@ -50,13 +50,16 @@ class Debezium():
 
     def run(self, *args: str):
 
-        jnius_config.add_options(*args)
-        log.info("Configured jvm options:%s" % jnius_config.get_options())
+        from jnius import autoclass, detach
+        try:
+            jnius_config.add_options(*args)
+            log.info("Configured jvm options:%s" % jnius_config.get_options())
 
-        from jnius import autoclass
-        DebeziumServer = autoclass('io.debezium.server.Main')
-        _dbz = DebeziumServer()
-        return _dbz.main()
+            DebeziumServer = autoclass('io.debezium.server.Main')
+            _dbz = DebeziumServer()
+            return _dbz.main()
+        finally:
+            detach()
 
 
 def main():
