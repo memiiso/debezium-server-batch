@@ -60,7 +60,7 @@ public class StreamBigqueryChangeConsumerTest {
 
   public void dropTable(String destination) throws InterruptedException {
     TableId tableId = bqchangeConsumer.getTableId(destination);
-    this.simpleQuery("DROP TABLE IF EXISTS" + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
+    this.simpleQuery("DROP TABLE IF EXISTS " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
   }
 
   public TableResult getTableData(String destination, String where) throws InterruptedException {

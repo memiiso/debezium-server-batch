@@ -229,9 +229,7 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
       Schema eventSchema = sampleBqEvent.getBigQuerySchema(castDeletedField, true);
 
       List<Field> tableFields = new ArrayList<>(table.getDefinition().getSchema().getFields());
-      List<String> fieldNames = table.getDefinition().getSchema().getFields().stream()
-          .map(Field::getName)
-          .collect(Collectors.toList());
+      List<String> fieldNames = tableFields.stream().map(Field::getName).collect(Collectors.toList());
 
       boolean fieldAddition = false;
       for (Field field : eventSchema.getFields()) {
@@ -246,6 +244,8 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
         Schema newSchema = Schema.of(tableFields);
         Table updatedTable = table.toBuilder().setDefinition(StandardTableDefinition.of(newSchema)).build();
         table = updatedTable.update();
+        //jsonStreamWriters.get(destination).close();
+        //jsonStreamWriters.replace(destination, getDataWriter(table));
         LOGGER.info("New columns successfully added to table");
       }
     }
