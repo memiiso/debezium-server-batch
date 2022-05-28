@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 #####  loggger
+import threading
 from pathlib import Path
 
 log = logging.getLogger(name="debezium")
@@ -76,6 +77,19 @@ class Debezium():
         finally:
             from jnius import detach
             detach()
+
+
+class DebeziumRunAsyn(threading.Thread):
+    def __init__(self, debezium_dir: str, java_args: list, java_home: str = None):
+        threading.Thread.__init__(self)
+        self.debezium_dir = debezium_dir
+        self.java_args = java_args
+        self.java_home = java_home
+        self._dbz: Debezium = None
+
+    def run(self):
+        self._dbz = Debezium(debezium_dir=self.debezium_dir, java_home=self.java_home)
+        return self._dbz.run(*self.java_args)
 
 
 def main():
