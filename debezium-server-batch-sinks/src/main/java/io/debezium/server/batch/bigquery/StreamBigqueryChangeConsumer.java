@@ -231,6 +231,11 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
       FieldList fields = this.addNewField(table.getDefinition().getSchema().getFields(), schema.getFields());
       Schema newSchema = Schema.of(fields);
       // @TODO alter table!
+      // Update the table with the new schema
+      Table updatedTable =
+          table.toBuilder().setDefinition(StandardTableDefinition.of(newSchema)).build();
+      updatedTable.update();
+      LOGGER.info("New columns successfully added to table");
       // throw new DebeziumException("Field addition is not supported yet!");
       //Schema schema = new DebeziumBigqueryEvent(sampleEvent).getBigQuerySchema(castDeletedField);
     }
