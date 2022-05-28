@@ -58,6 +58,11 @@ public class StreamBigqueryChangeConsumerTest {
     this.simpleQuery("TRUNCATE TABLE " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
   }
 
+  public void dropTable(String destination) throws InterruptedException {
+    TableId tableId = bqchangeConsumer.getTableId(destination);
+    this.simpleQuery("DROP TABLE IF EXISTS" + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable());
+  }
+
   public TableResult getTableData(String destination, String where) throws InterruptedException {
     TableId tableId = bqchangeConsumer.getTableId(destination);
     return this.simpleQuery("SELECT * FROM " + tableId.getProject() + "." + tableId.getDataset() + "." + tableId.getTable()
@@ -132,7 +137,7 @@ public class StreamBigqueryChangeConsumerTest {
   @Test
   public void testSchemaChanges() throws Exception {
     String dest = "testc.inventory.customers";
-    truncateTable(dest);
+    dropTable(dest);
     Awaitility.await().atMost(Duration.ofSeconds(180)).until(() -> {
       try {
         return this.getTableData(dest).getTotalRows() >= 4;
@@ -163,6 +168,7 @@ public class StreamBigqueryChangeConsumerTest {
             && this.getTableData(dest, "first_name = 'SallyUSer2'").getTotalRows() == 1
             && this.getTableData(dest, "last_name is null").getTotalRows() == 1
             && this.getTableData(dest, "id = 1004 AND __op = 'd'").getTotalRows() == 1
+            && this.getTableData(dest, "test_varchar_column = 'value1'").getTotalRows() == 1
             ;
       } catch (Exception e) {
         e.printStackTrace();
@@ -178,18 +184,15 @@ public class StreamBigqueryChangeConsumerTest {
       try {
         this.getTableData(dest).getValues().forEach(System.out::println);
         this.getTableData(dest).getSchema().getFields().forEach(System.out::println);
-        //this.getTableData(dest, "test_varchar_column = 'test_varchar_value3'").getValues().forEach(System
-        // .out::println);
         return this.getTableData(dest).getTotalRows() >= 10
             && this.getTableData(dest, "first_name = 'User3'").getTotalRows() == 1
-            //&& this.getTableData(dest, "test_varchar_column == 'test_varchar_value3'").getTotalRows() ==1
+            && this.getTableData(dest, "test_varchar_column = 'test_varchar_value3'").getTotalRows() == 1
             ;
       } catch (Exception e) {
         e.printStackTrace();
         return false;
       }
     });
-
   }
 
 
