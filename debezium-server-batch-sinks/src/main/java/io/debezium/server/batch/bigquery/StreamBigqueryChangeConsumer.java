@@ -16,11 +16,13 @@ import io.grpc.Status.Code;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -224,31 +226,30 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
 
     if (allowFieldAddition) {
       DebeziumBigqueryEvent sampleBqEvent = new DebeziumBigqueryEvent(sampleEvent);
-      Schema schema = sampleBqEvent.getBigQuerySchema(castDeletedField, true);
-      // @TODO  use the sample event to add new fields to bigquery table! and use table schema!
-      LOGGER.error("Field addition is not implemented yet!");
-      //currentSchema.
-      FieldList fields = this.addNewField(table.getDefinition().getSchema().getFields(), schema.getFields());
-      Schema newSchema = Schema.of(fields);
-      // @TODO alter table!
-      // Update the table with the new schema
-      Table updatedTable =
-          table.toBuilder().setDefinition(StandardTableDefinition.of(newSchema)).build();
-      updatedTable.update();
-      LOGGER.info("New columns successfully added to table");
-      // throw new DebeziumException("Field addition is not supported yet!");
-      //Schema schema = new DebeziumBigqueryEvent(sampleEvent).getBigQuerySchema(castDeletedField);
-    }
-    return table;
-  }
+      Schema eventSchema = sampleBqEvent.getBigQuerySchema(castDeletedField, true);
 
-  public FieldList addNewField(FieldList currentFields, FieldList newFields) {
-    for (Field nfield : newFields) {
-      if (currentFields.get(nfield.getName()) == null) {
-        currentFields.add(nfield);
+      List<Field> tableFields = new ArrayList<>(table.getDefinition().getSchema().getFields());
+      List<String> fieldNames = table.getDefinition().getSchema().getFields().stream()
+          .map(Field::getName)
+          .collect(Collectors.toList());
+
+      boolean fieldAddition = false;
+      for (Field field : eventSchema.getFields()) {
+        if (!fieldNames.contains(field.getName())) {
+          tableFields.add(field);
+          fieldAddition = true;
+        }
+      }
+
+      if (fieldAddition) {
+        LOGGER.info("Updating table with the new fields");
+        Schema newSchema = Schema.of(tableFields);
+        Table updatedTable = table.toBuilder().setDefinition(StandardTableDefinition.of(newSchema)).build();
+        table = updatedTable.update();
+        LOGGER.info("New columns successfully added to table");
       }
     }
-    return currentFields;
+    return table;
   }
 
   protected static class DataWriter {
