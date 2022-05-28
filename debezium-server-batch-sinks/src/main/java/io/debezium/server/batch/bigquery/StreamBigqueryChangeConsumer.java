@@ -242,7 +242,7 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
       }
 
       if (fieldAddition) {
-        LOGGER.info("Updating table with the new fields");
+        LOGGER.debug("Updating table with the new fields");
         Schema newSchema = Schema.of(tableFields);
         Table updatedTable = table.toBuilder().setDefinition(StandardTableDefinition.of(newSchema)).build();
         table = updatedTable.update();
