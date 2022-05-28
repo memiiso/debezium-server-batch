@@ -1,6 +1,7 @@
 import argparse
 import jnius_config
 import logging
+import os
 import sys
 #####  loggger
 from pathlib import Path
@@ -18,7 +19,7 @@ log.addHandler(handler)
 
 class Debezium():
 
-    def __init__(self, debezium_dir: str = None, conf_dir: str = None):
+    def __init__(self, debezium_dir: str = None, conf_dir: str = None, java_home: str = None):
         if debezium_dir is None:
             self.debezium_server_dir: Path = Path(__file__).resolve().parent
         else:
@@ -36,18 +37,32 @@ class Debezium():
             log.info("Setting conf dir to:%s" % self.conf_dir.as_posix())
 
         ##### jnius
+        if java_home:
+            self.java_home(java_home=java_home)
+
         DEBEZIUM_CLASSPATH: list = [
             self.debezium_server_dir.joinpath('*').as_posix(),
             self.debezium_server_dir.joinpath("lib/*").as_posix(),
             self.conf_dir.as_posix()]
+        self.add_classpath(*DEBEZIUM_CLASSPATH)
 
-        if not jnius_config.vm_running:
-            jnius_config.add_classpath(*DEBEZIUM_CLASSPATH)
-            log.info("VM Classpath: %s" % jnius_config.get_classpath())
-        else:
-            log.warning("VM is already running, can't set classpath/options")
-            log.debug("VM started at %s" % jnius_config.vm_started_at)
+    def add_classpath(self, *claspath):
+        if jnius_config.vm_running:
+            raise ValueError(
+                "VM is already running, can't set classpath/options; VM started at %s" % jnius_config.vm_started_at)
 
+        jnius_config.add_classpath(*claspath)
+        log.info("VM Classpath: %s" % jnius_config.get_classpath())
+
+    def java_home(self, java_home: str):
+        if jnius_config.vm_running:
+            raise ValueError("VM is already running, can't set java home; VM started at" + jnius_config.vm_started_at)
+
+        os.putenv("JAVA_HOME", java_home)
+        os.environ["JAVA_HOME"] = java_home
+        log.info("JAVA_HOME set to %s" % java_home)
+
+    # pylint: disable=no-name-in-module
     def run(self, *args: str):
 
         try:
