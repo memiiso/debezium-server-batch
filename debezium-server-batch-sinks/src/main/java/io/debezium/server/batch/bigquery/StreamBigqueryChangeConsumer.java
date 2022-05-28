@@ -223,12 +223,27 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
     }
 
     if (allowFieldAddition) {
+      DebeziumBigqueryEvent sampleBqEvent = new DebeziumBigqueryEvent(sampleEvent);
+      Schema schema = sampleBqEvent.getBigQuerySchema(castDeletedField, true);
       // @TODO  use the sample event to add new fields to bigquery table! and use table schema!
       LOGGER.error("Field addition is not implemented yet!");
+      //currentSchema.
+      FieldList fields = this.addNewField(table.getDefinition().getSchema().getFields(), schema.getFields());
+      Schema newSchema = Schema.of(fields);
+      // @TODO alter table!
       // throw new DebeziumException("Field addition is not supported yet!");
       //Schema schema = new DebeziumBigqueryEvent(sampleEvent).getBigQuerySchema(castDeletedField);
     }
     return table;
+  }
+
+  public FieldList addNewField(FieldList currentFields, FieldList newFields) {
+    for (Field nfield : newFields) {
+      if (currentFields.get(nfield.getName()) == null) {
+        currentFields.add(nfield);
+      }
+    }
+    return currentFields;
   }
 
   protected static class DataWriter {
