@@ -21,6 +21,7 @@ public class StreamBigqueryChangeConsumerTestProfile implements QuarkusTestProfi
     Map<String, String> config = new HashMap<>();
 
     config.put("debezium.sink.type", "bigquerystream");
+    config.put("debezium.sink.bigquerystream.allowFieldAddition", "true");
     config.put("debezium.source.table.include.list", "inventory.test_date_table,inventory.customers,inventory.geom");
     //
     config.put("debezium.sink.bigquerystream.project", "test");
