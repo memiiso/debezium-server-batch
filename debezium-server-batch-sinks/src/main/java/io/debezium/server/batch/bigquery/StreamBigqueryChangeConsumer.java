@@ -244,8 +244,8 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
         Schema newSchema = Schema.of(tableFields);
         Table updatedTable = table.toBuilder().setDefinition(StandardTableDefinition.of(newSchema)).build();
         table = updatedTable.update();
-        //jsonStreamWriters.get(destination).close();
-        //jsonStreamWriters.replace(destination, getDataWriter(table));
+        jsonStreamWriters.get(destination).close();
+        jsonStreamWriters.replace(destination, getDataWriter(table));
         LOGGER.info("New columns successfully added to table");
       }
     }
