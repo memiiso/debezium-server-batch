@@ -3,7 +3,7 @@
  *  * Copyright memiiso Authors.
  *  *
  *  * Licensed under the Apache Software License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  */
 
 package io.debezium.server.batch.spark;
@@ -129,8 +129,9 @@ public class BatchSparkChangeConsumer extends AbstractSparkChangeConsumer {
 
   private String getPartition() {
     final ZonedDateTime batchTime = ZonedDateTime.now(ZoneId.of(partitionDataZone));
-    return "year=" + batchTime.getYear() + "/month=" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0') + "/day="
-        + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
+    return "dt=" + batchTime.getYear()
+        + "-" + StringUtils.leftPad(batchTime.getMonthValue() + "", 2, '0')
+        + "-" + StringUtils.leftPad(batchTime.getDayOfMonth() + "", 2, '0');
   }
 
   public String map(String destination) {
