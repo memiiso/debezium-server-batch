@@ -10,7 +10,6 @@ package io.debezium.server.batch.spark;
 
 import io.debezium.server.batch.DebeziumEvent;
 
-import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -19,13 +18,17 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
 import javax.inject.Named;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
@@ -55,7 +58,7 @@ public class BatchSparkChangeConsumer extends AbstractSparkChangeConsumer {
 
   @ConfigProperty(name = "debezium.sink.batch.destination-regexp-replace", defaultValue = "")
   protected Optional<String> destinationRegexpReplace;
-  
+
   @PostConstruct
   void connect() throws InterruptedException {
     this.initizalize();
@@ -66,20 +69,30 @@ public class BatchSparkChangeConsumer extends AbstractSparkChangeConsumer {
     this.stopSparkSession();
   }
 
+
+  private String writeJsonNodeAsString(JsonNode e) {
+    try {
+      return mapper.writeValueAsString(e);
+    } catch (JsonProcessingException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
   @Override
   public long uploadDestination(String destination, List<DebeziumEvent> data) {
 
     Instant start = Instant.now();
     StructType dfSchema = new DebeziumSparkEvent(data.get(0)).getSparkDfSchema();
-    File jsonlines = getJsonLinesFile(destination, data);
+    List<String> dataList = data.stream().map(e -> writeJsonNodeAsString(e.value())).collect(Collectors.toList());
+    Dataset<String> ds = spark.createDataset(dataList, Encoders.STRING());
     Dataset<Row> df;
 
     if (dfSchema != null) {
       LOGGER.debug("Reading data with schema definition, Schema:\n{}", dfSchema);
-      df = spark.read().schema(dfSchema).json(jsonlines.getAbsolutePath());
+      df = spark.read().schema(dfSchema).json(ds);
     } else {
       LOGGER.debug("Reading data without schema definition");
-      df = spark.read().json(jsonlines.getAbsolutePath());
+      df = spark.read().json(ds);
     }
 
     if (castDeletedField) {
@@ -110,7 +123,6 @@ public class BatchSparkChangeConsumer extends AbstractSparkChangeConsumer {
       );
     }
     df.unpersist();
-    jsonlines.delete();
     return numRecords;
   }
 
