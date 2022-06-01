@@ -16,11 +16,13 @@ import io.grpc.Status.Code;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
@@ -223,10 +225,29 @@ public class StreamBigqueryChangeConsumer extends AbstractChangeConsumer {
     }
 
     if (allowFieldAddition) {
-      // @TODO  use the sample event to add new fields to bigquery table! and use table schema!
-      LOGGER.error("Field addition is not implemented yet!");
-      // throw new DebeziumException("Field addition is not supported yet!");
-      //Schema schema = new DebeziumBigqueryEvent(sampleEvent).getBigQuerySchema(castDeletedField);
+      DebeziumBigqueryEvent sampleBqEvent = new DebeziumBigqueryEvent(sampleEvent);
+      Schema eventSchema = sampleBqEvent.getBigQuerySchema(castDeletedField, true);
+
+      List<Field> tableFields = new ArrayList<>(table.getDefinition().getSchema().getFields());
+      List<String> fieldNames = tableFields.stream().map(Field::getName).collect(Collectors.toList());
+
+      boolean fieldAddition = false;
+      for (Field field : eventSchema.getFields()) {
+        if (!fieldNames.contains(field.getName())) {
+          tableFields.add(field);
+          fieldAddition = true;
+        }
+      }
+
+      if (fieldAddition) {
+        LOGGER.debug("Updating table with the new fields");
+        Schema newSchema = Schema.of(tableFields);
+        Table updatedTable = table.toBuilder().setDefinition(StandardTableDefinition.of(newSchema)).build();
+        table = updatedTable.update();
+        jsonStreamWriters.get(destination).close();
+        jsonStreamWriters.replace(destination, getDataWriter(table));
+        LOGGER.info("New columns successfully added to table");
+      }
     }
     return table;
   }

@@ -126,7 +126,8 @@ public abstract class AbstractChangeConsumer extends BaseChangeConsumer implemen
       Map<JsonNode, List<DebeziumEvent>> eventsGroupedBySchema =
           destinationEvents.getValue().stream()
               .collect(Collectors.groupingBy(DebeziumEvent::valueSchema));
-      LOGGER.debug("Batch got {} records with {} different schema!!", events.size(), eventsGroupedBySchema.keySet().size());
+      LOGGER.debug("Batch got {} records with {} different schema!!", destinationEvents.getValue().size(),
+          eventsGroupedBySchema.keySet().size());
 
       for (List<DebeziumEvent> schemaEvents : eventsGroupedBySchema.values()) {
         numUploadedEvents += this.uploadDestination(destinationEvents.getKey(), schemaEvents);
