@@ -2,6 +2,18 @@
 ![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)
 ![Java CI with Maven](https://github.com/memiiso/debezium-server-batch/workflows/Java%20CI%20with%20Maven/badge.svg?branch=master)
 
+_________________
+
+# This project splitted to individual github projects
+
+:warning: **Each consumer moved to separate project**:
+
+* https://github.com/memiiso/debezium-server-spark
+* https://github.com/memiiso/debezium-server-bigquery
+* https://github.com/memiiso/debezium-server-jdbc
+
+_________________
+
 # Table of contents
 
 * [Debezium Batch Consumers](#debezium-batch-consumers)
